@@ -1,0 +1,16 @@
+[Unit]
+Description=MyZilla private browsing history server
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/deck/Projects/MyZilla
+EnvironmentFile=/home/deck/Projects/MyZilla/.env
+ExecStart=/home/deck/.local/bin/node --import tsx src/server/index.ts
+Restart=on-failure
+RestartSec=3
+UMask=0077
+NoNewPrivileges=true
+
+[Install]
+WantedBy=default.target

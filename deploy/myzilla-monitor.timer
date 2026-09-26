@@ -1,0 +1,11 @@
+[Unit]
+Description=Monitor MyZilla every minute until 2026-09-27 11:00 Asia/Taipei
+
+[Timer]
+OnCalendar=*-*-* *:*:00
+AccuracySec=1s
+Persistent=true
+Unit=myzilla-monitor.service
+
+[Install]
+WantedBy=timers.target

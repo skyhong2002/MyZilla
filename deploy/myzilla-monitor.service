@@ -1,0 +1,10 @@
+[Unit]
+Description=Check MyZilla HTTPS, authentication and import counts
+After=network.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/deck/Projects/MyZilla
+ExecStart=/usr/bin/python3 scripts/monitor.py
+UMask=0077
+NoNewPrivileges=true
