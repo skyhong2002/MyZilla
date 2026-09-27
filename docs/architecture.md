@@ -39,3 +39,7 @@ npm run db:backup -- data/backups/manual-YYYYMMDD.sqlite --source /path/to/myzil
 `src/accounts/` 管理邀請制帳號、密碼、session 與同步憑證；`src/social/` 管理規則分類、朋友關係、雙方同意的配對與摘要快照。HTTP 認證取得帳號後，才選擇該帳號的 BrowsingRepository。既有擁有者使用原 `events` 表，新帳號使用伺服器產生名稱的獨立資料表，同一 SQLite 備份涵蓋全部資料。
 
 `community.html` 與 `src/ui/community.ts` 提供帳號／興趣／朋友／分享流程，和既有儀表板共用樣式與工作階段。登入使用本機帳號；分析按請求計算，不呼叫外部 AI。未部署 OAuth 或背景分析 worker。功能、資料可見性和限制見 [帳號與分享](accounts-and-sharing.md)。
+
+## 經典入口領域
+
+`src/portal/` 提供收藏、搜尋紀錄、可管理轉址、電影、心情、RSS 與在線顯示，使用同一帳號 Registry。首頁由 `src/ui/portal.ts` 呈現，回顧保留在 `dashboard.html`。新增的 `portal_*` 表帶帳號鍵，原始瀏覽資料不重建。完整來源與功能對照見 [舊站概念對照](legacy-features.md)。

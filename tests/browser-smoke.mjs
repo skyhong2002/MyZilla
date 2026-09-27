@@ -66,7 +66,7 @@ try {
   });
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto(`http://127.0.0.1:${port}`);
+  await page.goto(`http://127.0.0.1:${port}/dashboard.html`);
   await page.locator("#token").fill(token);
   await page.getByRole("button", { name: "解鎖回顧" }).click();
   await page.waitForFunction(

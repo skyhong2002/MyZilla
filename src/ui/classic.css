@@ -1,0 +1,52 @@
+:root {
+  color-scheme: light;
+  --bg: #f3f6fd;
+  --surface: #fff;
+  --raised: #eaf2f8;
+  --line: #c9dbe8;
+  --line-strong: #96b8ce;
+  --ink: #263846;
+  --ink-2: #405867;
+  --muted: #576f7d;
+  --accent: #235e82;
+  --accent-bg: #dfedf7;
+}
+body {
+  background: #f3f6fd;
+}
+.site-header {
+  border-bottom: 1px solid #acc8d9;
+}
+.brand-mark,
+.avatar {
+  background: #d9eaf5;
+  color: #215676;
+}
+.site-nav a[aria-current="page"],
+.period button.selected,
+button.primary {
+  background: #285d7b;
+  color: #fff;
+}
+.site-nav a {
+  color: #344e60;
+}
+input,
+textarea,
+select {
+  background: #fff;
+  color: #243b4a;
+}
+.site-header {
+  flex-wrap: wrap;
+}
+.site-nav {
+  flex-wrap: wrap;
+}
+
+.save-history-link {
+  display: block;
+  text-align: right;
+  font-size: 12px;
+  margin: 0 0 12px;
+}

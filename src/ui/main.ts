@@ -1,4 +1,5 @@
 import "./style.css";
+import "./classic.css";
 import type { Settings } from "../shared/events";
 import { webUrl, type SiteSummary, type Visit } from "../shared/model";
 import {
@@ -59,7 +60,7 @@ const colors = [
 
 $("app").innerHTML = `
 <a class="skip-link" href="#page-title">跳到主要內容</a>
-<header class="site-header"><a class="brand" href="#overview" data-view="overview"><span class="brand-mark" aria-hidden="true">m</span><span><strong>MyZilla</strong><small>BROWSING, REVISITED</small></span></a><nav class="site-nav" aria-label="主要導覽"><a href="#overview" data-view="overview" data-main-nav="dashboard">儀表板</a><a href="#settings" data-view="settings" data-main-nav="settings">匯入與設定</a>${extension ? "" : '<a href="/community.html">帳號與朋友</a><button id="logout" type="button" hidden>鎖定</button>'}</nav></header>
+<header class="site-header"><a class="brand" href="#overview" data-view="overview"><span class="brand-mark" aria-hidden="true">m</span><span><strong>MyZilla</strong><small>BROWSING, REVISITED</small></span></a><nav class="site-nav" aria-label="主要導覽">${extension ? "" : '<a href="/">我的入口</a>'}<a href="#overview" data-view="overview" data-main-nav="dashboard">儀表板</a><a href="#settings" data-view="settings" data-main-nav="settings">匯入與設定</a>${extension ? "" : '<a href="/community.html">帳號與朋友</a><button id="logout" type="button" hidden>鎖定</button>'}</nav></header>
 <main class="site-main">
 <section class="profile"><div class="avatar" aria-hidden="true">M</div><div class="profile-copy"><div class="eyebrow">PERSONAL BROWSING ARCHIVE</div><div class="title-row"><h1 id="page-title" tabindex="-1">我的瀏覽空間</h1><span class="private-badge">私人</span></div><p id="page-scope">總覽 · 全部紀錄</p></div><a href="#settings" data-view="settings" class="button profile-action">匯入紀錄 <span aria-hidden="true">↗</span></a></section>
 <nav class="page-nav" aria-label="瀏覽紀錄導覽">${(["overview", "insights", "history", "recap"] as View[]).map((view) => `<a href="#${view}" data-view="${view}">${viewLabels[view]}</a>`).join("")}</nav>
@@ -282,7 +283,7 @@ function visitMarkup(v: HistoryVisit, className: string) {
   try {
     host = new URL(v.url).hostname || host;
   } catch {}
-  return `<${safe ? "a" : "div"} class="${className}" ${safe ? `href="${escape(safe)}" target="_blank" rel="noopener noreferrer"` : ""}><span class="site-icon" aria-hidden="true">${escape(host.slice(0, 1).toUpperCase())}</span><div><strong>${escape(v.title || v.url || "（來源無網址）")}</strong><span>${escape(v.url)}</span><small>${escape(v.source.browser)} · ${escape(v.source.profile)} · ${escape(v.source.device)}</small></div><time>${new Date(v.visitedAt).toLocaleString("zh-TW", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}</time><span aria-hidden="true">${safe ? "↗" : "·"}</span></${safe ? "a" : "div"}>`;
+  return `<${safe ? "a" : "div"} class="${className}" ${safe ? `href="${escape(safe)}" target="_blank" rel="noopener noreferrer"` : ""}><span class="site-icon" aria-hidden="true">${escape(host.slice(0, 1).toUpperCase())}</span><div><strong>${escape(v.title || v.url || "（來源無網址）")}</strong><span>${escape(v.url)}</span><small>${escape(v.source.browser)} · ${escape(v.source.profile)} · ${escape(v.source.device)}</small></div><time>${new Date(v.visitedAt).toLocaleString("zh-TW", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}</time><span aria-hidden="true">${safe ? "↗" : "·"}</span></${safe ? "a" : "div"}>${!extension && safe ? `<a class="save-history-link" href="/?captureUrl=${encodeURIComponent(safe)}&captureTitle=${encodeURIComponent(v.title.slice(0, 500))}#bookmark">加入我的網址</a>` : ""}`;
 }
 async function loadRecent(from: number, to: number) {
   const version = generation;

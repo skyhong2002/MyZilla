@@ -14,7 +14,8 @@
     "test:firefox": "node tests/firefox-smoke.mjs",
     "ingest": "node --env-file-if-exists=.env --import tsx src/ingest.ts",
     "db:backup": "python3 scripts/backup.py",
-    "test:community": "node tests/community-browser.mjs"
+    "test:community": "node tests/community-browser.mjs",
+    "test:portal": "node tests/portal-browser.mjs"
   },
   "keywords": [],
   "type": "module",

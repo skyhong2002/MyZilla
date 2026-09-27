@@ -1,4 +1,5 @@
 import "./style.css";
+import "./classic.css";
 import "./community.css";
 const root = document.getElementById("community")!;
 const esc = (s: unknown) =>
@@ -54,7 +55,7 @@ function categories(profile: any) {
   return `<div class="category-bars">${profile.categories.map((row: any) => `<div><div class="section-heading"><span>${esc(row.label)}</span><span>${row.percent}% · ${row.visits.toLocaleString()} 次</span></div><progress value="${row.percent}" max="100" aria-label="${esc(row.label)}"></progress></div>`).join("")}</div>`;
 }
 function render() {
-  root.innerHTML = `<header class="site-header"><a class="brand" href="/"><span class="brand-mark">m</span><strong>MyZilla</strong></a><nav class="site-nav" aria-label="主要導覽"><a href="/">儀表板</a><a href="/#settings">匯入與設定</a><a href="/community.html" aria-current="page">帳號與朋友</a>${data ? '<button data-action="logout">登出</button>' : ""}</nav></header><main class="site-main community-main"><section class="profile"><div><div class="eyebrow">YOUR SPACE, YOUR CONNECTIONS</div><h1>${data ? `${esc(data.me.name)} 的空間` : "你的瀏覽，也能成為交流的起點"}</h1><p>私人歷史留給自己；選擇要分享的興趣摘要。</p></div></section><p id="community-message" role="status" aria-live="polite">${esc(output)}</p>${data ? loggedIn() : login()}<footer>MyZilla · 原始瀏覽歷史僅供本人存取</footer></main>`;
+  root.innerHTML = `<header class="site-header"><a class="brand" href="/"><span class="brand-mark">m</span><strong>MyZilla</strong></a><nav class="site-nav" aria-label="主要導覽"><a href="/">我的入口</a><a href="/dashboard.html">儀表板</a><a href="/dashboard.html#settings">匯入與設定</a><a href="/community.html" aria-current="page">帳號與朋友</a>${data ? '<button data-action="logout">登出</button>' : ""}</nav></header><main class="site-main community-main"><section class="profile"><div><div class="eyebrow">YOUR SPACE, YOUR CONNECTIONS</div><h1>${data ? `${esc(data.me.name)} 的空間` : "你的瀏覽，也能成為交流的起點"}</h1><p>私人歷史留給自己；選擇要分享的興趣摘要。</p></div></section><p id="community-message" role="status" aria-live="polite">${esc(output)}</p>${data ? loggedIn() : login()}<footer>MyZilla · 原始瀏覽歷史僅供本人存取</footer></main>`;
   renderSites();
 }
 function login() {

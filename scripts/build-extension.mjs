@@ -5,6 +5,7 @@ for (const target of ["chromium", "firefox"]) {
   await rm(dir, { recursive: true, force: true });
   await mkdir(dir, { recursive: true });
   await cp("dist/web", dir, { recursive: true });
+  await cp("dist/web/dashboard.html", `${dir}/index.html`);
   await rm(`${dir}/downloads`, { recursive: true, force: true });
   await build({
     entryPoints: ["src/extension/background.ts"],

@@ -46,3 +46,14 @@ Mac-side verification reported stale local DNS NXDOMAIN despite working public/u
 - 正式 HTTPS `/community.html` 正常；匿名歷史與社交 API 回傳 401；擁有者驗證後查詢正常。取現有一筆紀錄原樣重播同步，accepted 1、duplicates 1、inserted 0、rejected 0。
 - 正式帳號僅有既有擁有者私人空間，尚未替使用者設定密碼；朋友、配對同意與分享都未自動建立或開啟。後續由使用者在介面設定。
 - 部署仍為原 systemd + loopback 18140 + Cloudflare Tunnel；容器及 CI 定義已驗證本機可用，尚無 remote/CD。
+
+## 經典 MyZilla 入口（2026-09-28）
+
+- 依 Wayback 原始頁面、樣式及 Wiki 重新實作；來源、完成項目及無法復原部分見 `legacy-features.md`。
+- 20 個 TypeScript API／模型測試及 2 個 Python 匯入／備份測試通過。新增測試涵蓋收藏隔離、分頁、重播、朋友可見性撤銷、短網址期限／撤銷、搜尋、RSS、在線同意與電影統計的朋友邊界。
+- 獨立資料庫 Chromium 入口測試完成收藏、生活分類、點閱、短網址撤銷、電影及朋友統計、私人搜尋、JSON 重播匯入、RSS、心情與桌面／手機布局。既有 Chromium 同步及社交 UI、Firefox 與實際 Zen 執行測試通過。
+- 最終程式完成 TypeScript 檢查、網頁及雙瀏覽器擴充套件建置；Docker image 重建後以非 root 通過健康、首頁、回顧、帳號、下載與登入保護測試。
+- 部署前完成 `data/backups/pre-classic-20260928.sqlite` 一致性備份。重啟原 systemd 服務後，正式 DB 的 **100,665** 筆歷史與來源 SHA256 對帳通過，私人證據為 `data/classic-reconciliation.txt`。
+- 正式 HTTPS `/health`、`/`、`/dashboard.html`、`/community.html` 均為 200。匿名 sources、portal items／feed／export／searches 均為 401；驗證後收藏與匯出正常，歷史報表仍為 100,665 筆。
+- 正式 portal 收藏與公開短網址均為零，沒有測試 fixture 或自動分享。正式部署沿用 systemd、127.0.0.1:18140 及原 Cloudflare Tunnel。
+- 前一階段監測已依使用者回報於 2026-09-27 11:00 Taipei 結束：415 次檢查零失敗，最後新增 4 筆 Chrome 後為 100,665 筆；本次沒有重新啟動該限時監測。

@@ -21,6 +21,7 @@ jobs:
       - run: npx playwright install --with-deps chromium firefox
       - run: npm run test:browser
       - run: npm run test:community
+      - run: npm run test:portal
       - run: npm run test:firefox
       - run: docker build -t myzilla:check .
       - run: node tests/container-smoke.mjs myzilla:check

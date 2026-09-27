@@ -4,7 +4,11 @@ export default defineConfig({
     outDir: "dist/web",
     target: "es2022",
     rollupOptions: {
-      input: { main: "index.html", community: "community.html" },
+      input: {
+        main: "index.html",
+        dashboard: "dashboard.html",
+        community: "community.html",
+      },
     },
   },
   server: {

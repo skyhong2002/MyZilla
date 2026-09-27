@@ -2,6 +2,7 @@ import type { DatabaseSync } from "node:sqlite";
 import { initializeDatabase } from "../data/database";
 import { Registry } from "../accounts/registry";
 import { registerAccounts } from "../accounts/routes";
+import { registerPortal } from "../portal/routes";
 import { registerSocial } from "../social/routes";
 import { registerIngest } from "../browsing/ingest";
 import { registerBrowsing } from "../browsing/routes";
@@ -23,6 +24,7 @@ export function createApp(
     registerBrowsing(app, (c) => registry.repository(c.get("account").id));
     registerAccounts(app, registry);
     registerSocial(app, registry);
+    registerPortal(app, registry);
   }
   return app;
 }
