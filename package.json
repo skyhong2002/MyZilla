@@ -5,13 +5,15 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build && node scripts/build-extension.mjs && python3 scripts/package-downloads.py",
-    "start": "node --env-file-if-exists=.env --import tsx src/server/index.ts",
+    "start": "node --env-file-if-exists=.env --import tsx src/index.ts",
     "test": "tsx --test tests/*.test.ts",
     "check": "tsc --noEmit",
     "test:importer": "python3 -m unittest discover -s tests -p '*_test.py'",
     "test:browser": "node tests/browser-smoke.mjs",
     "lint:firefox": "web-ext lint --source-dir dist/firefox --ignore-files downloads",
-    "test:firefox": "node tests/firefox-smoke.mjs"
+    "test:firefox": "node tests/firefox-smoke.mjs",
+    "ingest": "node --env-file-if-exists=.env --import tsx src/ingest.ts",
+    "db:backup": "python3 scripts/backup.py"
   },
   "keywords": [],
   "type": "module",

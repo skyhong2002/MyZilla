@@ -158,3 +158,46 @@ test("foreground estimates discard sleep, stale worker state, idle and backwards
   const restored = JSON.parse(JSON.stringify(previous));
   assert.equal(closeInterval(restored, 31000)?.kind, "attention");
 });
+
+test("standalone ingestion shares storage, authentication and replay semantics without exposing reports", async () => {
+  const db = new DatabaseSync(":memory:");
+  try {
+    const ingest = createApp(db, token, "ingest");
+    const app = createApp(db, token);
+    assert.equal(
+      (await ingest.request("/api/events", { method: "POST" })).status,
+      401,
+    );
+    const request = {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${token}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ deviceId, source, events: [event] }),
+    };
+    assert.equal(
+      (await (await ingest.request("/api/events", request)).json()).inserted,
+      1,
+    );
+    assert.equal(
+      (await (await app.request("/api/events", request)).json()).duplicates,
+      1,
+    );
+    const headers = { authorization: `Bearer ${token}` };
+    assert.equal(
+      (await ingest.request("/api/report?from=0&to=1000", { headers })).status,
+      404,
+    );
+    assert.equal(
+      (
+        await (
+          await app.request("/api/report?from=0&to=1000", { headers })
+        ).json()
+      ).visitCount,
+      1,
+    );
+  } finally {
+    db.close();
+  }
+});
