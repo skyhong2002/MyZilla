@@ -13,7 +13,8 @@
     "lint:firefox": "web-ext lint --source-dir dist/firefox --ignore-files downloads",
     "test:firefox": "node tests/firefox-smoke.mjs",
     "ingest": "node --env-file-if-exists=.env --import tsx src/ingest.ts",
-    "db:backup": "python3 scripts/backup.py"
+    "db:backup": "python3 scripts/backup.py",
+    "test:community": "node tests/community-browser.mjs"
   },
   "keywords": [],
   "type": "module",

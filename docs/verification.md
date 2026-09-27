@@ -36,3 +36,13 @@ HTTPS health returns 200; anonymous or incorrect-key `/api/*` requests return 40
 `myzilla-monitor.timer` probes every minute until **2026-09-27 11:00 Asia/Taipei**. It checks HTTPS, anonymous rejection, authorized access and per-browser counts. Logs are private and include aggregate counts, not raw URLs. This scheduled period is ongoing; do not interpret this record as claiming every future check already passed.
 
 Mac-side verification reported stale local DNS NXDOMAIN despite working public/upstream resolution. Its UI test used an SSH forward to this same service, while HTTPS was verified separately with normal certificate checks.
+
+## 帳號與社交第一版（2026-09-27）
+
+- 15 個 TypeScript API／模型測試通過，另有 2 個 Python 匯入／備份測試通過。
+- 獨立測試資料庫的兩個 Chromium 工作階段，完成擁有者建立、一次性邀請註冊、登入、朋友接受、雙方同意的興趣配對、分類校正、分享與撤銷；桌面及手機布局通過。
+- 原有 Chromium 全量匯入／離線同步、Firefox 及實際 Zen 執行測試通過。容器完成建置並以非 root 執行健康、靜態頁面、下載、匿名拒絕與私人查詢測試。
+- 部署前完成 `data/backups/pre-community-20260927.sqlite` 一致性備份，備份與部署後正式 DB 的 100,665 筆事件／來源 SHA256 對帳通過。
+- 正式 HTTPS `/community.html` 正常；匿名歷史與社交 API 回傳 401；擁有者驗證後查詢正常。取現有一筆紀錄原樣重播同步，accepted 1、duplicates 1、inserted 0、rejected 0。
+- 正式帳號僅有既有擁有者私人空間，尚未替使用者設定密碼；朋友、配對同意與分享都未自動建立或開啟。後續由使用者在介面設定。
+- 部署仍為原 systemd + loopback 18140 + Cloudflare Tunnel；容器及 CI 定義已驗證本機可用，尚無 remote/CD。

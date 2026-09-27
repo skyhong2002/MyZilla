@@ -1,8 +1,11 @@
-import type { Hono } from "hono";
+import type { Hono, Context } from "hono";
 import { batchSchema } from "../shared/events";
 import type { BrowsingRepository } from "./repository";
 
-export function registerIngest(app: Hono, repository: BrowsingRepository) {
+export function registerIngest(
+  app: Hono,
+  resolve: (c: Context) => BrowsingRepository,
+) {
   app.post("/api/events", async (c) => {
     let value: unknown;
     try {
@@ -19,6 +22,6 @@ export function registerIngest(app: Hono, repository: BrowsingRepository) {
         },
         400,
       );
-    return c.json(repository.ingest(result.data));
+    return c.json(resolve(c).ingest(result.data));
   });
 }

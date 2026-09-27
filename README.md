@@ -14,6 +14,10 @@
 
 採用與 urtube 對應的主服務、匯入、資料層與回顧呈現分工，附容器建置、CI 與一致性備份。分層、部署狀態及尚未移植的產品功能見 [架構說明](docs/architecture.md)。
 
+## 帳號、興趣與朋友
+
+從「帳號與朋友」以原始金鑰建立擁有者帳號，或使用邀請碼建立獨立私人帳號。可修正網站興趣分類、送出朋友邀請、雙方同意後比較分類分布，並主動產生可撤銷的限時摘要連結。詳見 [帳號與分享說明](docs/accounts-and-sharing.md)。
+
 ## 啟動
 
 需要 Node.js 24+、npm、Python 3。
@@ -26,7 +30,7 @@ npm run build
 npm start
 ```
 
-資料庫預設 `data/myzilla.sqlite`，金鑰透過 `Authorization: Bearer …` 驗證。公開網站只提供登入介面、擴充功能下載與健康檢查；`/api/*` 一律驗證身分。開發介面可另跑 `npm run dev`。
+資料庫預設 `data/myzilla.sqlite`，金鑰透過 `Authorization: Bearer …` 驗證。公開網站提供登入介面、擴充功能下載、健康檢查與使用者主動建立的限時摘要分享；`/api/*` 一律驗證身分。開發介面可另跑 `npm run dev`。
 
 現有部署由使用者 systemd 管理：`systemctl --user status myzilla`。正式 `.env` 與 `data/client-token` 權限為 0600，均不納入 Git。請透過自己的 SSH 連線取用金鑰，然後貼入網站或擴充功能。服務只綁定 loopback，外部走既有 tunnel。
 
@@ -77,6 +81,7 @@ Zen／Firefox：開啟 `about:debugging#/runtime/this-firefox`，選「暫時載
 npm test
 npm run test:importer
 npm run test:browser
+npm run test:community
 npm run lint:firefox
 npm run test:firefox
 ```
@@ -89,4 +94,4 @@ npm run test:firefox
 
 ## 範圍與後續
 
-第一版為單一私人空間，使用持有金鑰者存取；尚無多使用者帳號、共同投遞箱、策展分享與分類模型。Infovore 整合評估見 [摘要來源設計](docs/infovore-summary.md)。
+目前支援邀請制多帳號、網站規則分類、雙方同意的朋友配對及摘要分享。尚無 Google OAuth、外部 AI 語意分類、公開陌生人配對或策展投遞箱。Infovore 整合評估見 [摘要來源設計](docs/infovore-summary.md)。

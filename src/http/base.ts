@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
-import { timingSafeEqual } from "node:crypto";
+import type { Registry } from "../accounts/registry";
 
-export function createBaseApp(token: string) {
+export function createBaseApp(token: string, registry: Registry) {
   if (token.length < 32)
     throw new Error("MYZILLA_TOKEN must contain at least 32 characters");
   const app = new Hono();
@@ -18,16 +18,23 @@ export function createBaseApp(token: string) {
   });
   app.get("/health", (c) => c.json({ ok: true, version: "0.1.0" }));
   app.use("/api/*", async (c, next) => {
-    const supplied = Buffer.from(c.req.header("Authorization") ?? "");
-    const expected = Buffer.from(`Bearer ${token}`);
+    const account = registry.authenticate(c.req.header("Authorization"));
+    if (!account) return c.json({ error: "請登入或檢查存取金鑰" }, 401);
+    c.set("account", account);
     if (
-      supplied.length !== expected.length ||
-      !timingSafeEqual(supplied, expected)
+      c.req.path.startsWith("/api/community") &&
+      account.credential === "device"
     )
-      return c.json({ error: "請檢查存取金鑰" }, 401);
+      return c.json({ error: "請使用帳號登入管理" }, 403);
     await next();
   });
-  app.use("/api/*", bodyLimit({ maxSize: 16 * 1024 * 1024 }));
+  app.use(
+    "/api/*",
+    bodyLimit({
+      maxSize: 16 * 1024 * 1024,
+      onError: (c) => c.json({ error: "請求內容過大" }, 413),
+    }),
+  );
   app.onError((error, c) => {
     console.error(error.message);
     return c.json({ error: "伺服器處理失敗，資料仍可重試同步" }, 500);

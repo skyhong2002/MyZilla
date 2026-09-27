@@ -59,7 +59,7 @@ const colors = [
 
 $("app").innerHTML = `
 <a class="skip-link" href="#page-title">跳到主要內容</a>
-<header class="site-header"><a class="brand" href="#overview" data-view="overview"><span class="brand-mark" aria-hidden="true">m</span><span><strong>MyZilla</strong><small>BROWSING, REVISITED</small></span></a><nav class="site-nav" aria-label="主要導覽"><a href="#overview" data-view="overview" data-main-nav="dashboard">儀表板</a><a href="#settings" data-view="settings" data-main-nav="settings">匯入與設定</a>${extension ? "" : '<button id="logout" type="button" hidden>鎖定</button>'}</nav></header>
+<header class="site-header"><a class="brand" href="#overview" data-view="overview"><span class="brand-mark" aria-hidden="true">m</span><span><strong>MyZilla</strong><small>BROWSING, REVISITED</small></span></a><nav class="site-nav" aria-label="主要導覽"><a href="#overview" data-view="overview" data-main-nav="dashboard">儀表板</a><a href="#settings" data-view="settings" data-main-nav="settings">匯入與設定</a>${extension ? "" : '<a href="/community.html">帳號與朋友</a><button id="logout" type="button" hidden>鎖定</button>'}</nav></header>
 <main class="site-main">
 <section class="profile"><div class="avatar" aria-hidden="true">M</div><div class="profile-copy"><div class="eyebrow">PERSONAL BROWSING ARCHIVE</div><div class="title-row"><h1 id="page-title" tabindex="-1">我的瀏覽空間</h1><span class="private-badge">私人</span></div><p id="page-scope">總覽 · 全部紀錄</p></div><a href="#settings" data-view="settings" class="button profile-action">匯入紀錄 <span aria-hidden="true">↗</span></a></section>
 <nav class="page-nav" aria-label="瀏覽紀錄導覽">${(["overview", "insights", "history", "recap"] as View[]).map((view) => `<a href="#${view}" data-view="${view}">${viewLabels[view]}</a>`).join("")}</nav>
@@ -67,7 +67,7 @@ $("app").innerHTML = `
 <div id="message" role="status" aria-live="polite">${extension ? "預設暫停記錄。設定連線後，即可開始同步。" : "解鎖後，查看自己的瀏覽紀錄。"}</div>
 <section id="settings" class="connection" aria-labelledby="connection-title"><div class="section-heading"><div><div class="eyebrow">${extension ? "CONNECTION" : "PRIVATE ACCESS"}</div><h2 id="connection-title">${extension ? "連接你的瀏覽空間" : "開啟你的私人回顧"}</h2><p>${extension ? "完整網址、標題、造訪時間與估計前景時間會同步至你指定的伺服器。" : "輸入存取金鑰以讀取紀錄。金鑰只保留在此分頁工作階段。"}</p></div><span id="connection-state" class="status-chip">尚未連線</span></div>
 <form id="connect-form">${extension ? '<label class="server-field">伺服器網址<input id="server" type="url" value="https://myzilla.observe.tw" required /></label><label>瀏覽器<input id="browser-name" required placeholder="Brave / Zen / Chrome / Arc / Dia"/></label><label>設定檔<input id="profile-name" required placeholder="Default / 工作 / 個人"/></label><label>裝置<input id="device-name" required placeholder="Sky Mac"/></label>' : ""}<label class="token-field">存取金鑰<input id="token" type="password" required minlength="32" autocomplete="off" placeholder="貼上你的存取金鑰"/></label><button class="primary" type="submit">${extension ? "儲存並連線" : "解鎖回顧"} <span aria-hidden="true">↗</span></button></form>
-${!extension ? '<p class="access-help">已完成歷史匯入？直接解鎖即可查看。要累積新的紀錄，請在下方安裝擴充功能。</p>' : ""}
+${!extension ? '<p class="access-help"><a href="/community.html">使用帳號登入／建立擁有者帳號 →</a></p><p class="access-help">已完成歷史匯入？直接解鎖即可查看。要累積新的紀錄，請在下方安裝擴充功能。</p>' : ""}
 <div id="capture-controls" ${extension ? "" : "hidden"}><div class="section-heading"><div><h3>紀錄與同步</h3><p>開始後累積新的活動；離線紀錄會保留，連線後補送。</p></div></div><div class="actions"><button id="toggle" class="primary" type="button">開始記錄</button><button id="sync" type="button">立即同步</button><button id="import" type="button">匯入全部歷史</button></div><p id="capture-status"></p><p class="note">已透過原生工具匯入此設定檔的歷史，直接開始記錄即可，避免重複匯入。</p></div>
 </section>
 <section id="setup-guide" class="setup-guide"><div class="section-heading"><div><h2>讓瀏覽紀錄持續累積</h2><p>每個瀏覽器設定檔分別設定一次，就能在這裡一起回顧。</p></div></div><div class="setup-steps"><article><span class="step-number">01</span><h3>安裝擴充功能</h3><p>在使用中的瀏覽器與設定檔安裝對應版本。</p><a href="${extension ? "https://myzilla.observe.tw" : ""}/downloads/myzilla-chromium.zip">Brave / Chrome / Arc / Dia ↗</a><a href="${extension ? "https://myzilla.observe.tw" : ""}/downloads/myzilla-firefox.zip">Zen / Firefox ↗</a><small>Zen／Firefox 測試版重啟後需重新載入。</small></article><article><span class="step-number">02</span><h3>連線並開始記錄</h3><p>從工具列開啟 MyZilla，填入金鑰與來源名稱，按「開始記錄」。</p><a href="${extension ? "https://myzilla.observe.tw" : ""}/downloads/install.md">查看安裝步驟 ↗</a></article><article><span class="step-number">03</span><h3>找回以前看過的內容</h3><p>首次可匯入全部既有歷史，再到總覽與歷史頁探索。</p><a href="${extension ? "https://myzilla.observe.tw" : ""}/downloads/import-contract.md">多瀏覽器歷史匯入說明 ↗</a></article></div><div id="sources-section" hidden><h3>已同步的來源</h3><p class="note">所有期間的累計紀錄，依瀏覽器、設定檔與裝置呈現。</p><div id="sources-list"></div></div></section>
@@ -413,7 +413,12 @@ $("connect-form").addEventListener("submit", (event) => {
     await refresh();
   });
 });
-$("logout")?.addEventListener("click", () => {
+$("logout")?.addEventListener("click", async () => {
+  await fetch("/api/community/logout", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(5000),
+  }).catch(() => undefined);
   sessionStorage.removeItem("myzilla-token");
   location.reload();
 });
