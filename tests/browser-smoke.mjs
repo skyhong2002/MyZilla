@@ -76,6 +76,29 @@ try {
     () => document.querySelectorAll(".visit").length === 200,
   );
   assert.equal(await page.locator(".visit").count(), 200);
+  assert.equal(await page.locator("#overview-view").isVisible(), true);
+  assert.equal(await page.locator("#settings").isVisible(), false);
+  await page.getByRole("button", { name: "近 7 天", exact: true }).click();
+  await page.waitForFunction(
+    () => document.querySelector("#visits-stat")?.textContent === "0",
+  );
+  await page.locator('.page-nav [data-view="insights"]').click();
+  assert.equal(new URL(page.url()).searchParams.get("range"), "7");
+  await page.getByRole("button", { name: "全部", exact: true }).click();
+  await page.waitForFunction(
+    () => document.querySelector("#visits-stat")?.textContent === "225",
+  );
+  assert.equal(await page.locator("#insights-view").isVisible(), true);
+  await page.locator("#insights-metric").selectOption("milliseconds");
+  assert.match(
+    await page.locator("#distribution").innerText(),
+    /時間正在慢慢累積/,
+  );
+  await page.locator("#insights-metric").selectOption("visits");
+  await page.locator('.page-nav [data-view="recap"]').click();
+  assert.match(await page.locator("#recap-content").innerText(), /225/);
+  await page.locator('.page-nav [data-view="history"]').click();
+  assert.equal(await page.locator("#overview-view").isVisible(), false);
   await page.getByRole("button", { name: "下一頁" }).click();
   await page.waitForFunction(
     () => document.querySelectorAll(".visit").length === 25,
@@ -90,10 +113,24 @@ try {
     await page.locator("#history-list").innerText(),
     /historical needle/,
   );
+  assert.match(page.url(), /q=historical/);
+  await page.locator('.page-nav [data-view="overview"]').click();
+  await page.goBack();
+  await page.waitForFunction(
+    () => !document.querySelector("#history-view").hidden,
+  );
+  assert.equal(await page.locator("#search").inputValue(), "historical needle");
+  await page.reload();
+  await page.waitForFunction(
+    () => document.querySelectorAll(".visit").length === 1,
+  );
+  assert.equal(await page.locator("#history-view").isVisible(), true);
+  assert.equal(await page.locator("#search").inputValue(), "historical needle");
   await page.locator("#search").fill("");
   await page.waitForFunction(
     () => document.querySelectorAll(".visit").length === 200,
   );
+  await page.locator('.page-nav [data-view="overview"]').click();
   await page.evaluate(() => scrollTo(0, 0));
   await page.screenshot({ path: "/tmp/myzilla-desktop.png", fullPage: false });
   await page.setViewportSize({ width: 390, height: 844 });
@@ -210,7 +247,7 @@ try {
   await extensionPage.waitForFunction(() =>
     document.querySelector("#message")?.textContent?.includes("已連線"),
   );
-  await extensionPage.locator('nav a[href="#settings"]').click();
+  await extensionPage.locator('.site-nav [data-view="settings"]').click();
   await extensionPage
     .getByRole("button", { name: "立即同步", exact: true })
     .click();
