@@ -1,3 +1,4 @@
+import { estimateDwell } from "./dwell";
 import type { Hono, Context } from "hono";
 import type { BrowsingRepository } from "./repository";
 
@@ -5,6 +6,36 @@ export function registerBrowsing(
   app: Hono,
   resolve: (c: Context) => BrowsingRepository,
 ) {
+  app.get("/api/dwell", (c) => {
+    const from = Number(c.req.query("from")),
+      to = Number(c.req.query("to")),
+      threshold = Number(c.req.query("threshold") ?? 180),
+      offset = Number(c.req.query("offset") ?? 0),
+      q = (c.req.query("q") ?? "").toLowerCase();
+    if (
+      ![from, to, offset].every(Number.isSafeInteger) ||
+      to <= from ||
+      offset < 0 ||
+      ![60, 180].includes(threshold) ||
+      q.length > 2000
+    )
+      return c.json({ error: "Invalid estimate parameters" }, 400);
+    const data = estimateDwell(resolve(c).insightRows(), from, to, threshold);
+    const pages = data.pages.filter(
+      (p) =>
+        !q ||
+        p.url.toLowerCase().includes(q) ||
+        p.title.toLowerCase().includes(q),
+    );
+    return c.json({
+      ...data,
+      totalPages: data.pages.length,
+      matchedPages: pages.length,
+      offset,
+      limit: 50,
+      pages: pages.slice(offset, offset + 50),
+    });
+  });
   app.get("/api/sources", (c) => c.json({ sources: resolve(c).sources() }));
   app.get("/api/report", (c) => {
     const from = Number(c.req.query("from"));

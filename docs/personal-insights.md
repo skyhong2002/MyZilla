@@ -28,3 +28,14 @@
 所有端點要求既有 Bearer 身分，資料依帳號 Repository 取得。同步金鑰可讀自己的分析（其原本已有歷史讀取權），不能修改回饋。`insight_feedback` 僅存帳號、主題 ID、名稱與選擇；SQLite 一致性備份涵蓋此表，原始 `events` 不修改。
 
 `src/insights/analyze.ts` 為純分析，`routes.ts` 處理帳號範圍、快取、查詢與回饋；`src/ui/personal-insights.ts` 呈現五面向與證據操作。`npm run test:insights` 以暫存資料庫驗證瀏覽器流程；正式資料僅供唯讀驗證與對帳，不寫入測試回饋。
+
+
+## 歷史停留推估
+
+回顧頁的「03 / 留下的時間」及總覽新增歷史推估，以同一裝置 ID／瀏覽器／profile 的相鄰 visit 計算：0 < 下一筆時間 − 本筆時間 < 60 或 180 秒，將時間差歸給本筆 URL。相同安全網址的有效區間加總，提供標題／URL 搜尋及每頁 50 筆的完整分頁。預設 180 秒，門檻存於目前分頁的 sessionStorage。
+
+剛好等於門檻、超過門檻或最後一筆沒有後續者不補值、不封頂；同 URL 同時間去重，同時間多個不同 URL 不分配其後區間。下一筆即使是內部頁面仍作為前一頁的結束界線，但內部／非安全 HTTP(S) 頁面不產生推估時長。不跨 profiles 或裝置拼接，不要求前後頁相同網站。查詢先保留期間外的前後鄰居，再將合格區間裁切至查詢期間，避免邊界遺失或超算。
+
+`GET /api/dwell?from=<ms>&to=<ms>&threshold=180&offset=0&q=` 使用既有帳號 Bearer 認證；limit 固定 50，totalMilliseconds／totalPages 為目前期間完整估算，matchedPages 是搜尋後頁數。每個頁面回傳 milliseconds、intervals；無法估算的頁面不冒充零停留。此 API 唯讀計算，不建立 attention 事件，也不改寫原始歷史。
+
+多分頁、背景開頁、重新整理、閒置及跨 profiles 重疊都可能影響結果，因此 UI 明示「歷史推估」，與實際捕捉的前景時間分開、不加總。這也不是重建 tab/referrer 導覽圖的證據。

@@ -80,6 +80,39 @@ try {
   await page.locator("#token").fill(token);
   await page.getByRole("button", { name: "解鎖回顧", exact: true }).click();
   await page.locator("#personal-overview h2").waitFor();
+  await page.locator('.page-nav [data-view="recap"]').click();
+  await page.locator("#dwell-threshold").waitFor();
+  assert.notEqual(
+    await page.locator("#estimated-stat").innerText(),
+    "無可估算區間",
+  );
+  await page.locator("#dwell-threshold").selectOption("60");
+  await page.waitForFunction(
+    () =>
+      document.querySelector("#estimated-stat")?.textContent === "無可估算區間",
+  );
+  await page.locator("#dwell-threshold").selectOption("180");
+  await page.waitForFunction(
+    () =>
+      document.querySelector("#estimated-stat")?.textContent !== "無可估算區間",
+  );
+  await page.locator("#dwell-search input").fill("Cloudflare");
+  await page.getByRole("button", { name: "搜尋連結", exact: true }).click();
+  await page.locator("#dwell-panel tbody tr").first().waitFor();
+  assert.ok(
+    (await page.locator("#dwell-panel tbody").innerText()).includes(
+      "Cloudflare",
+    ),
+  );
+  await page.setViewportSize({ width: 390, height: 850 });
+  assert.equal(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth > innerWidth,
+    ),
+    false,
+  );
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.locator('.page-nav [data-view="overview"]').click();
   assert.equal(await page.locator("#time-stat").innerText(), "尚未記錄");
   await page.getByRole("link", { name: "展開五個面向 →", exact: true }).click();
   for (const id of ["map", "paths", "changes", "pairs", "long"])

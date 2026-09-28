@@ -77,3 +77,11 @@ Mac-side verification reported stale local DNS NXDOMAIN despite working public/u
 - 部署前備份 `data/backups/pre-insights-20260928.sqlite`；正式原始歷史及來源 SHA256 對帳 PASS，證據為私密 `data/insights-reconciliation.txt`。最終事件數仍為 100,665。
 - 主題為本機規則／標題關鍵詞，沒有對外傳送歷史或抓取文章全文；方法與限制見 `personal-insights.md`。新洞察沒有自動加入公開分享或朋友匹配。
 - 本機 `/tmp` 空間不足造成一次截圖程序失敗，改用專案忽略的 `data/runtime-tmp` 後操作、截圖及瀏覽器測試均通過，未刪除其他專案檔案。
+
+
+## 相鄰造訪停留推估（2026-09-28）
+
+- 35 個 API／模型測試通過；新增嚴格 60／180 秒界線、前頁歸屬與重訪累計、跨日期裁切、來源隔離、同時間重複與歧義、內部頁面邊界、API 登入與搜尋測試。
+- 瀏覽器測試完成回顧頁門檻切換、各網址搜尋、手機布局及原有五面向洞察。既有 Chromium 匯入／同步與完整歷史操作測試通過。
+- 正式 HTTPS 匿名 API 401；全部歷史 60 秒門檻為 72,200 段、19,234 個網址、約 168.8 小時；180 秒為 78,551 段、20,228 個網址、約 352.4 小時。這是來源各自推估的累加，並非互斥閱讀時數。
+- 正式 100,665 筆事件／來源 SHA256 對帳 PASS，證據為 `data/dwell-reconciliation.txt`。此變更沒有資料庫 migration 或事件改寫。

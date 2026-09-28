@@ -1,5 +1,6 @@
 import "./style.css";
 import "./classic.css";
+import { dwellPanel } from "./dwell";
 import { personalInsights } from "./personal-insights";
 import type { Settings } from "../shared/events";
 import { webUrl, type SiteSummary, type Visit } from "../shared/model";
@@ -74,10 +75,10 @@ ${!extension ? '<p class="access-help"><a href="/community.html">使用帳號登
 </section>
 <section id="setup-guide" class="setup-guide"><div class="section-heading"><div><h2>讓瀏覽紀錄持續累積</h2><p>每個瀏覽器設定檔分別設定一次，就能在這裡一起回顧。</p></div></div><div class="setup-steps"><article><span class="step-number">01</span><h3>安裝擴充功能</h3><p>在使用中的瀏覽器與設定檔安裝對應版本。</p><a href="${extension ? "https://myzilla.observe.tw" : ""}/downloads/myzilla-chromium.zip">Brave / Chrome / Arc / Dia ↗</a><a href="${extension ? "https://myzilla.observe.tw" : ""}/downloads/myzilla-firefox.zip">Zen / Firefox ↗</a><small>Zen／Firefox 測試版重啟後需重新載入。</small></article><article><span class="step-number">02</span><h3>連線並開始記錄</h3><p>從工具列開啟 MyZilla，填入金鑰與來源名稱，按「開始記錄」。</p><a href="${extension ? "https://myzilla.observe.tw" : ""}/downloads/install.md">查看安裝步驟 ↗</a></article><article><span class="step-number">03</span><h3>找回以前看過的內容</h3><p>首次可匯入全部既有歷史，再到總覽與歷史頁探索。</p><a href="${extension ? "https://myzilla.observe.tw" : ""}/downloads/import-contract.md">多瀏覽器歷史匯入說明 ↗</a></article></div><div id="sources-section" hidden><h3>已同步的來源</h3><p class="note">所有期間的累計紀錄，依瀏覽器、設定檔與裝置呈現。</p><div id="sources-list"></div></div></section>
 <div id="dashboard" hidden>
-<section id="overview-view" data-panel="overview"><div id="personal-overview"></div><div class="stats"><article><strong id="visits-stat">—</strong><span>造訪次數</span></article><article><strong id="sites-stat">—</strong><span>網站與來源</span></article><article><strong id="time-stat">—</strong><span>估計前景時間</span></article></div><p class="note">前景時間從啟用記錄後累積；匯入的舊歷史只有造訪次數。</p><div class="section-heading"><div><h2>經常造訪的網站</h2><p>從日常的足跡，看看你持續關注什麼。</p></div><div class="sort-control"><label for="metric">排序依據</label><select id="metric"><option value="visits">造訪次數</option><option value="milliseconds">前景時間</option></select></div></div><div id="ranking" class="ranking"></div><a class="text-link" href="#insights" data-view="insights">查看完整網站分布 →</a><section class="recent-section"><div class="section-heading"><h2>最近看過的頁面</h2><a class="text-link" href="#history" data-view="history">全部歷史 →</a></div><div id="recent-list"></div></section></section>
+<section id="overview-view" data-panel="overview"><div id="personal-overview"></div><div class="stats"><article><strong id="visits-stat">—</strong><span>造訪次數</span></article><article><strong id="sites-stat">—</strong><span>網站與來源</span></article><article><strong id="time-stat">—</strong><span>估計前景時間</span></article><article><strong id="estimated-stat">—</strong><span id="estimated-label">歷史推估停留</span><a href="#recap" data-view="recap">查看各連結與估算門檻 →</a></article></div><p class="note">前景時間由擴充功能記錄；歷史推估依相鄰造訪另計。</p><div class="section-heading"><div><h2>經常造訪的網站</h2><p>從日常的足跡，看看你持續關注什麼。</p></div><div class="sort-control"><label for="metric">排序依據</label><select id="metric"><option value="visits">造訪次數</option><option value="milliseconds">前景時間</option></select></div></div><div id="ranking" class="ranking"></div><a class="text-link" href="#insights" data-view="insights">查看完整網站分布 →</a><section class="recent-section"><div class="section-heading"><h2>最近看過的頁面</h2><a class="text-link" href="#history" data-view="history">全部歷史 →</a></div><div id="recent-list"></div></section></section>
 <section id="insights-view" data-panel="insights" hidden><div id="personal-insights"></div><details><summary>網站使用統計</summary><div class="section-heading"><div><h2>你的注意力分布</h2><p>以造訪次數和估計前景時間，從兩個角度回顧瀏覽習慣。</p></div><select id="insights-metric" aria-label="洞察統計方式"><option value="visits">造訪次數</option><option value="milliseconds">前景時間</option></select></div><div class="insights-grid"><div id="distribution"></div><div id="insight-summary" class="insight-summary"></div></div><p class="method-note">前景時間估計瀏覽器有焦點、分頁啟用且電腦未閒置時的活動，並非實際閱讀時間。</p><div class="section-heading"><h2>所有網站</h2><span id="sites-count"></span></div><div class="table-scroll"><table class="sites-table"><thead><tr><th scope="col">網站</th><th scope="col">造訪次數</th><th scope="col">前景時間</th></tr></thead><tbody id="sites-list"></tbody></table></div><button id="more-sites" type="button" hidden>顯示更多網站</button></details></section>
 <section id="history-view" data-panel="history" hidden><div class="section-heading"><div><h2>瀏覽歷史</h2><p id="history-count">搜尋所有已同步的紀錄。</p></div><label class="search"><span class="sr-only">搜尋造訪紀錄</span><input id="search" type="search" maxlength="2000" placeholder="搜尋標題或網址" aria-label="搜尋造訪紀錄"/></label></div><div id="history-list"></div><div class="pagination"><button id="previous" type="button">← 上一頁</button><span id="page-info"></span><button id="next" type="button">下一頁 →</button></div></section>
-<section id="recap-view" data-panel="recap" hidden><div class="eyebrow">YOUR BROWSING RECAP</div><h2 class="recap-title">這段時間，你看了些什麼？</h2><p class="note">依目前選取期間的全部紀錄整理。</p><div id="recap-content"></div><a href="#history" data-view="history" class="button">回到歷史，找回那些頁面 →</a></section>
+<section id="recap-view" data-panel="recap" hidden><div class="eyebrow">YOUR BROWSING RECAP</div><h2 class="recap-title">這段時間，你看了些什麼？</h2><p class="note">依目前選取期間的全部紀錄整理。</p><div id="recap-content"></div><section id="dwell-panel"></section><a href="#history" data-view="history" class="button">回到歷史，找回那些頁面 →</a></section>
 </div><footer><span>MyZilla</span><span>把你看過的，變成值得留下的。</span><span>私人瀏覽空間</span></footer>
 </main>`;
 
@@ -211,6 +212,7 @@ async function api(path: string, method = "GET", body?: unknown) {
   return response.json();
 }
 const personal = personalInsights(api);
+const dwell = dwellPanel(api);
 async function refresh() {
   if (!token) return;
   const version = ++generation;
@@ -227,6 +229,7 @@ async function refresh() {
     loadRecent(from, to),
     loadSources(),
     personal.load(from, to),
+    dwell.load(from, to),
   ]);
   if (version === generation) message("已連線 · 所有資料來自你的私人伺服器");
 }
@@ -244,7 +247,7 @@ function render() {
   const value = (n: number) =>
     state.metric === "visits" ? `${n.toLocaleString()} 次` : duration(n);
   if (!total) {
-    const empty = `<div class="empty"><h3>${state.metric === "visits" ? "還沒有造訪紀錄" : "時間正在慢慢累積"}</h3><p>${state.metric === "visits" ? "切換日期，或從匯入與設定開始加入紀錄。" : "啟用記錄後才會累積前景時間；舊歷史不會換算為閱讀時長。"}</p><a href="#settings" data-view="settings">前往匯入與設定 →</a></div>`;
+    const empty = `<div class="empty"><h3>${state.metric === "visits" ? "還沒有造訪紀錄" : "時間正在慢慢累積"}</h3><p>${state.metric === "visits" ? "切換日期，或從匯入與設定開始加入紀錄。" : "啟用記錄後才會累積前景時間；回顧頁另提供歷史停留推估。"}</p><a href="#settings" data-view="settings">前往匯入與設定 →</a></div>`;
     $("ranking").innerHTML = empty;
     $("distribution").innerHTML = empty;
     $("insight-summary").textContent = "目前期間尚無足夠資料。";
@@ -286,7 +289,7 @@ function render() {
   $("more-sites").hidden = sites.length <= siteLimit;
   const top = [...report.sites].sort((a, b) => b.visits - a.visits)[0];
   $("recap-content").innerHTML = report.visitCount
-    ? `<article class="recap-chapter"><span>01 / 你的足跡</span><strong>${report.visitCount.toLocaleString()}<small> 次造訪</small></strong><p>你留下了 ${report.sites.length.toLocaleString()} 個網站與來源的紀錄。</p></article><article class="recap-chapter"><span>02 / 最常回來的地方</span><strong class="recap-domain">${escape(top?.domain ?? "—")}</strong><p>${(top?.visits ?? 0).toLocaleString()} 次造訪，占全部造訪的 ${Math.round(((top?.visits ?? 0) / report.visitCount) * 100)}%。</p></article><article class="recap-chapter"><span>03 / 留下的時間</span><strong>${duration(totalTime)}</strong><p>${totalTime ? "這是啟用記錄後累積的估計前景時間，並非實際閱讀時長。" : "尚未累積前景時間。啟用擴充功能後，新活動才會開始計時。"}</p></article>`
+    ? `<article class="recap-chapter"><span>01 / 你的足跡</span><strong>${report.visitCount.toLocaleString()}<small> 次造訪</small></strong><p>你留下了 ${report.sites.length.toLocaleString()} 個網站與來源的紀錄。</p></article><article class="recap-chapter"><span>02 / 最常回來的地方</span><strong class="recap-domain">${escape(top?.domain ?? "—")}</strong><p>${(top?.visits ?? 0).toLocaleString()} 次造訪，占全部造訪的 ${Math.round(((top?.visits ?? 0) / report.visitCount) * 100)}%。</p></article>`
     : '<div class="empty"><h3>等待你的第一段瀏覽足跡</h3><p>切換期間或先匯入紀錄，再回來看看。</p></div>';
 }
 function visitMarkup(v: HistoryVisit, className: string) {
