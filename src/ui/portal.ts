@@ -44,6 +44,7 @@ let me: any,
   busy = false,
   editing: any;
 let cancelImport = false;
+let loadVersion = 0;
 let renderedURL = location.href,
   restoring = false;
 installUX(root);
@@ -86,6 +87,7 @@ async function api(path: string, method = "GET", body?: unknown) {
             : "尚未登入，輸入仍保留。再次送出即可重新登入。",
         );
       }
+      render();
       throw Error("存取金鑰不正確或已失效，請重新輸入，或使用帳號登入。");
     }
     const value = await r.json().catch(() => ({}));
@@ -111,7 +113,7 @@ function state() {
   history.pushState(null, "", u);
 }
 function header() {
-  return `<header><a class="wordmark" href="/"><img class="portal-logo" src="./myzilla-mark.svg" width="96" height="72" alt="">MyZilla<span>我的個人入口</span></a><p>搜尋、收藏、回顧，從自己的生活出發。</p></header><nav class="top-nav" aria-label="主要導覽"><a href="/#bookmark" aria-current="page">我的入口</a><a href="/dashboard.html">瀏覽回顧</a><a href="/dashboard.html#settings">匯入與設定</a><a href="/community.html">帳號與朋友</a><a href="/help.html">使用說明</a>${me ? '<button data-action="logout">登出</button>' : '<a href="/community.html">登入</a>'}</nav>`;
+  return `<header><a class="wordmark" href="/"><img class="portal-logo" src="./myzilla-mark.svg" width="96" height="72" alt="">MyZilla<span>我的個人入口</span></a><p>搜尋、收藏、回顧，從自己的生活出發。</p></header><nav class="top-nav" aria-label="主要導覽"><a href="/#bookmark" aria-current="page">我的入口</a><a href="/dashboard.html">瀏覽回顧</a><a href="/dashboard.html#settings">匯入與設定</a><a href="/community.html">帳號與朋友</a><a href="/help.html">使用說明</a>${me || token() ? '<button data-action="logout">登出</button>' : '<a href="/community.html">登入</a>'}</nav>`;
 }
 function sidebar() {
   return `<aside><section><h2>快速搜尋</h2><form data-form="search"><label>關鍵字<input name="query" required maxlength="2000"></label><label>搜尋引擎<select name="engine">${options(Object.fromEntries(Object.entries(engines).map(([id, value]) => [id, value.label])), "google")}</select></label><button>搜尋並記錄</button><small>送至所選搜尋網站；記錄僅自己可見。</small></form></section><section><h2>功能選單</h2><nav aria-label="功能選單">${Object.entries(
@@ -123,11 +125,11 @@ function sidebar() {
     )
     .join(
       "",
-    )}<a href="/dashboard.html#history">瀏覽記錄</a><a href="/dashboard.html#settings">擴充功能與同步</a></nav></section><section><h2>你的帳號</h2><p>${me ? esc(me.account.name) : "尚未登入"}</p>${me ? `<p>@${esc(me.account.handle)}</p><label class="check"><input id="online-opt" type="checkbox" ${me.online ? "checked" : ""}>顯示我在線上</label><small>勾選後，站內登入者可看到你的名稱；最近五分鐘開啟入口視為在線。</small>` : '<a href="/community.html">帳號登入／邀請註冊</a>'}</section></aside>`;
+    )}<a href="/dashboard.html#history">瀏覽記錄</a><a href="/dashboard.html#settings">擴充功能與同步</a></nav></section><section><h2>你的帳號</h2><p>${me ? esc(me.account.name) : token() ? "我的帳號" : "尚未登入"}</p>${me ? `<p>@${esc(me.account.handle)}</p><label class="check"><input id="online-opt" type="checkbox" ${me.online ? "checked" : ""}>顯示我在線上</label><small>勾選後，站內登入者可看到你的名稱；最近五分鐘開啟入口視為在線。</small>` : token() ? "" : '<a href="/community.html">帳號登入／邀請註冊</a>'}</section></aside>`;
 }
 function render() {
   renderedURL = location.href;
-  document.title = `${me ? labels[kind] : "登入"} · MyZilla`;
+  document.title = `${me || token() ? labels[kind] : "登入"} · MyZilla`;
   root.innerHTML = `<a class="skip-link" href="#portal-main">跳到主要內容</a><div class="portal-shell">${header()}<div class="portal-layout"><main id="portal-main" tabindex="-1"><nav class="quick-nav" aria-label="快速切換">${Object.entries(
     labels,
   )
@@ -137,7 +139,7 @@ function render() {
     )
     .join(
       "",
-    )}</nav><div id="notice" role="status" aria-live="polite">${esc(notice)}</div>${copyControl(notice)}${me ? content() : `<section class="panel"><h1>歡迎回到自己的入口</h1><p>以帳號登入，或用既有金鑰開啟私人收藏與瀏覽回顧。</p><a class="button" href="/community.html">帳號登入／建立帳號</a><form data-form="unlock"><p><a href="/help.html#login">金鑰是什麼？第一次登入說明</a></p><label>存取金鑰<input name="token" type="password" minlength="32" required autocomplete="off"></label><button>開啟我的入口</button></form></section>`}</main>${sidebar()}</div><footer>MyZilla</footer><dialog id="editor" aria-label="收藏編輯與分享"></dialog></div>`;
+    )}</nav><div id="notice" role="status" aria-live="polite">${esc(notice)}</div>${copyControl(notice)}${me ? content() : token() ? `<section class="panel"><h1>${labels[kind]}</h1><div class="session-placeholder" aria-label="正在讀取內容"></div></section>` : `<section class="panel"><h1>歡迎回到自己的入口</h1><p>以帳號登入，或用既有金鑰開啟私人收藏與瀏覽回顧。</p><a class="button" href="/community.html">帳號登入／建立帳號</a><form data-form="unlock"><p><a href="/help.html#login">金鑰是什麼？第一次登入說明</a></p><label>存取金鑰<input name="token" type="password" minlength="32" required autocomplete="off"></label><button>開啟我的入口</button></form></section>`}</main>${sidebar()}</div><footer>MyZilla</footer><dialog id="editor" aria-label="收藏編輯與分享"></dialog></div>`;
 }
 function content() {
   if (kind === "tools") return tools();
@@ -191,16 +193,19 @@ function editor(item?: any) {
   };
 }
 async function load() {
-  if (!token()) {
+  const version = ++loadVersion,
+    credential = token();
+  if (!credential) {
     me = undefined;
     render();
     return;
   }
-  me = await api("/api/portal/me");
+  const nextMe = await api("/api/portal/me");
+  let nextListing = listing;
   if (kind === "tools")
-    listing = { trash: (await api("/api/portal/trash")).items };
+    nextListing = { trash: (await api("/api/portal/trash")).items };
   else if (["bookmark", "article", "movie", "mood"].includes(kind))
-    listing = await api(
+    nextListing = await api(
       "/api/portal/items?" +
         new URLSearchParams({
           kind,
@@ -212,9 +217,12 @@ async function load() {
         }),
     );
   else if (kind === "search")
-    listing = await api("/api/portal/searches?offset=" + offset);
+    nextListing = await api("/api/portal/searches?offset=" + offset);
   else if (["links", "online"].includes(kind))
-    listing = await api("/api/portal/" + kind);
+    nextListing = await api("/api/portal/" + kind);
+  if (version !== loadVersion || token() !== credential) return;
+  me = nextMe;
+  listing = nextListing;
   if (listing.total !== undefined && offset > 0 && offset >= listing.total) {
     offset = Math.max(0, Math.floor((listing.total - 1) / 20) * 20);
     state();
@@ -247,10 +255,10 @@ async function load() {
     history.replaceState(null, "", incoming);
   }
 }
-async function run(job: () => Promise<void>) {
-  if (busy) return;
-  busy = true;
-  const finish = pendingUI(root);
+async function run(job: () => Promise<void>, blocking = true) {
+  if (busy && blocking) return;
+  if (blocking) busy = true;
+  const finish = pendingUI(root, blocking);
   try {
     await job();
   } catch (e) {
@@ -293,7 +301,7 @@ async function run(job: () => Promise<void>) {
       );
     }
   } finally {
-    busy = false;
+    if (blocking) busy = false;
     finish();
   }
 }
@@ -456,7 +464,7 @@ root.addEventListener("click", (event) => {
     offset = 0;
     notice = "";
     state();
-    void run(load);
+    void run(load, false);
     return;
   }
   const button = (event.target as HTMLElement).closest<HTMLButtonElement>(
@@ -631,10 +639,10 @@ const restore = async () => {
   kind = Object.hasOwn(labels, location.hash.slice(1))
     ? location.hash.slice(1)
     : "bookmark";
-  await run(load);
+  await run(load, false);
   restoring = false;
 };
 addEventListener("popstate", restore);
 addEventListener("hashchange", restore);
 render();
-void run(load);
+void run(load, false);

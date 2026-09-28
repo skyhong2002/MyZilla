@@ -37,7 +37,7 @@ export function dwellPanel(api: Api) {
     status.setAttribute("role", "status");
     status.textContent = "正在估算相鄰造訪的停留時間…";
     root.prepend(status);
-    const finish = pendingUI(root);
+    const finish = pendingUI(root, false);
     try {
       const d = await api(
         "/api/dwell?" +

@@ -204,3 +204,16 @@ summary {
     transition: none !important;
   }
 }
+
+.session-placeholder {
+  min-height: 160px;
+  border-radius: 6px;
+  background: linear-gradient(
+    180deg,
+    #eaf0f6 0 14px,
+    transparent 14px 32px,
+    #eaf0f6 32px 46px,
+    transparent 46px
+  );
+  max-width: 640px;
+}

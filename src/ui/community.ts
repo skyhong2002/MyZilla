@@ -67,6 +67,7 @@ async function api(path: string, method = "GET", body?: unknown) {
             : "尚未登入，輸入仍保留。再次送出即可重新登入。",
         );
       }
+      render();
     }
     throw new Error(result.error ?? `HTTP ${response.status}`);
   }
@@ -77,9 +78,28 @@ function categories(profile: any) {
   return `<div class="category-bars">${profile.categories.map((row: any) => `<div><div class="section-heading"><span>${esc(row.label)}</span><span>${row.percent}% · ${row.visits.toLocaleString()} 次</span></div><progress value="${row.percent}" max="100" aria-label="${esc(row.label)}"></progress></div>`).join("")}</div>`;
 }
 function render() {
+  const signedIn =
+    !!data ||
+    !!getToken() ||
+    new URL(location.href).searchParams.has("google_complete");
   renderedURL = location.href;
-  document.title = `${data ? views[view() as keyof typeof views] : "登入"} · MyZilla`;
-  root.innerHTML = `<a class="skip-link" href="#community-main">跳到主要內容</a><header class="site-header"><a class="brand" href="/"><img class="brand-logo" src="./myzilla-mark.svg" width="48" height="36" alt=""><strong>MyZilla</strong></a><nav class="site-nav" aria-label="主要導覽"><a href="/">我的入口</a><a href="/dashboard.html">瀏覽回顧</a><a href="/dashboard.html#settings">匯入與設定</a><a href="/community.html" aria-current="page">帳號與朋友</a><a href="/help.html">使用說明</a>${data ? '<button data-action="logout">登出</button>' : ""}</nav></header><main id="community-main" tabindex="-1" class="site-main community-main"><section class="profile"><div><div class="eyebrow">YOUR SPACE, YOUR CONNECTIONS</div><h1>${data ? `${esc(data.me.name)} 的空間` : "你的瀏覽，也能成為交流的起點"}</h1><p>私人歷史留給自己；選擇要分享的興趣摘要。</p></div></section><p id="community-message" role="status" aria-live="polite">${esc(output)}</p>${copyControl(output)}${data ? loggedIn() : login()}<footer>MyZilla · 原始瀏覽歷史僅供本人存取</footer></main>`;
+  document.title = `${signedIn ? views[view() as keyof typeof views] : "登入"} · MyZilla`;
+  root.innerHTML = `<a class="skip-link" href="#community-main">跳到主要內容</a><header class="site-header"><a class="brand" href="/"><img class="brand-logo" src="./myzilla-mark.svg" width="48" height="36" alt=""><strong>MyZilla</strong></a><nav class="site-nav" aria-label="主要導覽"><a href="/">我的入口</a><a href="/dashboard.html">瀏覽回顧</a><a href="/dashboard.html#settings">匯入與設定</a><a href="/community.html" aria-current="page">帳號與朋友</a><a href="/help.html">使用說明</a>${signedIn ? '<button data-action="logout">登出</button>' : ""}</nav></header><main id="community-main" tabindex="-1" class="site-main community-main"><section class="profile"><div><div class="eyebrow">YOUR SPACE, YOUR CONNECTIONS</div><h1>${data ? `${esc(data.me.name)} 的空間` : signedIn ? "我的空間" : "你的瀏覽，也能成為交流的起點"}</h1><p>私人歷史留給自己；選擇要分享的興趣摘要。</p></div></section><p id="community-message" role="status" aria-live="polite">${esc(output)}</p>${copyControl(output)}${
+    data
+      ? loggedIn()
+      : signedIn
+        ? `<nav class="page-nav" aria-label="帳號與社交導覽">${Object.entries(
+            views,
+          )
+            .map(
+              ([id, label]) =>
+                `<a href="#${id}" ${view() === id ? 'aria-current="page"' : ""}>${label}</a>`,
+            )
+            .join(
+              "",
+            )}</nav><section class="community-section"><h2>${views[view() as keyof typeof views]}</h2><div class="session-placeholder" aria-label="正在讀取內容"></div></section>`
+        : login()
+  }<footer>MyZilla · 原始瀏覽歷史僅供本人存取</footer></main>`;
   renderSites();
 }
 function login() {
@@ -135,7 +155,8 @@ function shares() {
   return `<h2>分享我的興趣摘要</h2><p>建立連結前，先在<a href="#interests">興趣分析</a>確認內容。分享包含顯示名稱、全部造訪總數、分類次數與比例，沒有網站清單、原始網址或標題。</p><p>持有連結的人都能閱讀這份固定快照；連結不列入公開目錄，可隨時撤銷。<a href="/help.html#sharing">分享範圍說明</a></p><form data-form="share"><label>有效期間<select name="days"><option value="1">1 天</option><option value="7" selected>7 天</option><option value="30">30 天</option></select></label><button class="primary">建立分享連結</button></form><h3>有效分享</h3>${data.shares.shares.length ? data.shares.shares.map((share: any) => `<div class="source-row"><span>到期：${esc(new Date(share.expires).toLocaleString("zh-TW"))}</span><button data-action="revoke-share" data-id="${share.id}">撤銷分享</button></div>`).join("") : "<p>目前沒有有效的分享連結。</p>"}`;
 }
 async function load() {
-  if (!getToken()) {
+  const credential = getToken();
+  if (!credential) {
     data = undefined;
     render();
     return;
@@ -146,22 +167,24 @@ async function load() {
       api(`/api/community/${path}`),
     ),
   );
+  if (getToken() !== credential) return;
   data = { me, interests, friends, matches, shares };
   render();
 }
-async function run(job: () => Promise<void>) {
-  if (pending) return;
-  pending = true;
-  const finish = pendingUI(root);
+async function run(job: () => Promise<void>, blocking = true) {
+  if (pending && blocking) return;
+  if (blocking) pending = true;
+  const finish = pendingUI(root, blocking);
   try {
     await job();
   } catch (error) {
+    if (!data && !getToken()) render();
     output = errorMessage(error);
     announce(output, true);
     const el = document.getElementById("community-message");
     if (el) el.textContent = output;
   } finally {
-    pending = false;
+    if (blocking) pending = false;
     finish();
   }
 }
@@ -342,4 +365,4 @@ void run(async () => {
     output = messages[error] ?? "Google 登入未完成，請重新嘗試。";
   }
   await load();
-});
+}, false);

@@ -74,6 +74,69 @@ try {
   const page = await context.newPage(),
     errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
+  // Slow page entry must show the signed-in shell immediately, without a global processing toast or login flash.
+  await context.addInitScript(() => {
+    window.__loginFlashes = [];
+    new MutationObserver(() => {
+      const forms = [
+        ...document.querySelectorAll(
+          '[data-form="unlock"],[data-form="login"],#connect-form',
+        ),
+      ];
+      if (forms.some((el) => el.checkVisibility()))
+        window.__loginFlashes.push(location.pathname);
+    }).observe(document, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["hidden"],
+    });
+  });
+  for (const path of ["/", "/community.html", "/dashboard.html"]) {
+    await page.route("**/api/**", async (route) => {
+      await new Promise((r) => setTimeout(r, 900));
+      await route.continue();
+    });
+    await page.goto(base + path);
+    await expect(
+      page.getByRole("button", { name: "登出", exact: true }),
+    ).toBeVisible();
+    await page.waitForTimeout(650);
+    await expect(page.locator("#ux-toast")).toHaveCount(0);
+    assert.deepEqual(
+      await page.evaluate(() => window.__loginFlashes),
+      [],
+      path,
+    );
+    if (path === "/") {
+      await page
+        .locator("aside")
+        .getByRole("link", { name: "我的電影", exact: true })
+        .click();
+      await expect(
+        page.getByRole("button", { name: "新增電影", exact: true }),
+      ).toBeVisible();
+      await expect(page.locator("h1")).toHaveText("我的電影");
+    } else if (path.includes("community"))
+      await expect(page.locator("[data-form=profile]")).toBeVisible();
+    else await expect(page.locator("#visits-stat")).toHaveText("0");
+    await page.unrouteAll({ behavior: "wait" });
+  }
+  // An invalid session still returns to login after server rejection.
+  const invalid = await browser.newPage();
+  await invalid.addInitScript(() =>
+    sessionStorage.setItem(
+      "myzilla-token",
+      "invalid-fixture-token-123456789012345",
+    ),
+  );
+  for (const path of ["/", "/community.html", "/dashboard.html"]) {
+    await invalid.goto(base + path);
+    await expect(
+      invalid.locator('[data-form="unlock"],[data-form="login"],#connect-form'),
+    ).toBeVisible();
+  }
+  await invalid.close();
   await page.goto(base);
   await expect(
     page.getByRole("heading", { name: item.title, exact: true }),
@@ -349,7 +412,7 @@ try {
   });
   assert.deepEqual(errors, []);
   console.log(
-    "PASS: slow/failing/expired requests, same-account recovery, draft cancellation and Back, deletion undo/expiry entry, import preview/cancel/stop, last-page recovery, disabled controls, keyboard/focus, searchable help, retry and mobile layout",
+    "PASS: signed-in page entry without login flashes or global loading toasts, responsive navigation during reads, slow/failing/expired requests, same-account recovery, draft cancellation and Back, deletion undo/expiry entry, import preview/cancel/stop, last-page recovery, disabled controls, keyboard/focus, searchable help, retry and mobile layout",
   );
 } finally {
   await browser?.close();

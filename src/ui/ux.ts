@@ -96,7 +96,8 @@ export function confirmAction(
     dialog.showModal();
   });
 }
-export function pendingUI(root: HTMLElement) {
+export function pendingUI(root: HTMLElement, blocking = true) {
+  if (!blocking) return () => {};
   const focused = document.activeElement as HTMLElement;
   const hadFocus = root.contains(focused);
   const disabled = new Map<
@@ -121,15 +122,14 @@ export function pendingUI(root: HTMLElement) {
   root.setAttribute("aria-busy", "true");
   const dialog = root.matches("dialog")
     ? root
-    : root.querySelector("dialog[open]");
+    : (root.querySelector("dialog[open]") ??
+      (root.contains(focused) ? focused.closest("form") : null));
   const inline = document.createElement("p");
   inline.setAttribute("role", "status");
   inline.className = "ux-inline-status";
   if (dialog) dialog.append(inline);
   const timer = setTimeout(() => {
     inline.textContent = "正在處理，請稍候…";
-    if (!document.querySelector("#ux-toast[data-undo]"))
-      announce("正在處理，請稍候…");
   }, 500);
   return () => {
     clearTimeout(timer);
@@ -223,7 +223,6 @@ export function installUX(root: HTMLElement) {
       ) {
         e.preventDefault();
         e.stopImmediatePropagation();
-        announce("正在處理目前操作，完成後即可切換。");
         return;
       }
       if (
