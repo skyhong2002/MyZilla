@@ -15,10 +15,9 @@ const labels: Record<string, string> = {
   movie: "我的電影",
   mood: "我的心情",
   search: "搜尋記錄",
-  links: "MyURL 短網址",
+  links: "短網址管理",
   online: "線上使用者",
   tools: "匯入與工具",
-  about: "關於 MyZilla",
 };
 const moods = {
   happy: "開心",
@@ -107,15 +106,14 @@ function render() {
     .map(([id, label]) => `<a href="#${id}">${label}</a>`)
     .join(
       "",
-    )}</nav><div id="notice" role="status" aria-live="polite">${esc(notice)}</div>${me ? content() : `<section class="panel"><h1>歡迎回到自己的入口</h1><p>以帳號登入，或用既有金鑰開啟私人收藏與瀏覽回顧。</p><a class="button" href="/community.html">帳號登入／建立帳號</a><form data-form="unlock"><label>原始存取金鑰<input name="token" type="password" minlength="32" required autocomplete="off"></label><button>開啟我的入口</button></form></section>${about()}`}</main>${sidebar()}</div><footer>MyZilla · 從 2000 年代的個人入口概念重新出發 · <a href="#about">來源與功能說明</a></footer><dialog id="editor"></dialog></div>`;
+    )}</nav><div id="notice" role="status" aria-live="polite">${esc(notice)}</div>${me ? content() : `<section class="panel"><h1>歡迎回到自己的入口</h1><p>以帳號登入，或用既有金鑰開啟私人收藏與瀏覽回顧。</p><a class="button" href="/community.html">帳號登入／建立帳號</a><form data-form="unlock"><label>原始存取金鑰<input name="token" type="password" minlength="32" required autocomplete="off"></label><button>開啟我的入口</button></form></section>`}</main>${sidebar()}</div><footer>MyZilla</footer><dialog id="editor"></dialog></div>`;
 }
 function content() {
-  if (kind === "about") return about();
   if (kind === "tools") return tools();
   if (kind === "online")
     return `<h1>線上使用者</h1><p>只列出主動開啟在線顯示、最近五分鐘使用入口的帳號。</p>${listing.users?.map((u: any) => `<article class="item"><strong>${esc(u.name)}</strong> @${esc(u.handle)} <a href="/community.html#friends">加入朋友</a></article>`).join("") || '<p class="empty">目前沒有其他人開啟在線顯示。</p>'}`;
   if (kind === "links")
-    return `<h1>MyURL · 可管理短網址</h1><p>從收藏的「建立分享連結」產生。持有連結可開啟該網址；編輯收藏網址會更新轉址目的地。刪除收藏、撤銷或到期後失效。</p>${listing.links?.map((link: any) => `<article class="item"><strong>${esc(link.title)}</strong><p>${link.clicks} 次開啟 · ${esc(new Date(link.expires).toLocaleString("zh-TW"))} 到期</p><button data-action="revoke" data-id="${link.id}">撤銷連結</button></article>`).join("") || '<p class="empty">還沒有分享連結。</p>'}`;
+    return `<h1>短網址管理</h1><p>從收藏的「建立分享連結」產生。持有連結可開啟該網址；編輯收藏網址會更新轉址目的地。刪除收藏、撤銷或到期後失效。</p>${listing.links?.map((link: any) => `<article class="item"><strong>${esc(link.title)}</strong><p>${link.clicks} 次開啟 · ${esc(new Date(link.expires).toLocaleString("zh-TW"))} 到期</p><button data-action="revoke" data-id="${link.id}">撤銷連結</button></article>`).join("") || '<p class="empty">還沒有分享連結。</p>'}`;
   if (kind === "search")
     return `<h1>我的搜尋記錄</h1><p>只包含從右側快速搜尋送出的關鍵字。</p>${listing.items.map((item: any) => `<article class="item"><strong>${esc(item.query)}</strong><p>${esc(engines[item.engine as keyof typeof engines]?.label)} · ${item.uses} 次 · ${esc(new Date(item.last_used).toLocaleString("zh-TW"))}</p><button data-action="search-again" data-id="${item.id}">再次搜尋</button><button data-action="delete-search" data-id="${item.id}">刪除</button></article>`).join("") || '<p class="empty">尚無搜尋記錄。</p>'}${pagination()}`;
   return `<div class="heading"><h1>${labels[kind]}</h1><button class="primary" data-action="new">新增${kind === "movie" ? "電影" : kind === "mood" ? "心情" : "網址"}</button></div><div class="filters"><label>內容來源<select id="audience">${options({ mine: "自己的收藏", friends: "朋友分享的收藏" }, audience)}</select></label><span>${scope === "all" ? "全部分類" : scopes[scope as keyof typeof scopes]} · ${listing.total ?? 0} 筆</span></div>${audience === "friends" ? '<p class="note">只顯示已接受的朋友主動分享的項目。</p>' : ""}${listing.items.map(itemMarkup).join("") || '<p class="empty">目前沒有項目。新增收藏，或調整搜尋與分類。</p>'}${pagination()}`;
@@ -128,9 +126,6 @@ function pagination() {
 }
 function tools() {
   return `<h1>匯入與工具</h1><section class="panel"><h2>收藏備份與 RSS</h2><p>匯出全部網址、網摘、電影與心情內容；JSON 可分批還原，重送相同 ID 不會重複新增。匯入不會覆蓋既有點閱統計，不含帳號密碼或分享連結。匯入會沿用每筆可見性；朋友可見的項目會分享給目前的朋友。</p><button data-action="export">下載 JSON 備份</button><button data-action="rss">下載私人書籤 RSS</button><form data-form="import"><label>匯入 MyZilla JSON<input type="file" name="file" accept="application/json,.json" required></label><button>匯入全部項目</button></form><p>RSS 是私人匯出檔；訂閱程式也可透過帶 Bearer 驗證的 /api/portal/feed 讀取，沒有匿名訂閱入口。</p></section><section class="panel"><h2>瀏覽器歷史</h2><p>Brave、Chrome、Arc、Dia、Zen 所有設定檔的既有歷史，繼續使用原生 SQLite 工具全量匯入；新活動由擴充功能同步。</p><a href="/dashboard.html#settings">安裝、匯入與同步設定 →</a></section>`;
-}
-function about() {
-  return `<section class="panel"><h1>從舊 MyZilla 帶回來的概念</h1><p>簡潔的個人入口，把搜尋、網址、網摘、生活分類與電影收藏放在一起；現在也能回顧完整瀏覽紀錄、管理帳號與朋友。</p><p>參考 <a href="https://web.archive.org/web/20070714011435/http://myzilla.tw/myzilla.php" target="_blank" rel="noopener noreferrer">2007 年原站存檔</a>及 <a href="https://myzilla.wikidot.com/" target="_blank" rel="noopener noreferrer">MyZilla Wiki</a>。這是重新實作，非原站營運延續。</p><ul><li>我的網址／MyURL：收藏、生活分類、標籤、排序、轉址分享。</li><li>快速搜尋：多站搜尋與私人關鍵字記錄。</li><li>MyMovie：評分、觀看次數、願望清單、收藏媒體與筆記。</li><li>MyBlog／心情：網摘、RSS 匯出、心情記錄及主動分享。</li><li>新版：跨瀏覽器同步、興趣分析、朋友配對與限時摘要分享。</li></ul><p>原站部分登入後細節未被存檔；已停用的外部搜尋服務不保留失效入口。部落格全網排行榜、流量追蹤和當年規劃中的遊戲屬其他專案，沒有偽造資料或成品。</p></section>`;
 }
 function editor(item?: any) {
   editing = item ?? {

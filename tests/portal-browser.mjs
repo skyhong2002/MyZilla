@@ -75,7 +75,7 @@ try {
     .slice(1)
     .join("：");
   assert.equal((await fetch(link, { redirect: "manual" })).status, 302);
-  await page.getByRole("link", { name: "MyURL 短網址", exact: true }).click();
+  await page.getByRole("link", { name: "短網址管理", exact: true }).click();
   await page.getByRole("button", { name: "撤銷連結" }).click();
   await page.getByText("還沒有分享連結。", { exact: true }).waitFor();
   assert.equal((await fetch(link, { redirect: "manual" })).status, 404);
