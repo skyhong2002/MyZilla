@@ -78,17 +78,32 @@ header p {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+  align-items: center;
   gap: 8px 20px;
   padding: 9px;
   background: #b7d0de;
   border: 1px solid #a6c0d1;
   margin-top: 4px;
 }
-.top-nav a {
+.top-nav a,
+.top-nav button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 6px 8px;
+  line-height: 1.6;
+  white-space: nowrap;
   color: #213a4b;
+  border-radius: 3px;
 }
 .top-nav button {
-  padding: 0 8px;
+  border: 0;
+  background: transparent;
+}
+.top-nav a:hover,
+.top-nav button:hover {
+  background: #d4e6f0;
 }
 .portal-layout {
   display: grid;
