@@ -66,6 +66,22 @@ export class BrowsingRepository {
       rejections,
     };
   }
+  insightRevision() {
+    return this.prepare(
+      "SELECT COUNT(*) AS n, MAX(start_at) AS last FROM events",
+    ).get();
+  }
+  insightRows() {
+    return this.prepare(
+      "SELECT data,source,device FROM events WHERE kind='visit' ORDER BY start_at,device,id",
+    )
+      .all()
+      .map((row) => ({
+        ...JSON.parse(row.data as string),
+        source: JSON.parse(row.source as string),
+        deviceId: row.device as string,
+      }));
+  }
   sources() {
     return this.prepare(
       `SELECT device AS deviceId, source, kind, COUNT(*) AS count, MIN(start_at) AS firstAt, MAX(start_at) AS lastAt FROM events GROUP BY device, source, kind ORDER BY source`,

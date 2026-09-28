@@ -66,3 +66,14 @@ Mac-side verification reported stale local DNS NXDOMAIN despite working public/u
 - 正式 Google 登入入口已走到 Google 登入表單，顯示共用名稱 observe.tw，未出現 invalid_client 或 redirect_uri_mismatch。沒有代替使用者選擇或授權真實 Google 帳號；首次連結需由使用者登入既有私人空間後完成。
 - 正式健康與 Google 設定端點 200；匿名私人 API 401；偽造 callback state 被拒絕。Google secret 未出現在任何 web／extension 建置產物。
 - 部署前備份 `data/backups/pre-google-20260928.sqlite`。重啟後 100,665 筆正式歷史內容與來源 SHA256 對帳 PASS，私密證據 `data/google-reconciliation.txt`。沒有把測試 Google 身分寫入正式 DB。
+
+## 五面向個人洞察（2026-09-28）
+
+- 32 個 API／模型測試通過，涵蓋頁面日去重、來源隔離、五種分析、無資料期間、非網頁／工具排除計數、錯誤網址、回饋隔離、搜尋及證據分頁。
+- 新增 `npm run test:insights`：隔離 fixture DB 完成總覽、五面向、HTML escape、依據分頁、主題更名／工作標記／排除／恢復、空期間與桌面／手機布局。
+- 既有 Chromium 完整瀏覽器測試、Firefox 與實際 Zen 擴充功能匯入／同步測試通過。最終 TypeScript／Vite／擴充套件建置與非 root 容器測試通過。
+- 正式 API 對 100,665 筆歷史完成分析，首次 HTTPS 計算約 2.6 秒；74,932 筆符合內容分析條件。排除數量與主題涵蓋範圍在 UI 可展開，資料全量掃描而非只取近期或前 N 筆。
+- 正式 HTTPS 瀏覽器完成已驗證身分的五個區塊、主題搜尋與手機寬度檢查。匿名 `/api/insights` 為 401；正式 `insight_feedback` 沒有測試項目。
+- 部署前備份 `data/backups/pre-insights-20260928.sqlite`；正式原始歷史及來源 SHA256 對帳 PASS，證據為私密 `data/insights-reconciliation.txt`。最終事件數仍為 100,665。
+- 主題為本機規則／標題關鍵詞，沒有對外傳送歷史或抓取文章全文；方法與限制見 `personal-insights.md`。新洞察沒有自動加入公開分享或朋友匹配。
+- 本機 `/tmp` 空間不足造成一次截圖程序失敗，改用專案忽略的 `data/runtime-tmp` 後操作、截圖及瀏覽器測試均通過，未刪除其他專案檔案。

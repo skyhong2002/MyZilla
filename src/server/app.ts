@@ -7,6 +7,7 @@ import {
   type GoogleExchange,
 } from "../accounts/google";
 import { registerAccounts } from "../accounts/routes";
+import { registerInsights } from "../insights/routes";
 import { registerPortal } from "../portal/routes";
 import { registerSocial } from "../social/routes";
 import { registerIngest } from "../browsing/ingest";
@@ -33,6 +34,7 @@ export function createApp(
     registerGoogle(app, registry, google, exchange);
     registerSocial(app, registry);
     registerPortal(app, registry);
+    registerInsights(app, registry);
   }
   return app;
 }

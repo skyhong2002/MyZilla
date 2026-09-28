@@ -43,3 +43,8 @@ npm run db:backup -- data/backups/manual-YYYYMMDD.sqlite --source /path/to/myzil
 ## 經典入口領域
 
 `src/portal/` 提供收藏、搜尋紀錄、可管理轉址、電影、心情、RSS 與在線顯示，使用同一帳號 Registry。首頁由 `src/ui/portal.ts` 呈現，回顧保留在 `dashboard.html`。新增的 `portal_*` 表帶帳號鍵，原始瀏覽資料不重建。完整來源與功能對照見 [舊站概念對照](legacy-features.md)。
+
+
+## 個人內容洞察
+
+`src/insights/` 在帳號自己的全量歷史上產生五種內容線索，`insight_feedback` 保存使用者修正。所有讀寫依既有身分隔離；不參與既有朋友匹配或公開分享。分析方法、快取與 API 見 [個人洞察](personal-insights.md)。

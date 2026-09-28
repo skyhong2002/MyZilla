@@ -89,6 +89,7 @@ try {
     () => document.querySelector("#visits-stat")?.textContent === "225",
   );
   assert.equal(await page.locator("#insights-view").isVisible(), true);
+  await page.getByText("網站使用統計", { exact: true }).click();
   await page.locator("#insights-metric").selectOption("milliseconds");
   assert.match(
     await page.locator("#distribution").innerText(),

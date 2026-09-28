@@ -16,7 +16,8 @@
     "db:backup": "python3 scripts/backup.py",
     "test:community": "node tests/community-browser.mjs",
     "test:portal": "node tests/portal-browser.mjs",
-    "test:google": "node --import tsx tests/google-browser.ts"
+    "test:google": "node --import tsx tests/google-browser.ts",
+    "test:insights": "node tests/insights-browser.mjs"
   },
   "keywords": [],
   "type": "module",
