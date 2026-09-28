@@ -341,3 +341,10 @@ aside nav {
     font-size: 13px;
   }
 }
+
+.portal-logo {
+  display: block;
+  margin: 0 auto 6px;
+  width: 96px;
+  height: 72px;
+}

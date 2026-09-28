@@ -50,3 +50,11 @@ select {
   font-size: 12px;
   margin: 0 0 12px;
 }
+
+.brand-logo {
+  display: block;
+  flex: 0 0 auto;
+  width: 48px;
+  height: 36px;
+  object-fit: contain;
+}
