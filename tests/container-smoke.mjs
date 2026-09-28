@@ -24,7 +24,7 @@ try {
       `
     const root = 'http://127.0.0.1:18140';
     for (let i=0;i<30;i++) { try { await fetch(root+'/health'); break; } catch { await new Promise(r=>setTimeout(r,100)); } }
-    for (const [path, status] of [['/health',200],['/',200],['/community.html',200],['/dashboard.html',200],['/api/portal/items',401],['/api/community/me',401],['/api/sources',401],['/downloads/import_history.py',200]]) {
+    for (const [path, status] of [['/health',200],['/',200],['/help.html',200],['/community.html',200],['/dashboard.html',200],['/api/portal/trash',401],['/api/portal/items',401],['/api/community/me',401],['/api/sources',401],['/downloads/import_history.py',200]]) {
       const r=await fetch(root+path); if(r.status!==status) throw Error(path+': '+r.status);
     }
     const headers={authorization:'Bearer architecture-test-token-not-a-production-secret'};

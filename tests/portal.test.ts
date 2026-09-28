@@ -330,3 +330,65 @@ test("movie comparison uses only own and explicitly shared friend entries, one r
     db.close();
   }
 });
+
+test("deleted collections restore metadata once within ten minutes, without reviving links or crossing accounts", async () => {
+  const { db, app, call, member } = setup();
+  try {
+    const a = await member("alice"),
+      b = await member("bob"),
+      id = randomUUID();
+    await call("/api/portal/items/" + id, a, "PUT", bookmark);
+    await call("/api/portal/items/" + id + "/open", a, "POST");
+    const original = (await call("/api/portal/items", a)).data.items[0];
+    const link = (
+      await call("/api/portal/items/" + id + "/link", a, "POST", { days: 7 })
+    ).data;
+    await call("/api/portal/items/" + id, a, "DELETE");
+    assert.equal((await call("/api/portal/items", a)).data.total, 0);
+    assert.equal((await call("/api/portal/trash", a)).data.items[0].id, id);
+    assert.equal((await call("/api/portal/trash", b)).data.items.length, 0);
+    assert.equal((await call("/api/portal/trash", "")).status, 401);
+    assert.equal(
+      (await call("/api/portal/trash/" + id + "/restore", b, "POST")).status,
+      404,
+    );
+    assert.equal(
+      (await call("/api/portal/trash/" + id + "/restore", "", "POST")).status,
+      401,
+    );
+    assert.equal(
+      (await call("/api/portal/trash/" + id + "/restore", a, "POST")).status,
+      200,
+    );
+    assert.deepEqual(
+      (await call("/api/portal/items", a)).data.items[0],
+      original,
+    );
+    assert.equal((await app.request(link.path)).status, 404);
+    assert.equal(
+      (await call("/api/portal/trash/" + id + "/restore", a, "POST")).status,
+      404,
+    );
+    await call("/api/portal/items/" + id, a, "DELETE");
+    await call("/api/portal/items/" + id, a, "PUT", {
+      ...bookmark,
+      title: "new content",
+    });
+    assert.equal(
+      (await call("/api/portal/trash/" + id + "/restore", a, "POST")).status,
+      409,
+    );
+    assert.equal(
+      (await call("/api/portal/items", a)).data.items[0].title,
+      "new content",
+    );
+    await call("/api/portal/items/" + id, a, "DELETE");
+    db.prepare("UPDATE portal_trash SET expires=0").run();
+    assert.equal(
+      (await call("/api/portal/trash/" + id + "/restore", a, "POST")).status,
+      404,
+    );
+  } finally {
+    db.close();
+  }
+});

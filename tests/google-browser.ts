@@ -49,7 +49,10 @@ const app = createApp(
     nonce,
   }),
 );
-app.use("*", serveStatic({ root: "./dist/web" }));
+app.use(
+  "*",
+  serveStatic({ root: process.env.MYZILLA_WEB_ROOT ?? "./dist/web" }),
+);
 const server = serve({
   fetch: app.fetch,
   createServer,

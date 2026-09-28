@@ -133,7 +133,7 @@ try {
   );
   await page.locator('.page-nav [data-view="overview"]').click();
   await page.evaluate(() => scrollTo(0, 0));
-  await page.screenshot({ path: "/tmp/myzilla-desktop.png", fullPage: false });
+  await page.screenshot({ path: "data/myzilla-desktop.png", fullPage: false });
   await page.setViewportSize({ width: 390, height: 844 });
   assert.equal(
     await page.evaluate(
@@ -141,8 +141,8 @@ try {
     ),
     true,
   );
-  await page.screenshot({ path: "/tmp/myzilla-mobile.png", fullPage: false });
-  await page.getByRole("button", { name: "鎖定", exact: true }).click();
+  await page.screenshot({ path: "data/myzilla-mobile.png", fullPage: false });
+  await page.getByRole("button", { name: "登出", exact: true }).click();
   await page.waitForFunction(
     () => document.querySelector("#visits-stat")?.textContent === "—",
   );
@@ -215,7 +215,7 @@ try {
     await chrome.history.addUrl({ url: "https://example.org/full-import" });
   });
   await extensionPage
-    .getByRole("button", { name: "匯入全部歷史", exact: true })
+    .getByRole("button", { name: "匯入本設定檔全部歷史", exact: true })
     .click();
   await extensionPage.waitForFunction(async () => {
     const value = await chrome.storage.local.get("importJob");
@@ -243,6 +243,13 @@ try {
   await extensionPage.locator("#browser-name").fill("Chromium test");
   await extensionPage.locator("#profile-name").fill("Isolated");
   await extensionPage.locator("#device-name").fill("Fixture device");
+  await extensionPage.locator("#page-title").click();
+  await extensionPage.waitForTimeout(5500);
+  assert.equal(
+    await extensionPage.locator("#profile-name").inputValue(),
+    "Isolated",
+    "Background refresh preserves unsaved configuration after focus leaves the field",
+  );
   await extensionPage.locator("#token").fill(token);
   await extensionPage.getByRole("button", { name: "儲存並連線" }).click();
   await extensionPage.waitForFunction(() =>

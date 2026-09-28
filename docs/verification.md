@@ -85,3 +85,19 @@ Mac-side verification reported stale local DNS NXDOMAIN despite working public/u
 - 瀏覽器測試完成回顧頁門檻切換、各網址搜尋、手機布局及原有五面向洞察。既有 Chromium 匯入／同步與完整歷史操作測試通過。
 - 正式 HTTPS 匿名 API 401；全部歷史 60 秒門檻為 72,200 段、19,234 個網址、約 168.8 小時；180 秒為 78,551 段、20,228 個網址、約 352.4 小時。這是來源各自推估的累加，並非互斥閱讀時數。
 - 正式 100,665 筆事件／來源 SHA256 對帳 PASS，證據為 `data/dwell-reconciliation.txt`。此變更沒有資料庫 migration 或事件改寫。
+
+## 十項易用性原則修正（2026-09-28）
+
+逐項紀錄見 [易用性檢查表](usability-audit.md)：32 個可重現問題，涵蓋全部十項原則。包含操作狀態、統一導覽、草稿保護、刪除復原、匯入預覽與停止、獨立洞察分頁、錯誤重試、可搜尋說明及鍵盤焦點。
+
+- 36 個 TypeScript API／模型測試、2 個 Python 匯入／備份測試通過。
+- 新增 `test:usability`，驗證慢速／503／401、同帳號重新驗證、錯帳號拒絕、保留輸入、欄位錯誤、取消確認、復原、匯入預覽取消／停止、末頁刪除、Back 保護、複製備援、金鑰更換確認、搜尋說明及斷線重試。
+- 入口、社交、五面向洞察及 Google 模擬提供者瀏覽器測試通過；真實 Chromium、Firefox、Zen 隔離擴充功能測試通過。Chromium 額外驗證背景更新不會覆蓋已失焦但尚未儲存的設定。
+- Firefox lint：0 errors、0 notices、30 個 dynamic `innerHTML` 警告。動態文字有 escape／textContent，惡意標題 fixture 測試通過；不宣稱已完成第三方安全稽核或 Mozilla 簽署。
+- Docker 建置與非 root 執行檢查通過，包含新增說明頁與匿名拒絕 `/api/portal/trash`。
+- 正式部署前備份 `data/backups/pre-usability-20260928.sqlite`；備份及部署後 `data/myzilla.sqlite` 均對照 `data/final-expected-reconciliation.json` 通過完整內容／來源 SHA256 核對，**100,665 筆造訪完整保留**。原始事件未寫回、重建或清空。
+- 正式 HTTPS 網站與說明頁 200；匿名來源、洞察、停留推估及刪除暫存 API 401；驗證後歷史總數與刪除暫存 API 正常。Google 登入路由仍正確轉往 `accounts.google.com`，未代替使用者完成 Google 授權。
+- 公開 HTTPS 上以既有帳號唯讀檢查：主要導覽一致，入口／帳號／說明／洞察在 320、390、1440 px 沒有水平溢出，瀏覽器 pageerror 為 0。停留推估及五面向顯示正常。
+- 部署仍使用原 user systemd、`127.0.0.1:18140` 與 Cloudflare Tunnel。未安裝擴充功能至使用者設定檔，未替正式帳號建立朋友、分享或更換金鑰。
+
+本輪屬專家檢查與自動化操作測試，未進行真人使用者測試或螢幕閱讀器人工驗證。原有監測已在指定的 2026-09-27 11:00 截止，這次未重啟長期監測。

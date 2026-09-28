@@ -18,7 +18,11 @@ export function startServer(mode: "combined" | "ingest" = "combined") {
     mode,
     mode === "combined" ? googleConfig(process.env) : undefined,
   );
-  if (mode === "combined") app.use("*", serveStatic({ root: "./dist/web" }));
+  if (mode === "combined")
+    app.use(
+      "*",
+      serveStatic({ root: process.env.MYZILLA_WEB_ROOT ?? "./dist/web" }),
+    );
   const server = serve(
     {
       fetch: app.fetch,

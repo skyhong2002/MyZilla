@@ -1,5 +1,15 @@
 import "./style.css";
 import "./classic.css";
+import {
+  installUX,
+  pendingUI,
+  errorMessage,
+  announce,
+  discardChanges,
+  clearDirty,
+  isDirty,
+  reauthenticate,
+} from "./ux";
 import { dwellPanel } from "./dwell";
 import { personalInsights } from "./personal-insights";
 import type { Settings } from "../shared/events";
@@ -48,6 +58,9 @@ let totalMatches = 0;
 let token = extension ? "" : (sessionStorage.getItem("myzilla-token") ?? "");
 let authenticated = false;
 let busy = false;
+let knownAccount = "",
+  renderedURL = location.href,
+  restoring = false;
 let generation = 0;
 let searchGeneration = 0;
 let siteLimit = 25;
@@ -62,7 +75,7 @@ const colors = [
 
 $("app").innerHTML = `
 <a class="skip-link" href="#page-title">跳到主要內容</a>
-<header class="site-header"><a class="brand" href="#overview" data-view="overview"><img class="brand-logo" src="./myzilla-mark.svg" width="48" height="36" alt=""><span><strong>MyZilla</strong><small>BROWSING, REVISITED</small></span></a><nav class="site-nav" aria-label="主要導覽">${extension ? "" : '<a href="/">我的入口</a>'}<a href="#overview" data-view="overview" data-main-nav="dashboard">儀表板</a><a href="#settings" data-view="settings" data-main-nav="settings">匯入與設定</a>${extension ? "" : '<a href="/community.html">帳號與朋友</a><button id="logout" type="button" hidden>鎖定</button>'}</nav></header>
+<header class="site-header"><a class="brand" href="#overview" data-view="overview"><img class="brand-logo" src="./myzilla-mark.svg" width="48" height="36" alt=""><span><strong>MyZilla</strong><small>BROWSING, REVISITED</small></span></a><nav class="site-nav" aria-label="主要導覽">${extension ? "" : '<a href="/">我的入口</a>'}<a href="#overview" data-view="overview" data-main-nav="dashboard">瀏覽回顧</a><a href="#settings" data-view="settings" data-main-nav="settings">匯入與設定</a>${extension ? "" : '<a href="/community.html">帳號與朋友</a><a href="/help.html">使用說明</a><button id="logout" type="button" hidden>登出</button>'}</nav></header>
 <main class="site-main">
 <section class="profile"><div class="avatar" aria-hidden="true">M</div><div class="profile-copy"><div class="eyebrow">PERSONAL BROWSING ARCHIVE</div><div class="title-row"><h1 id="page-title" tabindex="-1">我的瀏覽空間</h1><span class="private-badge">私人</span></div><p id="page-scope">總覽 · 全部紀錄</p></div><a href="#settings" data-view="settings" class="button profile-action">匯入紀錄 <span aria-hidden="true">↗</span></a></section>
 <nav class="page-nav" aria-label="瀏覽紀錄導覽">${(["overview", "insights", "history", "recap"] as View[]).map((view) => `<a href="#${view}" data-view="${view}">${viewLabels[view]}</a>`).join("")}</nav>
@@ -71,13 +84,13 @@ $("app").innerHTML = `
 <section id="settings" class="connection" aria-labelledby="connection-title"><div class="section-heading"><div><div class="eyebrow">${extension ? "CONNECTION" : "PRIVATE ACCESS"}</div><h2 id="connection-title">${extension ? "連接你的瀏覽空間" : "開啟你的私人回顧"}</h2><p>${extension ? "完整網址、標題、造訪時間與估計前景時間會同步至你指定的伺服器。" : "輸入存取金鑰以讀取紀錄。金鑰只保留在此分頁工作階段。"}</p></div><span id="connection-state" class="status-chip">尚未連線</span></div>
 <form id="connect-form">${extension ? '<label class="server-field">伺服器網址<input id="server" type="url" value="https://myzilla.observe.tw" required /></label><label>瀏覽器<input id="browser-name" required placeholder="Brave / Zen / Chrome / Arc / Dia"/></label><label>設定檔<input id="profile-name" required placeholder="Default / 工作 / 個人"/></label><label>裝置<input id="device-name" required placeholder="Sky Mac"/></label>' : ""}<label class="token-field">存取金鑰<input id="token" type="password" required minlength="32" autocomplete="off" placeholder="貼上你的存取金鑰"/></label><button class="primary" type="submit">${extension ? "儲存並連線" : "解鎖回顧"} <span aria-hidden="true">↗</span></button></form>
 ${!extension ? '<p class="access-help"><a href="/community.html">使用帳號登入／建立擁有者帳號 →</a></p><p class="access-help">已完成歷史匯入？直接解鎖即可查看。要累積新的紀錄，請在下方安裝擴充功能。</p>' : ""}
-<div id="capture-controls" ${extension ? "" : "hidden"}><div class="section-heading"><div><h3>紀錄與同步</h3><p>開始後累積新的活動；離線紀錄會保留，連線後補送。</p></div></div><div class="actions"><button id="toggle" class="primary" type="button">開始記錄</button><button id="sync" type="button">立即同步</button><button id="import" type="button">匯入全部歷史</button></div><p id="capture-status"></p><p class="note">已透過原生工具匯入此設定檔的歷史，直接開始記錄即可，避免重複匯入。</p></div>
+<div id="capture-controls" ${extension ? "" : "hidden"}><div class="section-heading"><div><h3>紀錄與同步</h3><p>開始後累積新的活動；離線紀錄會保留，連線後補送。</p></div></div><div class="actions"><button id="toggle" class="primary" type="button">開始記錄</button><button id="sync" type="button">立即同步</button><button id="import" type="button">匯入本設定檔全部歷史</button></div><p id="capture-status"></p><p class="note">已透過原生工具匯入此設定檔的歷史，直接開始記錄即可，避免重複匯入。</p></div>
 </section>
 <section id="setup-guide" class="setup-guide"><div class="section-heading"><div><h2>讓瀏覽紀錄持續累積</h2><p>每個瀏覽器設定檔分別設定一次，就能在這裡一起回顧。</p></div></div><div class="setup-steps"><article><span class="step-number">01</span><h3>安裝擴充功能</h3><p>在使用中的瀏覽器與設定檔安裝對應版本。</p><a href="${extension ? "https://myzilla.observe.tw" : ""}/downloads/myzilla-chromium.zip">Brave / Chrome / Arc / Dia ↗</a><a href="${extension ? "https://myzilla.observe.tw" : ""}/downloads/myzilla-firefox.zip">Zen / Firefox ↗</a><small>Zen／Firefox 測試版重啟後需重新載入。</small></article><article><span class="step-number">02</span><h3>連線並開始記錄</h3><p>從工具列開啟 MyZilla，填入金鑰與來源名稱，按「開始記錄」。</p><a href="${extension ? "https://myzilla.observe.tw" : ""}/downloads/install.md">查看安裝步驟 ↗</a></article><article><span class="step-number">03</span><h3>找回以前看過的內容</h3><p>首次可匯入全部既有歷史，再到總覽與歷史頁探索。</p><a href="${extension ? "https://myzilla.observe.tw" : ""}/downloads/import-contract.md">多瀏覽器歷史匯入說明 ↗</a></article></div><div id="sources-section" hidden><h3>已同步的來源</h3><p class="note">所有期間的累計紀錄，依瀏覽器、設定檔與裝置呈現。</p><div id="sources-list"></div></div></section>
 <div id="dashboard" hidden>
-<section id="overview-view" data-panel="overview"><div id="personal-overview"></div><div class="stats"><article><strong id="visits-stat">—</strong><span>造訪次數</span></article><article><strong id="sites-stat">—</strong><span>網站與來源</span></article><article><strong id="time-stat">—</strong><span>估計前景時間</span></article><article><strong id="estimated-stat">—</strong><span id="estimated-label">歷史推估停留</span><a href="#recap" data-view="recap">查看各連結與估算門檻 →</a></article></div><p class="note">前景時間由擴充功能記錄；歷史推估依相鄰造訪另計。</p><div class="section-heading"><div><h2>經常造訪的網站</h2><p>從日常的足跡，看看你持續關注什麼。</p></div><div class="sort-control"><label for="metric">排序依據</label><select id="metric"><option value="visits">造訪次數</option><option value="milliseconds">前景時間</option></select></div></div><div id="ranking" class="ranking"></div><a class="text-link" href="#insights" data-view="insights">查看完整網站分布 →</a><section class="recent-section"><div class="section-heading"><h2>最近看過的頁面</h2><a class="text-link" href="#history" data-view="history">全部歷史 →</a></div><div id="recent-list"></div></section></section>
+<section id="overview-view" data-panel="overview"><div id="personal-overview"></div><div class="stats"><article><strong id="visits-stat">—</strong><span>造訪次數</span></article><article><strong id="sites-stat">—</strong><span>網站與來源</span></article><article><strong id="time-stat">—</strong><span>估計前景時間</span></article><article><strong id="estimated-stat">—</strong><span id="estimated-label">歷史推估停留</span><a href="#recap" data-view="recap">查看各連結與估算門檻 →</a></article></div><p class="note">前景時間由擴充功能記錄；歷史推估依相鄰造訪另計。</p><div class="section-heading"><div><h2>經常造訪的網站</h2><p>從日常的足跡，看看你持續關注什麼。</p></div><div class="sort-control"><label for="metric">排序依據</label><select id="metric"><option value="visits">造訪次數</option><option value="milliseconds">前景時間</option></select></div></div><div id="ranking" class="ranking"></div><a class="text-link" href="#insights" data-view="insights">查看洞察與網站統計 →</a><section class="recent-section"><div class="section-heading"><h2>最近看過的頁面</h2><a class="text-link" href="#history" data-view="history">全部歷史 →</a></div><div id="recent-list"></div></section></section>
 <section id="insights-view" data-panel="insights" hidden><div id="personal-insights"></div><details><summary>網站使用統計</summary><div class="section-heading"><div><h2>你的注意力分布</h2><p>以造訪次數和估計前景時間，從兩個角度回顧瀏覽習慣。</p></div><select id="insights-metric" aria-label="洞察統計方式"><option value="visits">造訪次數</option><option value="milliseconds">前景時間</option></select></div><div class="insights-grid"><div id="distribution"></div><div id="insight-summary" class="insight-summary"></div></div><p class="method-note">前景時間估計瀏覽器有焦點、分頁啟用且電腦未閒置時的活動，並非實際閱讀時間。</p><div class="section-heading"><h2>所有網站</h2><span id="sites-count"></span></div><div class="table-scroll"><table class="sites-table"><thead><tr><th scope="col">網站</th><th scope="col">造訪次數</th><th scope="col">前景時間</th></tr></thead><tbody id="sites-list"></tbody></table></div><button id="more-sites" type="button" hidden>顯示更多網站</button></details></section>
-<section id="history-view" data-panel="history" hidden><div class="section-heading"><div><h2>瀏覽歷史</h2><p id="history-count">搜尋所有已同步的紀錄。</p></div><label class="search"><span class="sr-only">搜尋造訪紀錄</span><input id="search" type="search" maxlength="2000" placeholder="搜尋標題或網址" aria-label="搜尋造訪紀錄"/></label></div><div id="history-list"></div><div class="pagination"><button id="previous" type="button">← 上一頁</button><span id="page-info"></span><button id="next" type="button">下一頁 →</button></div></section>
+<section id="history-view" data-panel="history" hidden><div class="section-heading"><div><h2>瀏覽歷史</h2><p id="history-count">搜尋所有已同步的紀錄。</p></div><label class="search"><span class="sr-only">搜尋造訪紀錄</span><input id="search" type="search" maxlength="2000" placeholder="搜尋標題或網址" aria-label="搜尋造訪紀錄"/></label></div><div id="history-feedback" role="status"></div><button id="clear-search" type="button" hidden>清除搜尋</button><div id="history-list"></div><div class="pagination"><button id="previous" type="button">← 上一頁</button><span id="page-info"></span><button id="next" type="button">下一頁 →</button></div></section>
 <section id="recap-view" data-panel="recap" hidden><div class="eyebrow">YOUR BROWSING RECAP</div><h2 class="recap-title">這段時間，你看了些什麼？</h2><p class="note">依目前選取期間的全部紀錄整理。</p><div id="recap-content"></div><section id="dwell-panel"></section><a href="#history" data-view="history" class="button">回到歷史，找回那些頁面 →</a></section>
 </div><footer><span>MyZilla</span><span>把你看過的，變成值得留下的。</span><span>私人瀏覽空間</span></footer>
 </main>`;
@@ -87,6 +100,7 @@ function message(text: string, error = false) {
   $("message").classList.toggle("error", error);
 }
 function applyNavigation(focus = false) {
+  renderedURL = location.href;
   const settings = state.view === "settings";
   $("settings").hidden = authenticated && !settings;
   $("setup-guide").hidden = authenticated && !settings;
@@ -180,7 +194,7 @@ async function status() {
     ["device-name", config!.device],
     ["token", token],
   ])
-    $<HTMLInputElement>(id).value = value;
+    if (!isDirty($("settings"))) $<HTMLInputElement>(id).value = value;
   $("toggle").textContent = config!.enabled ? "暫停記錄" : "開始記錄";
   $("capture-status").textContent =
     `${config!.enabled ? "● 記錄中" : "○ 已暫停"} · 本機 ${data.total.toLocaleString()} 筆 · 待同步 ${data.pending.toLocaleString()} 筆${data.importStatus ? ` · ${data.importStatus}` : ""}`;
@@ -203,14 +217,26 @@ async function api(path: string, method = "GET", body?: unknown) {
   });
   if (!response.ok) {
     if (response.status === 401) {
+      if (!extension && knownAccount) {
+        sessionStorage.removeItem("myzilla-token");
+        const ok = await reauthenticate(knownAccount);
+        token = sessionStorage.getItem("myzilla-token") ?? "";
+        throw Error(
+          ok
+            ? "登入已恢復，請重新送出剛才的操作。"
+            : "尚未登入，輸入仍保留。再次送出即可重新登入。",
+        );
+      }
       authenticated = false;
       applyNavigation();
       throw new Error("金鑰不正確或已失效，請重新輸入。");
     }
-    throw new Error(`讀取失敗（HTTP ${response.status}）`);
+    const detail = await response.json().catch(() => ({}));
+    throw new Error(detail.error ?? `HTTP ${response.status}`);
   }
   return response.json();
 }
+installUX($("app"));
 const personal = personalInsights(api);
 const dwell = dwellPanel(api);
 async function refresh() {
@@ -221,6 +247,13 @@ async function refresh() {
   const data: Report = await api(`/api/report?from=${from}&to=${to}`);
   if (version !== generation) return;
   report = data;
+  if (!extension && !knownAccount) {
+    const response = await fetch("/api/community/me", {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(20000),
+    });
+    if (response.ok) knownAccount = (await response.json()).id;
+  }
   authenticated = true;
   render();
   applyNavigation();
@@ -331,20 +364,39 @@ async function loadHistory() {
   if (!token) return;
   const version = ++searchGeneration;
   const { from, to } = bounds();
-  const data = await api(
-    `/api/visits?${new URLSearchParams({ from: String(from), to: String(to), q: state.query, offset: String(state.offset), limit: "200" })}`,
-  );
-  if (version !== searchGeneration) return;
-  visits = data.visits;
-  totalMatches = data.total;
-  renderHistory();
+  $("history-feedback").textContent = "正在搜尋，先前結果尚未更新…";
+  $("history-list").setAttribute("aria-busy", "true");
+  try {
+    const data = await api(
+      `/api/visits?${new URLSearchParams({ from: String(from), to: String(to), q: state.query, offset: String(state.offset), limit: "200" })}`,
+    );
+    if (version !== searchGeneration) return;
+    if (state.offset > 0 && state.offset >= data.total) {
+      state.offset = Math.max(0, Math.floor((data.total - 1) / 200) * 200);
+      writeNavigation(true);
+      await loadHistory();
+      return;
+    }
+    visits = data.visits;
+    totalMatches = data.total;
+    $("history-feedback").textContent = "";
+    renderHistory();
+  } catch (e) {
+    if (version === searchGeneration)
+      $("history-feedback").innerHTML =
+        `${escape(errorMessage(e))} 先前結果尚未更新。 <button data-history-retry>重試搜尋</button>`;
+  } finally {
+    if (version === searchGeneration)
+      $("history-list").removeAttribute("aria-busy");
+  }
 }
 function renderHistory() {
+  $("clear-search").hidden = !state.query;
   $("history-count").textContent =
     `共 ${totalMatches.toLocaleString()} 筆${state.query ? "符合的" : ""}造訪 · 搜尋涵蓋所選期間全部紀錄`;
   $("history-list").innerHTML = visits.length
     ? visits.map((v) => visitMarkup(v, "visit")).join("")
-    : `<div class="empty"><h3>${state.query ? "找不到符合的紀錄" : "這段期間還沒有紀錄"}</h3><p>試試其他關鍵字、切換日期，或從擴充功能同步。</p>${state.query ? '<button id="clear-search" type="button">清除搜尋</button>' : ""}</div>`;
+    : `<div class="empty"><h3>${state.query ? "找不到符合的紀錄" : "這段期間還沒有紀錄"}</h3><p>試試其他關鍵字、切換日期，或從擴充功能同步。</p></div>`;
   $("page-info").textContent =
     totalMatches && visits.length
       ? `${state.offset + 1}–${Math.min(state.offset + visits.length, totalMatches)} / ${totalMatches.toLocaleString()}`
@@ -356,21 +408,20 @@ function renderHistory() {
 async function run(job: () => Promise<void>) {
   if (busy) return;
   busy = true;
-  $("app").setAttribute("aria-busy", "true");
-  document
-    .querySelectorAll<HTMLButtonElement>("button")
-    .forEach((b) => (b.disabled = true));
+  const finish = pendingUI($("app"));
   try {
     await job();
   } catch (error) {
-    message(error instanceof Error ? error.message : "操作失敗", true);
+    message(errorMessage(error), true);
+    announce(errorMessage(error), true);
   } finally {
     busy = false;
-    $("app").removeAttribute("aria-busy");
-    document
-      .querySelectorAll<HTMLButtonElement>("button")
-      .forEach((b) => (b.disabled = false));
-    if (report) renderHistory();
+    finish();
+    if (report) {
+      ($("previous") as HTMLButtonElement).disabled = state.offset === 0;
+      ($("next") as HTMLButtonElement).disabled =
+        state.offset + visits.length >= totalMatches;
+    }
   }
 }
 $("app").addEventListener("click", (event) => {
@@ -386,11 +437,13 @@ $("app").addEventListener("click", (event) => {
     event.preventDefault();
     navigate(link.dataset.view as View);
   }
+  if (target.closest("[data-history-retry]")) void run(loadHistory);
   if (target.closest("#clear-search")) {
     state.query = "";
     state.offset = 0;
     writeNavigation();
-    void run(loadHistory);
+    applyNavigation();
+    void run(loadHistory).then(() => $("search").focus());
   }
 });
 $("connect-form").addEventListener("submit", (event) => {
@@ -421,15 +474,20 @@ $("connect-form").addEventListener("submit", (event) => {
         profile: ($("profile-name") as HTMLInputElement).value,
         device: ($("device-name") as HTMLInputElement).value,
       });
+      clearDirty($("settings"));
       await status();
     } else {
+      if (token !== entered) knownAccount = "";
       token = entered;
       sessionStorage.setItem("myzilla-token", token);
     }
     await refresh();
+    clearDirty($("settings"));
   });
 });
 $("logout")?.addEventListener("click", async () => {
+  if (!(await discardChanges($("app")))) return;
+  clearDirty($("app"));
   await fetch("/api/community/logout", {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
@@ -448,7 +506,9 @@ for (const type of ["toggle", "sync", "import"])
     });
   });
 document.querySelectorAll<HTMLButtonElement>("[data-days]").forEach((button) =>
-  button.addEventListener("click", () => {
+  button.addEventListener("click", async () => {
+    if (!(await discardChanges($("app")))) return;
+    clearDirty($("app"));
     state.days = Number(button.dataset.days);
     state.offset = 0;
     writeNavigation();
@@ -473,7 +533,8 @@ $("search").addEventListener("input", () => {
   state.offset = 0;
   writeNavigation(true);
   searchTimer = setTimeout(
-    () => void loadHistory().catch((error) => message(error.message, true)),
+    () =>
+      void loadHistory().catch((error) => message(errorMessage(error), true)),
     250,
   );
 });
@@ -489,18 +550,27 @@ $("next").addEventListener("click", () => {
     void run(loadHistory);
   }
 });
-const restoreNavigation = () => {
+const restoreNavigation = async () => {
+  if (restoring || location.href === renderedURL) return;
+  restoring = true;
+  if (!(await discardChanges($("app")))) {
+    history.replaceState(null, "", renderedURL);
+    restoring = false;
+    return;
+  }
+  clearDirty($("app"));
   clearTimeout(searchTimer);
   const old = state;
   state = readNavigation(new URL(location.href), extension);
   applyNavigation();
   if (old.days !== state.days)
-    void refresh().catch((error) => message(error.message, true));
+    void refresh().catch((error) => message(errorMessage(error), true));
   else {
     render();
     if (old.query !== state.query || old.offset !== state.offset)
-      void loadHistory().catch((error) => message(error.message, true));
+      void loadHistory().catch((error) => message(errorMessage(error), true));
   }
+  restoring = false;
 };
 addEventListener("popstate", restoreNavigation);
 addEventListener("hashchange", restoreNavigation);
@@ -512,5 +582,5 @@ void run(async () => {
 if (extension)
   setInterval(() => {
     if (!busy && !document.querySelector("input:focus"))
-      void status().catch((error) => message(error.message, true));
+      void status().catch((error) => message(errorMessage(error), true));
   }, 5000);

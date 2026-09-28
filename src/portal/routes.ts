@@ -7,6 +7,9 @@ import { webUrl } from "../shared/model";
 import { itemSchema, engines, searchUrl, xml } from "./model";
 export function registerPortal(app: Hono, registry: Registry) {
   const db = registry.db;
+  db.exec(
+    "CREATE TABLE IF NOT EXISTS portal_trash(account TEXT NOT NULL,id TEXT NOT NULL,snapshot TEXT NOT NULL,expires INTEGER NOT NULL,PRIMARY KEY(account,id))",
+  );
   db.exec(`CREATE TABLE IF NOT EXISTS portal_items(account TEXT NOT NULL,id TEXT NOT NULL,kind TEXT NOT NULL,scope TEXT NOT NULL,visibility TEXT NOT NULL,data TEXT NOT NULL,clicks INTEGER NOT NULL DEFAULT 0,last_used INTEGER NOT NULL DEFAULT 0,created INTEGER NOT NULL,updated INTEGER NOT NULL,PRIMARY KEY(account,id));
  CREATE INDEX IF NOT EXISTS portal_owner_kind ON portal_items(account,kind,scope);
  CREATE TABLE IF NOT EXISTS portal_searches(account TEXT NOT NULL,id TEXT NOT NULL,engine TEXT NOT NULL,query TEXT NOT NULL,uses INTEGER NOT NULL,last_used INTEGER NOT NULL,PRIMARY KEY(account,id),UNIQUE(account,engine,query));
@@ -131,8 +134,26 @@ export function registerPortal(app: Hono, registry: Registry) {
     if (!z.uuid().safeParse(c.req.param("id")).success)
       return c.json({ error: "無效項目 ID" }, 400);
     const input = itemSchema.safeParse(await c.req.json().catch(() => null));
-    if (!input.success)
-      return c.json({ error: "請確認標題、HTTP/HTTPS 網址與欄位格式" }, 400);
+    if (!input.success) {
+      const instructions: Record<string, string> = {
+        title: "請填寫標題，最多 500 字。",
+        url: "請填寫不含帳號密碼的 http:// 或 https:// 網址。",
+        tags: "最多 30 個標籤，每個最多 64 字。",
+        notes: "筆記最多 10,000 字。",
+        rating: "評分請填 0–10 的整數。",
+        watched: "觀看次數請填 0–100,000 的整數。",
+        collection: "收藏媒體最多 500 字。",
+      };
+      const fields: Record<string, string> = {};
+      for (const issue of input.error.issues) {
+        const key = String(issue.path[0] ?? "");
+        if (instructions[key]) fields[key] = instructions[key];
+      }
+      return c.json(
+        { error: "部分內容需要修正，請檢查標示的欄位後再儲存。", fields },
+        400,
+      );
+    }
     const value = {
         ...input.data,
         url: input.data.url ? webUrl(input.data.url)! : "",
@@ -159,11 +180,79 @@ export function registerPortal(app: Hono, registry: Registry) {
       id = c.req.param("id");
     db.exec("BEGIN");
     try {
+      const row = db
+        .prepare("SELECT * FROM portal_items WHERE account=? AND id=?")
+        .get(owner, id);
+      db.prepare("DELETE FROM portal_trash WHERE expires<=?").run(Date.now());
+      if (row)
+        db.prepare("INSERT OR REPLACE INTO portal_trash VALUES(?,?,?,?)").run(
+          owner,
+          id,
+          JSON.stringify(row),
+          Date.now() + 600000,
+        );
       db.prepare("DELETE FROM portal_links WHERE account=? AND item=?").run(
         owner,
         id,
       );
       db.prepare("DELETE FROM portal_items WHERE account=? AND id=?").run(
+        owner,
+        id,
+      );
+      db.exec("COMMIT");
+    } catch (e) {
+      db.exec("ROLLBACK");
+      throw e;
+    }
+    return c.json({ ok: true });
+  });
+  app.get("/api/portal/trash", (c) => {
+    const rows = db
+      .prepare(
+        "SELECT id,snapshot,expires FROM portal_trash WHERE account=? AND expires>? ORDER BY expires DESC",
+      )
+      .all(c.get("account").id, Date.now());
+    return c.json({
+      items: rows.map((row) => ({
+        id: row.id,
+        expires: row.expires,
+        title: JSON.parse(JSON.parse(row.snapshot as string).data).title,
+      })),
+    });
+  });
+  app.post("/api/portal/trash/:id/restore", (c) => {
+    const owner = c.get("account").id,
+      id = c.req.param("id");
+    const trash = db
+      .prepare(
+        "SELECT snapshot FROM portal_trash WHERE account=? AND id=? AND expires>?",
+      )
+      .get(owner, id, Date.now());
+    if (!trash) return c.json({ error: "復原期限已過或項目已復原" }, 404);
+    if (
+      db
+        .prepare("SELECT id FROM portal_items WHERE account=? AND id=?")
+        .get(owner, id)
+    )
+      return c.json({ error: "已有同一項目，為避免覆蓋，未執行復原" }, 409);
+    const row = JSON.parse(trash.snapshot as string);
+    db.exec("BEGIN");
+    try {
+      db.prepare(
+        "INSERT INTO portal_items(account,id,kind,scope,visibility,data,clicks,last_used,created,updated) VALUES(?,?,?,?,?,?,?,?,?,?)",
+      ).run(
+        owner,
+        id,
+        row.kind,
+        row.scope,
+        row.visibility,
+        row.data,
+        row.clicks,
+        row.last_used,
+        row.created,
+        row.updated,
+      );
+      db.prepare("DELETE FROM portal_trash WHERE account=? AND id=?").run(
         owner,
         id,
       );

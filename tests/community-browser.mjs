@@ -132,7 +132,7 @@ try {
     true,
   );
   await guest.screenshot({
-    path: "/tmp/myzilla-community-mobile.png",
+    path: "data/myzilla-community-mobile.png",
     fullPage: true,
   });
   await owner.getByRole("link", { name: "興趣分析", exact: true }).click();
@@ -162,18 +162,22 @@ try {
     !(await publicPage.locator("body").innerText()).includes("github.com"),
   );
   await owner.getByRole("button", { name: "撤銷分享", exact: true }).click();
+  await owner
+    .locator(".ux-confirm")
+    .getByRole("button", { name: "撤銷分享", exact: true })
+    .click();
   await owner.getByText("目前沒有有效的分享連結。", { exact: true }).waitFor();
   assert.equal((await publicPage.reload()).status(), 404);
   await owner.getByRole("link", { name: "帳號", exact: true }).click();
   await owner.screenshot({
-    path: "/tmp/myzilla-community-desktop.png",
+    path: "data/myzilla-community-desktop.png",
     fullPage: true,
   });
   await guest.getByRole("button", { name: "登出", exact: true }).click();
   await guest.locator('[data-form="login"]').waitFor();
   await submit(guest, "login", { handle: "friend-test", password }, "登入");
   await guest.getByRole("heading", { name: /Friend fixture 的空間/ }).waitFor();
-  await guest.getByRole("link", { name: "儀表板", exact: true }).click();
+  await guest.getByRole("link", { name: "瀏覽回顧", exact: true }).click();
   await guest.waitForFunction(
     () => document.querySelector("#visits-stat")?.textContent === "1",
   );

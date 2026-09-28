@@ -42,7 +42,7 @@ try {
   await page.getByRole("button", { name: "開啟我的入口", exact: true }).click();
   await page.getByRole("button", { name: "新增網址", exact: true }).waitFor();
   await page.getByRole("button", { name: "新增網址", exact: true }).click();
-  const dialog = page.getByRole("dialog");
+  const dialog = page.locator("#editor");
   await dialog.locator('[name="title"]').fill("研究書籤 <img src=x>");
   await dialog
     .locator('[name="url"]')
@@ -77,6 +77,10 @@ try {
   assert.equal((await fetch(link, { redirect: "manual" })).status, 302);
   await page.getByRole("link", { name: "短網址管理", exact: true }).click();
   await page.getByRole("button", { name: "撤銷連結" }).click();
+  await page
+    .locator(".ux-confirm")
+    .getByRole("button", { name: "撤銷連結", exact: true })
+    .click();
   await page.getByText("還沒有分享連結。", { exact: true }).waitFor();
   assert.equal((await fetch(link, { redirect: "manual" })).status, 404);
   await page.getByRole("link", { name: "我的電影", exact: true }).click();
@@ -116,6 +120,10 @@ try {
     buffer: backup,
   });
   await page.getByRole("button", { name: "匯入全部項目", exact: true }).click();
+  await page
+    .locator(".ux-confirm")
+    .getByRole("button", { name: "開始匯入", exact: true })
+    .click();
   await page.getByText(/匯入完成：接受 2、拒收 0/).waitFor();
   const rssDownload = page.waitForEvent("download");
   await page
@@ -130,7 +138,7 @@ try {
     .getByRole("heading", { name: "研究書籤 <img src=x>", exact: true })
     .waitFor();
   await page.screenshot({
-    path: "/tmp/myzilla-portal-desktop.png",
+    path: "data/myzilla-portal-desktop.png",
     fullPage: true,
   });
   await page.setViewportSize({ width: 390, height: 844 });
@@ -141,7 +149,7 @@ try {
     true,
   );
   await page.screenshot({
-    path: "/tmp/myzilla-portal-mobile.png",
+    path: "data/myzilla-portal-mobile.png",
     fullPage: true,
   });
   await page

@@ -348,3 +348,31 @@ aside nav {
   width: 96px;
   height: 72px;
 }
+
+@media (max-width: 720px) {
+  header {
+    padding: 12px;
+  }
+  .wordmark {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+  }
+  .wordmark span {
+    font-size: 16px;
+  }
+  .portal-logo {
+    width: 48px;
+    height: 36px;
+    margin: 0;
+  }
+  header p {
+    font-size: 12px;
+  }
+  aside section:has(nav[aria-label="功能選單"]) {
+    display: none;
+  }
+}

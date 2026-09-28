@@ -106,3 +106,23 @@
 #personal-insights > section {
   margin-top: 28px;
 }
+
+.insight-jumps button[aria-pressed="true"] {
+  background: #285d7b;
+  color: #fff;
+  border-color: #285d7b;
+}
+.insight-jumps {
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 5;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+#personal-insights > section {
+  scroll-margin-top: 90px;
+}
+#personal-insights [aria-busy="true"] {
+  opacity: 0.8;
+}

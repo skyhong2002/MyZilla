@@ -115,8 +115,25 @@ try {
   await page.locator('.page-nav [data-view="overview"]').click();
   assert.equal(await page.locator("#time-stat").innerText(), "尚未記錄");
   await page.getByRole("link", { name: "展開五個面向 →", exact: true }).click();
-  for (const id of ["map", "paths", "changes", "pairs", "long"])
-    assert.ok(await page.locator("#insight-" + id).isVisible());
+  for (const id of ["map", "paths", "changes", "pairs", "long", "map"]) {
+    await page.locator(`[data-jump="${id}"]`).click();
+    await page.waitForFunction(
+      (id) => document.querySelector(`#insight-${id}`)?.hidden === false,
+      id,
+    );
+    assert.equal(
+      await page.locator("#personal-insights > section:visible").count(),
+      1,
+    );
+  }
+  await page.locator('[data-jump="long"]').click();
+  await page.getByRole("button", { name: "下一頁洞察", exact: true }).click();
+  await page.getByText("13–24 / 25 項", { exact: true }).waitFor();
+  await page.locator('[data-jump="map"]').click();
+  await page.locator("#insight-map .topic-card").first().waitFor();
+  await page.locator('[data-jump="long"]').click();
+  await page.getByText("13–24 / 25 項", { exact: true }).waitFor();
+  await page.locator('[data-jump="map"]').click();
   const card = page.locator(".topic-card").filter({
     has: page.getByRole("heading", { name: "身分驗證與 OAuth", exact: true }),
   });
@@ -154,7 +171,10 @@ try {
         .querySelector("#insight-map")
         ?.textContent.includes("我的身分驗證專案"),
   );
-  await page.getByText(/我的主題調整/).click();
+  await page
+    .locator("summary")
+    .filter({ hasText: /我的主題調整/ })
+    .click();
   await page.getByRole("button", { name: "恢復自動判斷", exact: true }).click();
   await page
     .locator("#insight-map")
@@ -171,6 +191,7 @@ try {
   );
   await page.screenshot({ path: "data/insights-mobile.png", fullPage: false });
   await page.getByRole("button", { name: "近 7 天", exact: true }).click();
+  await page.locator('[data-jump="changes"]').click();
   await page
     .getByText("其中一期沒有內容紀錄，暫不判定升溫或淡出。", { exact: true })
     .waitFor();

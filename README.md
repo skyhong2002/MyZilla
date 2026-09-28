@@ -71,7 +71,7 @@ Zen／Firefox：開啟 `about:debugging#/runtime/this-firefox`，選「暫時載
 
 每個瀏覽器、每個設定檔都必須個別安裝。點工具列 MyZilla，填寫伺服器網址、金鑰、瀏覽器／設定檔／裝置名稱，授權連線，按「開始記錄」。預設不記錄，不在無痕視窗執行。伺服器選用 HTTPS，本機測試可使用 loopback HTTP。記錄到 IndexedDB 後分批同步，離線自動保留佇列。
 
-原生匯入已完成的設定檔，擴充功能只需開始記錄新的活動；不要再按「匯入全部歷史」，以免用另一個來源 ID 重複匯入相同歷史。擴充功能的全量匯入按鈕適用於未做原生匯入的設定檔，進度會持久化，背景逐批完成。
+原生匯入已完成的設定檔，擴充功能只需開始記錄新的活動；不要再按「匯入本設定檔全部歷史」，以免用另一個來源 ID 重複匯入相同歷史。擴充功能的全量匯入按鈕適用於未做原生匯入的設定檔，進度會持久化，背景逐批完成。
 
 「暫停記錄」停止新的活動收集；已排程的匯入與待同步資料仍會送出。第一版沒有自動刪除本機／伺服器歷史，瀏覽器端刪除歷史也不會刪除先前匯入的伺服器資料。
 
@@ -91,6 +91,9 @@ npm run test:importer
 npm run test:browser
 npm run test:community
 npm run test:portal
+npm run test:google
+npm run test:insights
+npm run test:usability
 npm run lint:firefox
 npm run test:firefox
 ```
@@ -103,4 +106,16 @@ npm run test:firefox
 
 ## 範圍與後續
 
-目前支援邀請制多帳號、網站規則分類、雙方同意的朋友配對及摘要分享。尚無 Google OAuth、外部 AI 語意分類、公開陌生人配對或策展投遞箱。Infovore 整合評估見 [摘要來源設計](docs/infovore-summary.md)。
+目前支援邀請制多帳號、網站規則分類、雙方同意的朋友配對及摘要分享。已支援 Google 帳號連結與登入；尚無外部 AI 語意分類、公開陌生人配對或策展投遞箱。Infovore 整合評估見 [摘要來源設計](docs/infovore-summary.md)。
+
+## 操作與說明
+
+產品內的 [使用說明](https://myzilla.observe.tw/help.html) 可搜尋登入、匯入、洞察、停留推估及分享範圍。十項易用性原則的逐項問題與驗證紀錄見 [易用性檢查表](docs/usability-audit.md)。
+
+- 收藏刪除後 10 分鐘內，可從通知或「匯入與工具 → 最近刪除的收藏」復原；原分享連結永久失效。新增 `portal_trash` 為附加資料表，不重建原始歷史。
+- JSON 收藏匯入先預覽更新與朋友可見筆數，可停止並重送。此功能不取代瀏覽器歷史匯入工具。
+- 五個洞察面向獨立分頁；日期或搜尋條件改變時重置頁碼。
+- 未儲存表單離開前確認；登入過期可在原畫面使用同一帳號重新驗證，保留輸入。密碼不另存為草稿。
+- 按 `/` 聚焦目前搜尋欄；長頁提供回到頂部；錯誤可重試並保留輸入。
+
+需要隔離預覽前端時，可用 `npx vite build --outDir data/usability-preview`，測試服務設定 `MYZILLA_WEB_ROOT=./data/usability-preview`。正式服務仍預設 `dist/web`；測試 DB 必須另外指定，不能使用正式 DB。

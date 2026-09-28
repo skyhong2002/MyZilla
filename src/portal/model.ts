@@ -100,7 +100,7 @@ export const itemSchema = z
       value.url
         ? Boolean(webUrl(value.url))
         : !["bookmark", "article"].includes(value.kind),
-    "網址需為不含帳密的 HTTP/HTTPS 網址",
+    { message: "網址需為不含帳密的 HTTP/HTTPS 網址", path: ["url"] },
   );
 export type PortalItem = z.infer<typeof itemSchema>;
 export const xml = (text: string) =>

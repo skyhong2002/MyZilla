@@ -1,0 +1,206 @@
+[hidden] {
+  display: none !important;
+}
+button,
+a,
+input,
+select,
+textarea,
+summary {
+  touch-action: manipulation;
+}
+button,
+.button,
+summary {
+  min-height: 40px;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+:focus-visible {
+  outline: 3px solid #9c6400 !important;
+  outline-offset: 3px;
+}
+a[aria-current="page"] {
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 6px;
+}
+summary {
+  cursor: pointer;
+  padding: 8px 0;
+}
+.ux-toast {
+  position: fixed;
+  z-index: 1000;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: #163d55;
+  color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px #0003;
+  max-width: calc(100vw - 24px);
+  width: max-content;
+  overflow-wrap: anywhere;
+}
+.ux-toast span {
+  min-width: 0;
+}
+.ux-toast button {
+  background: #fff;
+  color: #173c51;
+  border: 1px solid #b6cbd7;
+  white-space: nowrap;
+}
+.ux-error {
+  background: #7a2828;
+}
+.ux-confirm {
+  width: min(520px, calc(100vw - 24px));
+  padding: 24px;
+  border: 1px solid #9bb9cc;
+  border-radius: 8px;
+  color: #263846;
+  background: #fff;
+  max-height: 90vh;
+  overflow: auto;
+}
+.ux-confirm::backdrop {
+  background: #12273799;
+}
+.ux-confirm .actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+}
+.ux-confirm h2 {
+  font-size: 22px;
+}
+.ux-confirm textarea {
+  width: 100%;
+  min-height: 100px;
+}
+.ux-top {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 20;
+  border: 1px solid #9bb9cc;
+  background: #fff;
+  color: #244a65;
+  padding: 8px 12px;
+}
+.ux-toast ~ .ux-top {
+  bottom: 85px;
+}
+[aria-busy="true"] {
+  cursor: progress;
+}
+.help-link {
+  font-size: 13px;
+}
+.field-error {
+  color: #922626;
+  white-space: pre-wrap;
+}
+.filter-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 0;
+}
+.form-error {
+  border-left: 4px solid #a33030;
+  padding: 12px;
+  background: #fff1f1;
+  color: #732323;
+}
+.ux-inline-status {
+  min-height: 1.5em;
+  color: #244a65;
+}
+@media (max-width: 600px) {
+  button,
+  .button,
+  input,
+  select,
+  summary {
+    min-height: 44px;
+  }
+  .ux-toast {
+    flex-wrap: wrap;
+    bottom: 10px;
+  }
+  .ux-toast span {
+    flex-basis: 100%;
+  }
+  .ux-top {
+    font-size: 12px;
+  }
+  nav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+  }
+}
+.ux-confirm form,
+.ux-confirm label {
+  display: grid;
+  gap: 8px;
+}
+.ux-confirm form {
+  margin: 16px 0;
+}
+.ux-confirm input {
+  width: 100%;
+  min-width: 0;
+}
+#help-search {
+  width: min(100%, 560px);
+  display: block;
+  margin-top: 8px;
+}
+#help .community-section {
+  scroll-margin-top: 20px;
+}
+#help li {
+  margin: 12px 0;
+}
+#help h2 {
+  font-size: 23px;
+}
+#dwell-search {
+  flex-wrap: wrap;
+}
+#dwell-search label {
+  min-width: min(240px, 100%);
+}
+
+.skip-link {
+  position: absolute;
+  left: 12px;
+  top: -80px;
+  z-index: 2000;
+  background: #fff;
+  color: #163d55;
+  padding: 12px;
+}
+.skip-link:focus {
+  top: 12px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation: none !important;
+    transition: none !important;
+  }
+}
