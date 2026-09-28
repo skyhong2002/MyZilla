@@ -82,7 +82,7 @@ export function registerSocial(app: Hono, registry: Registry) {
     const id = c.get("account").id;
     const other = db
       .prepare(
-        "SELECT id FROM accounts WHERE handle=? AND password IS NOT NULL",
+        "SELECT id FROM accounts WHERE handle=? AND (password IS NOT NULL OR EXISTS (SELECT 1 FROM google_identities g WHERE g.account=accounts.id))",
       )
       .get(input.data.handle)?.id as string | undefined;
     if (!other || other === id)

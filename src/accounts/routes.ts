@@ -83,8 +83,12 @@ export function registerAccounts(app: Hono, registry: Registry) {
         .prepare("SELECT password FROM accounts WHERE id=?")
         .get(account.id)?.password,
     );
+    const google = registry.db
+      .prepare("SELECT email FROM google_identities WHERE account=?")
+      .get(account.id);
     return c.json({
       ...registry.account(account.id),
+      googleEmail: google?.email ?? null,
       claimed,
       credential: account.credential,
     });

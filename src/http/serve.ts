@@ -4,6 +4,7 @@ import { DatabaseSync } from "node:sqlite";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { createApp } from "../server/app";
+import { googleConfig } from "../accounts/google";
 import { readConfig } from "../config";
 
 export function startServer(mode: "combined" | "ingest" = "combined") {
@@ -11,7 +12,12 @@ export function startServer(mode: "combined" | "ingest" = "combined") {
   const path = config.database;
   mkdirSync(dirname(path), { recursive: true });
   const db = new DatabaseSync(path);
-  const app = createApp(db, config.token, mode);
+  const app = createApp(
+    db,
+    config.token,
+    mode,
+    mode === "combined" ? googleConfig(process.env) : undefined,
+  );
   if (mode === "combined") app.use("*", serveStatic({ root: "./dist/web" }));
   const server = serve(
     {

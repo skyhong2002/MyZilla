@@ -4,7 +4,7 @@
 
 開啟 `/community.html`（「帳號與朋友」）。既有使用者先以原始存取金鑰開啟，再填寫帳號、顯示名稱及至少 12 字元密碼建立擁有者帳號。既有所有歷史直接屬於此私人空間，不搬動、不重匯。之後可用帳號密碼登入，再切換至儀表板。
 
-目前為本機帳號、邀請制；沒有 Google OAuth、電子郵件驗證或自助忘記密碼寄信。請保存密碼及原始擁有者金鑰，該金鑰繼續保有擁有者存取權。
+支援本機帳號與 Google 登入，維持邀請制；沒有本機帳號電子郵件驗證或自助忘記密碼寄信。請保存密碼及原始擁有者金鑰，該金鑰繼續保有擁有者存取權。
 
 擁有者可產生七天有效、只能使用一次的加入邀請碼。朋友在登入頁展開「收到加入邀請？建立帳號」，使用邀請碼建立自己的空白私人空間。加入本站不會自動成為朋友或公開資料。
 
@@ -47,3 +47,22 @@
 `npm test` 驗證帳號隔離、相同來源 ID 在不同帳號的匯入及重播、擁有者接管、單次邀請、憑證撤銷、雙方同意、移除朋友、分享過期／撤銷、HTML escape 與公開登入限流。
 
 `npm run test:community` 以獨立暫存資料庫與兩個 Chromium 工作階段完成：建立擁有者、邀請註冊、登入、同步、朋友接受、相似度、分類修正、分享／撤銷及手機版面。測試不建立正式帳號、不對正式資料開啟配對或產生公開分享。
+
+
+## Google 登入
+
+正式站沿用同機 urtube 的 Google 登入 client；只複製 client ID/secret 到 MyZilla 私密 `.env`，不修改其他網站或取得其使用者權限。Google 同意畫面仍顯示共用 client 的「observe.tw」。
+
+1. 先用 MyZilla 原有帳號或原始金鑰登入 `/community.html`。
+2. 在「帳號」按「連結 Google 帳號」，選擇自己的 Google 帳號。
+3. 之後使用登入頁的「使用 Google 帳號登入」即可回到同一私人空間。沒有本機密碼的擁有者也能連結；原始金鑰仍可恢復存取。
+
+新使用者仍先以邀請碼建立帳號，再連結 Google。未連結的 Google 帳號不自動註冊、不依 email 合併帳號，也不會因為第一個登入而取得 owner。以 Google 穩定 `sub` 對應帳號，一個 Google 身分只連結一個 MyZilla 帳號；目前不提供自行改綁或解除連結介面。
+
+設定 `GOOGLE_CLIENT_ID`、`GOOGLE_CLIENT_SECRET`、`PUBLIC_ORIGIN=https://myzilla.observe.tw`，並在 Google Cloud Web client 登記 `https://myzilla.observe.tw/auth/google/callback`。三者未啟用時隱藏 Google 登入入口；此後端轉址流程不需要 JavaScript origin。憑證不提交 Git、不放前端。
+
+安全流程依 [Google OpenID Connect 文件](https://developers.google.com/identity/openid-connect/openid-connect)：授權碼交換使用 PKCE S256；state 綁定 Secure/HttpOnly/SameSite=Lax 的 host-only cookie，10 分鐘過期且一次使用。官方 google-auth-library 驗證 ID token 簽章／issuer／audience／expiration，再確認 nonce、azp 及已驗證 email。只要求 openid/email/profile，不保存 Google access/refresh token、不取得 Drive 或 YouTube 資料。回呼後用 60 秒一次性 HttpOnly cookie 交接本站 session，POST 檢查固定 Origin，本站 token 不出現在 URL。連結流程在回呼時重新驗證原登入，同步金鑰不能連結帳號。
+
+流程暫存在單一服務程序，重啟後須重做尚未完成的登入；已完成的 Google 身分連結存在 SQLite `google_identities`，隨原有 DB 一起備份。多副本部署前需改用共享流程儲存。
+
+`npm run test:google` 使用獨立記憶體 DB、臨時 HTTPS 憑證與模擬 Google 身分提供者，驗證未連結拒絕、擁有者連結、登入交接、登出／重登與手機布局。正式 Google 頁面測試僅驗證跳轉至登入表單；真實 Google 授權需由使用者在自己的瀏覽器完成。

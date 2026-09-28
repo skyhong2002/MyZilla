@@ -57,3 +57,12 @@ Mac-side verification reported stale local DNS NXDOMAIN despite working public/u
 - 正式 HTTPS `/health`、`/`、`/dashboard.html`、`/community.html` 均為 200。匿名 sources、portal items／feed／export／searches 均為 401；驗證後收藏與匯出正常，歷史報表仍為 100,665 筆。
 - 正式 portal 收藏與公開短網址均為零，沒有測試 fixture 或自動分享。正式部署沿用 systemd、127.0.0.1:18140 及原 Cloudflare Tunnel。
 - 前一階段監測已依使用者回報於 2026-09-27 11:00 Taipei 結束：415 次檢查零失敗，最後新增 4 筆 Chrome 後為 100,665 筆；本次沒有重新啟動該限時監測。
+
+## Google 登入（2026-09-28）
+
+- 沿用同機 urtube 既有 Google login client，複製至 MyZilla 0600 私密 `.env`，未修改其他服務設定。正式回呼為 `https://myzilla.observe.tw/auth/google/callback`。
+- 28 個 API／模型測試通過，包括 Google state/cookie、PKCE、nonce、issuer/audience/expiration、未驗證 email、重播、過期、取消、同步金鑰拒絕、跨帳號連結拒絕與原 session 撤銷。身分驗證生產實作使用官方 google-auth-library；測試注入模擬 provider。
+- 臨時 HTTPS + 記憶體 DB 的 Google 瀏覽器流程通過：未連結拒絕、擁有者連結、一次性交接、登出重登、手機布局。原有社交 UI 測試及非 root 容器測試通過；TypeScript 與完整建置通過。
+- 正式 Google 登入入口已走到 Google 登入表單，顯示共用名稱 observe.tw，未出現 invalid_client 或 redirect_uri_mismatch。沒有代替使用者選擇或授權真實 Google 帳號；首次連結需由使用者登入既有私人空間後完成。
+- 正式健康與 Google 設定端點 200；匿名私人 API 401；偽造 callback state 被拒絕。Google secret 未出現在任何 web／extension 建置產物。
+- 部署前備份 `data/backups/pre-google-20260928.sqlite`。重啟後 100,665 筆正式歷史內容與來源 SHA256 對帳 PASS，私密證據 `data/google-reconciliation.txt`。沒有把測試 Google 身分寫入正式 DB。

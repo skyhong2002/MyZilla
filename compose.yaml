@@ -7,6 +7,9 @@ services:
     environment:
       MYZILLA_TOKEN: ${MYZILLA_TOKEN:?Set MYZILLA_TOKEN in .env}
       MYZILLA_DB: /data/myzilla.sqlite
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-https://myzilla.observe.tw}
       HOST: 0.0.0.0
       PORT: 18140
     ports:

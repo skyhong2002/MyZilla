@@ -65,7 +65,7 @@ export function registerPortal(app: Hono, registry: Registry) {
     c.json({
       users: db
         .prepare(
-          "SELECT a.handle,a.name FROM accounts a JOIN portal_preferences p ON a.id=p.account WHERE p.online=1 AND p.last_seen>? AND a.id<>? AND a.password IS NOT NULL ORDER BY a.handle",
+          "SELECT a.handle,a.name FROM accounts a JOIN portal_preferences p ON a.id=p.account WHERE p.online=1 AND p.last_seen>? AND a.id<>? AND (a.password IS NOT NULL OR EXISTS (SELECT 1 FROM google_identities g WHERE g.account=a.id)) ORDER BY a.handle",
         )
         .all(Date.now() - 300000, c.get("account").id),
     }),

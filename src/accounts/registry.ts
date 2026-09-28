@@ -42,6 +42,7 @@ export class Registry {
   ) {
     db.exec(`CREATE TABLE IF NOT EXISTS accounts(id TEXT PRIMARY KEY, handle TEXT NOT NULL UNIQUE, name TEXT NOT NULL, password TEXT, matching INTEGER NOT NULL DEFAULT 0);
       INSERT OR IGNORE INTO accounts(id,handle,name) VALUES('owner','owner','我的瀏覽空間');
+      CREATE TABLE IF NOT EXISTS google_identities(subject TEXT PRIMARY KEY, account TEXT NOT NULL UNIQUE, email TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS credentials(hash TEXT PRIMARY KEY, account TEXT NOT NULL, kind TEXT NOT NULL, expires INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS invitations(hash TEXT PRIMARY KEY, expires INTEGER NOT NULL, used INTEGER NOT NULL DEFAULT 0);
       CREATE TABLE IF NOT EXISTS friendships(sender TEXT NOT NULL, receiver TEXT NOT NULL, status TEXT NOT NULL, PRIMARY KEY(sender,receiver));

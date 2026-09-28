@@ -14,6 +14,7 @@ const getToken = () => sessionStorage.getItem("myzilla-token") ?? "";
 const saveToken = (token: string) =>
   sessionStorage.setItem("myzilla-token", token);
 let data: any;
+let googleEnabled = false;
 let siteLimit = 50;
 let siteQuery = "";
 let output = "";
@@ -59,7 +60,7 @@ function render() {
   renderSites();
 }
 function login() {
-  return `<div class="community-grid"><section><h2>登入帳號</h2><form data-form="login"><label>帳號<input name="handle" required autocomplete="username"></label><label>密碼<input name="password" type="password" required minlength="12" maxlength="128" autocomplete="current-password"></label><button class="primary">登入</button></form></section><section><h2>已有原始存取金鑰？</h2><p>先開啟私人空間，再建立擁有者帳號，保留全部既有紀錄。</p><form data-form="legacy"><label>存取金鑰<input name="token" type="password" required minlength="32" autocomplete="off"></label><button>使用金鑰開啟</button></form></section></div><details class="community-section"><summary>收到加入邀請？建立帳號</summary><form data-form="register"><label>邀請碼<input name="invitation" required minlength="32" autocomplete="off"></label>${identity}<button class="primary">建立私人帳號</button></form></details>`;
+  return `<div class="community-grid"><section><h2>登入帳號</h2>${googleEnabled ? '<p><a class="google-login" href="/auth/google/start">使用 Google 帳號登入</a></p>' : ""}<form data-form="login"><label>帳號<input name="handle" required autocomplete="username"></label><label>密碼<input name="password" type="password" required minlength="12" maxlength="128" autocomplete="current-password"></label><button class="primary">登入</button></form></section><section><h2>已有原始存取金鑰？</h2><p>先開啟私人空間，再建立擁有者帳號，保留全部既有紀錄。</p><form data-form="legacy"><label>存取金鑰<input name="token" type="password" required minlength="32" autocomplete="off"></label><button>使用金鑰開啟</button></form></section></div><details class="community-section"><summary>收到加入邀請？建立帳號</summary><form data-form="register"><label>邀請碼<input name="invitation" required minlength="32" autocomplete="off"></label>${identity}<button class="primary">建立私人帳號</button></form></details>`;
 }
 function loggedIn() {
   return `<nav class="page-nav" aria-label="帳號與社交導覽">${Object.entries(
@@ -76,6 +77,7 @@ function loggedIn() {
 function account() {
   const me = data.me;
   return `${!me.claimed && me.id === "owner" && me.credential === "legacy" ? `<section><h2>建立擁有者帳號</h2><p>現有 ${data.interests.total.toLocaleString()} 筆造訪會留在此帳號，不需重新匯入。</p><form data-form="claim">${identity}<button class="primary">建立帳號並登入</button></form></section>` : `<p>帳號：<strong>@${esc(me.handle)}</strong></p>`}
+  ${googleEnabled ? `<section><h2>Google 登入</h2>${me.googleEmail ? `<p>已連結：${esc(me.googleEmail)}</p><p>下次可直接使用 Google 登入此私人空間。</p>` : '<p>連結後可用 Google 登入，現有收藏與瀏覽紀錄都會保留。</p><button data-action="google-link">連結 Google 帳號</button>'}</section>` : ""}
   <section><h2>個人設定</h2><form data-form="profile"><label>顯示名稱<input name="name" value="${esc(me.name)}" required maxlength="80"></label><label class="check-label"><input type="checkbox" name="matching" ${me.matching ? "checked" : ""}>讓已接受的朋友比較我的興趣分類摘要</label><p class="note">雙方都開啟才顯示配對。朋友可見名稱、分類比例與造訪總數；看不到網址、標題、裝置或個別時間。關閉後立即停止比較。</p><button>儲存設定</button></form></section>
   <section><h2>瀏覽器同步金鑰</h2><p>用於擴充功能與原生匯入工具，有效一年，可同步及讀取此帳號歷史；不能管理朋友或分享。更換會使上一把同步金鑰失效。</p><div class="actions"><button data-action="device-token">建立／更換同步金鑰</button><button data-action="revoke-device">撤銷同步金鑰</button></div><p class="note">原始擁有者金鑰保持相容，請勿傳給朋友。朋友須使用自己的帳號與同步金鑰。</p></section>
   ${me.id === "owner" ? '<section><h2>邀請加入本站</h2><p>一次性邀請碼，有效七天。新帳號從空白私人空間開始。</p><button data-action="invite">產生邀請碼</button></section>' : ""}
@@ -181,7 +183,11 @@ root.addEventListener("click", (event) => {
     output = "";
     const action = button.dataset.action,
       id = encodeURIComponent(button.dataset.id ?? "");
-    if (action === "logout") {
+    if (action === "google-link") {
+      const { url } = await api("/api/community/google/link", "POST");
+      location.assign(url);
+      return;
+    } else if (action === "logout") {
       await api("/api/community/logout", "POST");
       sessionStorage.removeItem("myzilla-token");
       data = undefined;
@@ -236,4 +242,27 @@ addEventListener("hashchange", () => {
   render();
 });
 render();
-void run(load);
+void run(async () => {
+  const params = new URL(location.href).searchParams;
+  const complete = params.has("google_complete");
+  const error = params.get("google_error");
+  if (complete || error)
+    history.replaceState(null, "", "/community.html" + location.hash);
+  googleEnabled = (await api("/auth/google/config")).enabled;
+  if (complete) {
+    const result = await api("/auth/google/session", "POST");
+    saveToken(result.token);
+    output = "已使用 Google 登入";
+  } else if (error) {
+    const messages: Record<string, string> = {
+      unlinked:
+        "此 Google 帳號尚未連結。請先使用原有帳號或存取金鑰登入，再於帳號設定連結 Google。新使用者請先使用邀請碼建立帳號。",
+      linked: "此 Google 帳號或私人空間已經連結其他帳號，未變更連結。",
+      cancelled: "已取消 Google 登入。",
+      expired: "原登入已過期，請重新登入後連結 Google。",
+      state: "登入驗證已失效，請在同一個瀏覽器重新開始。",
+    };
+    output = messages[error] ?? "Google 登入未完成，請重新嘗試。";
+  }
+  await load();
+});

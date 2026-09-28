@@ -1,6 +1,11 @@
 import type { DatabaseSync } from "node:sqlite";
 import { initializeDatabase } from "../data/database";
 import { Registry } from "../accounts/registry";
+import {
+  registerGoogle,
+  type GoogleConfig,
+  type GoogleExchange,
+} from "../accounts/google";
 import { registerAccounts } from "../accounts/routes";
 import { registerPortal } from "../portal/routes";
 import { registerSocial } from "../social/routes";
@@ -12,6 +17,8 @@ export function createApp(
   db: DatabaseSync,
   token: string,
   mode: "combined" | "ingest" = "combined",
+  google?: GoogleConfig,
+  exchange?: GoogleExchange,
 ) {
   if (token.length < 32)
     throw new Error("MYZILLA_TOKEN must contain at least 32 characters");
@@ -23,6 +30,7 @@ export function createApp(
   if (mode === "combined") {
     registerBrowsing(app, (c) => registry.repository(c.get("account").id));
     registerAccounts(app, registry);
+    registerGoogle(app, registry, google, exchange);
     registerSocial(app, registry);
     registerPortal(app, registry);
   }
