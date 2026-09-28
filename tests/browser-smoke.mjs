@@ -192,6 +192,23 @@ try {
   await extensionPage.waitForFunction(() =>
     document.querySelector("#capture-status")?.textContent?.includes("已暫停"),
   );
+  const collected = await extensionPage.evaluate(async () => {
+    const tabs = await chrome.tabs.query({
+      url: "http://127.0.0.1:18141/health",
+    });
+    const group = await chrome.tabs.group({ tabIds: tabs.map((t) => t.id) });
+    await chrome.tabGroups.update(group, { title: "Fixture shared reading" });
+    return chrome.runtime.sendMessage({ type: "collect-tabs" });
+  });
+  assert.equal(collected.ok, true);
+  assert.ok(
+    collected.data.items.some(
+      (t) =>
+        t.url.endsWith("/health") && t.group.includes("Fixture shared reading"),
+    ),
+  );
+  await extensionPage.getByRole("button", { name: "挑選開啟的分頁" }).click();
+  await extensionPage.locator("[data-tab-pick]").first().waitFor();
   const stored = await worker.evaluate(async () => {
     const request = indexedDB.open("myzilla", 1);
     const db = await new Promise((resolve, reject) => {
@@ -275,6 +292,22 @@ try {
     );
     throw error;
   }
+  await extensionPage.locator("[data-tab-pick]").first().check();
+  await extensionPage
+    .getByRole("button", { name: "將已選分頁加入待整理" })
+    .click();
+  await extensionPage.waitForFunction(() =>
+    document
+      .querySelector("[data-tabs-status]")
+      ?.textContent.includes("新增 1"),
+  );
+  const inbox = await (
+    await fetch(`http://127.0.0.1:${port}/api/curation/inbox`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  ).json();
+  assert.equal(inbox.total, 1);
+  assert.ok(inbox.items[0].url.endsWith("/health"));
   const sources = await (
     await fetch(`http://127.0.0.1:${port}/api/sources`, {
       headers: { Authorization: `Bearer ${token}` },

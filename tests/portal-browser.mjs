@@ -37,7 +37,7 @@ try {
   const page = await context.newPage(),
     errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto(base);
+  await page.goto(base + "/#bookmark");
   await page.locator('[name="token"]').fill(token);
   await page.getByRole("button", { name: "開啟我的入口", exact: true }).click();
   await page.getByRole("button", { name: "新增網址", exact: true }).waitFor();

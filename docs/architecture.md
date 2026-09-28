@@ -48,3 +48,7 @@ npm run db:backup -- data/backups/manual-YYYYMMDD.sqlite --source /path/to/myzil
 ## 個人內容洞察
 
 `src/insights/` 在帳號自己的全量歷史上產生五種內容線索，`insight_feedback` 保存使用者修正。所有讀寫依既有身分隔離；不參與既有朋友匹配或公開分享。分析方法、快取與 API 見 [個人洞察](personal-insights.md)。
+
+## 整理與共同選集
+
+`src/curation/` 承接瀏覽、洞察與舊收藏的明確挑選，提供私人待整理、主題選集、共同編輯與可撤銷分享快照。`src/ui/curation.ts` 是共用加入介面，`workspace.ts` 提供首頁、待整理與選集；`tab-collector.ts` 將擴充功能選取的分頁送到同一個收件入口。原始歷史與個人洞察不自動轉成分享內容。完整角色、資料及分享契約見 [整理與選集](curation.md)。

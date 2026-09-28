@@ -137,7 +137,7 @@ try {
     ).toBeVisible();
   }
   await invalid.close();
-  await page.goto(base);
+  await page.goto(base + "/#bookmark");
   await expect(
     page.getByRole("heading", { name: item.title, exact: true }),
   ).toBeVisible();

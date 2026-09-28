@@ -18,7 +18,8 @@
     "test:portal": "node tests/portal-browser.mjs",
     "test:google": "node --import tsx tests/google-browser.ts",
     "test:insights": "node tests/insights-browser.mjs",
-    "test:usability": "node tests/usability-browser.mjs"
+    "test:usability": "node tests/usability-browser.mjs",
+    "test:curation": "node tests/curation-browser.mjs"
   },
   "keywords": [],
   "type": "module",

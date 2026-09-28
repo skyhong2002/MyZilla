@@ -119,3 +119,7 @@ npm run test:firefox
 - 按 `/` 聚焦目前搜尋欄；長頁提供回到頂部；錯誤可重試並保留輸入。
 
 需要隔離預覽前端時，可用 `npx vite build --outDir data/usability-preview`，測試服務設定 `MYZILLA_WEB_ROOT=./data/usability-preview`。正式服務仍預設 `dist/web`；測試 DB 必須另外指定，不能使用正式 DB。
+
+## 從瀏覽到主題選集
+
+首頁整合關注線索、待整理與選集。從歷史、洞察、時間推估或舊收藏挑選連結，加入選集、編排並寫下推薦理由；可邀朋友共同編輯，再預覽及發布可撤銷的分享快照。擴充功能 0.2.0 也能手動挑選開啟的分頁送入待整理。[完整操作與權限](docs/curation.md)。

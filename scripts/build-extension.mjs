@@ -1,11 +1,12 @@
 import { build } from "esbuild";
 import { cp, mkdir, rm, readFile, writeFile } from "node:fs/promises";
+const webRoot = process.env.MYZILLA_WEB_BUILD ?? "dist/web";
 for (const target of ["chromium", "firefox"]) {
   const dir = `dist/${target}`;
   await rm(dir, { recursive: true, force: true });
   await mkdir(dir, { recursive: true });
-  await cp("dist/web", dir, { recursive: true });
-  await cp("dist/web/dashboard.html", `${dir}/index.html`);
+  await cp(webRoot, dir, { recursive: true });
+  await cp(`${webRoot}/dashboard.html`, `${dir}/index.html`);
   await rm(`${dir}/downloads`, { recursive: true, force: true });
   await build({
     entryPoints: ["src/extension/background.ts"],
@@ -17,6 +18,9 @@ for (const target of ["chromium", "firefox"]) {
   const manifest = JSON.parse(await readFile("public/manifest.json", "utf8"));
   if (target === "firefox") {
     delete manifest.minimum_chrome_version;
+    manifest.permissions = manifest.permissions.filter(
+      (p) => p !== "tabGroups",
+    );
     manifest.background = { scripts: ["background.js"] };
     manifest.browser_specific_settings = {
       gecko: {

@@ -1,3 +1,10 @@
+import { captureButton, installCapture } from "./curation";
+import {
+  workspace,
+  loadWorkspace,
+  installWorkspace,
+  hydrateHome,
+} from "./workspace";
 import "./portal.css";
 import {
   installUX,
@@ -22,6 +29,9 @@ const esc = (s: unknown) =>
       ]!,
   );
 const labels: Record<string, string> = {
+  home: "今日入口",
+  inbox: "待整理",
+  collections: "主題選集",
   bookmark: "我的網址",
   article: "我的網摘",
   movie: "我的電影",
@@ -51,7 +61,7 @@ installUX(root);
 let params = new URL(location.href).searchParams;
 let kind = Object.hasOwn(labels, location.hash.slice(1))
   ? location.hash.slice(1)
-  : "bookmark";
+  : "home";
 let scope = params.get("scope") ?? "all",
   query = params.get("q") ?? "",
   sort = params.get("sort") ?? "recent",
@@ -113,7 +123,7 @@ function state() {
   history.pushState(null, "", u);
 }
 function header() {
-  return `<header><a class="wordmark" href="/"><img class="portal-logo" src="./myzilla-mark.svg" width="96" height="72" alt="">MyZilla<span>我的個人入口</span></a><p>搜尋、收藏、回顧，從自己的生活出發。</p></header><nav class="top-nav" aria-label="主要導覽"><a href="/#bookmark" aria-current="page">我的入口</a><a href="/dashboard.html">瀏覽回顧</a><a href="/dashboard.html#settings">匯入與設定</a><a href="/community.html">帳號與朋友</a><a href="/help.html">使用說明</a>${me || token() ? '<button data-action="logout">登出</button>' : '<a href="/community.html">登入</a>'}</nav>`;
+  return `<header><a class="wordmark" href="/"><img class="portal-logo" src="./myzilla-mark.svg" width="96" height="72" alt="">MyZilla<span>我的個人入口</span></a><p>搜尋、收藏、回顧，從自己的生活出發。</p></header><nav class="top-nav" aria-label="主要導覽"><a href="/#home" ${kind !== "collections" ? 'aria-current="page"' : ""}>我的入口</a><a href="/#collections" ${kind === "collections" ? 'aria-current="page"' : ""}>主題選集</a><a href="/dashboard.html">瀏覽回顧</a><a href="/dashboard.html#settings">匯入與設定</a><a href="/community.html">帳號與朋友</a><a href="/help.html">使用說明</a>${me || token() ? '<button data-action="logout">登出</button>' : '<a href="/community.html">登入</a>'}</nav>`;
 }
 function sidebar() {
   return `<aside><section><h2>快速搜尋</h2><form data-form="search"><label>關鍵字<input name="query" required maxlength="2000"></label><label>搜尋引擎<select name="engine">${options(Object.fromEntries(Object.entries(engines).map(([id, value]) => [id, value.label])), "google")}</select></label><button>搜尋並記錄</button><small>送至所選搜尋網站；記錄僅自己可見。</small></form></section><section><h2>功能選單</h2><nav aria-label="功能選單">${Object.entries(
@@ -142,6 +152,8 @@ function render() {
     )}</nav><div id="notice" role="status" aria-live="polite">${esc(notice)}</div>${copyControl(notice)}${me ? content() : token() ? `<section class="panel"><h1>${labels[kind]}</h1><div class="session-placeholder" aria-label="正在讀取內容"></div></section>` : `<section class="panel"><h1>歡迎回到自己的入口</h1><p>以帳號登入，或用既有金鑰開啟私人收藏與瀏覽回顧。</p><a class="button" href="/community.html">帳號登入／建立帳號</a><form data-form="unlock"><p><a href="/help.html#login">金鑰是什麼？第一次登入說明</a></p><label>存取金鑰<input name="token" type="password" minlength="32" required autocomplete="off"></label><button>開啟我的入口</button></form></section>`}</main>${sidebar()}</div><footer>MyZilla</footer><dialog id="editor" aria-label="收藏編輯與分享"></dialog></div>`;
 }
 function content() {
+  if (["home", "inbox", "collections"].includes(kind))
+    return workspace(kind, listing);
   if (kind === "tools") return tools();
   if (kind === "online")
     return `<h1>線上使用者</h1><p>只列出主動開啟在線顯示、最近五分鐘使用入口的帳號。</p>${listing.users?.map((u: any) => `<article class="item"><strong>${esc(u.name)}</strong> @${esc(u.handle)} <a href="/community.html#friends">加入朋友</a></article>`).join("") || '<p class="empty">目前沒有其他人開啟在線顯示。</p>'}`;
@@ -152,7 +164,7 @@ function content() {
   return `<div class="heading"><h1>${labels[kind]}</h1><button class="primary" data-action="new">新增${kind === "movie" ? "電影" : kind === "mood" ? "心情" : "網址"}</button></div><form data-form="find"><label for="find-query">搜尋${labels[kind]}<input id="find-query" name="query" type="search" value="${esc(query)}" placeholder="標題、網址或標籤"></label><button>搜尋</button></form><div class="filters"><label>生活分類<select id="scope">${options({ all: "全部", ...scopes }, scope)}</select></label><label>排序<select id="sort">${options({ recent: "最近使用", clicks: "點閱次數", created: "最新加入" }, sort)}</select></label><label>內容來源<select id="audience">${options({ mine: "自己的收藏", friends: "朋友分享的收藏" }, audience)}</select></label><span>${scope === "all" ? "全部分類" : scopes[scope as keyof typeof scopes]} · ${listing.total ?? 0} 筆</span></div>${query || scope !== "all" || audience !== "mine" ? `<div class="filter-summary"><span>${query ? `關鍵字：${esc(query)}` : ""} ${scope !== "all" ? esc(scopes[scope as keyof typeof scopes]) : ""}</span><button data-action="clear-filters">清除篩選</button></div>` : ""}${audience === "friends" ? '<p class="note">只顯示已接受的朋友主動分享的項目。</p>' : ""}${listing.items.map(itemMarkup).join("") || '<p class="empty">目前沒有項目。新增收藏，或調整搜尋與分類。</p>'}${pagination()}`;
 }
 function itemMarkup(item: any) {
-  return `<article class="item"><div class="heading"><h2>${esc(item.title)}</h2><small>${item.owner ? esc(item.owner.name) : item.visibility === "friends" ? "朋友可見" : "私人"}</small></div>${item.url ? `<p class="item-url">${esc(item.url)}</p>` : ""}<p>${esc(scopes[item.scope as keyof typeof scopes])} ${item.tags.map((t: string) => `<span class="tag">${esc(t)}</span>`).join("")}</p>${item.kind === "movie" ? `<p>評分 ${item.rating || "尚未評分"}${item.rating ? "/10" : ""} · 看過 ${item.watched} 次${item.wishlist ? " · 願望清單" : ""}${item.collection ? ` · 收藏：${esc(item.collection)}` : ""}</p>` : ""}${item.kind === "mood" ? `<p>${esc(moods[item.mood as keyof typeof moods])} · ${esc(new Date(item.created).toLocaleString("zh-TW"))}</p>` : ""}<p class="notes">${esc(item.notes)}</p><small>${item.clicks} 次開啟${item.lastUsed ? " · 最近 " + esc(new Date(item.lastUsed).toLocaleString("zh-TW")) : ""}</small><div class="actions">${item.url ? (item.owner ? `<a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">開啟網址 ↗</a>` : `<button data-action="open" data-id="${item.id}">開啟網址 ↗</button>`) : ""}${!item.owner ? `<button data-action="edit" data-id="${item.id}">編輯</button>${item.kind === "movie" ? `<button data-action="movie-summary" data-id="${item.id}">朋友觀影概況</button>` : ""}${item.url ? `<button data-action="link" data-id="${item.id}">建立分享連結</button>` : ""}<button data-action="delete" data-id="${item.id}">刪除</button>` : ""}</div></article>`;
+  return `<article class="item"><div class="heading"><h2>${esc(item.title)}</h2><small>${item.owner ? esc(item.owner.name) : item.visibility === "friends" ? "朋友可見" : "私人"}</small></div>${item.url ? `<p class="item-url">${esc(item.url)}</p>` : ""}<p>${esc(scopes[item.scope as keyof typeof scopes])} ${item.tags.map((t: string) => `<span class="tag">${esc(t)}</span>`).join("")}</p>${item.kind === "movie" ? `<p>評分 ${item.rating || "尚未評分"}${item.rating ? "/10" : ""} · 看過 ${item.watched} 次${item.wishlist ? " · 願望清單" : ""}${item.collection ? ` · 收藏：${esc(item.collection)}` : ""}</p>` : ""}${item.kind === "mood" ? `<p>${esc(moods[item.mood as keyof typeof moods])} · ${esc(new Date(item.created).toLocaleString("zh-TW"))}</p>` : ""}<p class="notes">${esc(item.notes)}</p><small>${item.clicks} 次開啟${item.lastUsed ? " · 最近 " + esc(new Date(item.lastUsed).toLocaleString("zh-TW")) : ""}</small><div class="actions">${item.url ? captureButton({ url: item.url, title: item.title }, "放進主題選集") : ""}${item.url ? (item.owner ? `<a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">開啟網址 ↗</a>` : `<button data-action="open" data-id="${item.id}">開啟網址 ↗</button>`) : ""}${!item.owner ? `<button data-action="edit" data-id="${item.id}">編輯</button>${item.kind === "movie" ? `<button data-action="movie-summary" data-id="${item.id}">朋友觀影概況</button>` : ""}${item.url ? `<button data-action="link" data-id="${item.id}">建立分享連結</button>` : ""}<button data-action="delete" data-id="${item.id}">刪除</button>` : ""}</div></article>`;
 }
 function pagination() {
   return `<div class="pagination"><button data-action="previous" ${offset === 0 ? "disabled" : ""}>上一頁</button><span>${listing.total ? offset + 1 : 0}–${Math.min(offset + 20, listing.total ?? 0)} / ${listing.total ?? 0}</span><button data-action="next" ${offset + 20 >= (listing.total ?? 0) ? "disabled" : ""}>下一頁</button></div>`;
@@ -202,7 +214,9 @@ async function load() {
   }
   const nextMe = await api("/api/portal/me");
   let nextListing = listing;
-  if (kind === "tools")
+  if (["home", "inbox", "collections"].includes(kind))
+    nextListing = await loadWorkspace(kind, api);
+  else if (kind === "tools")
     nextListing = { trash: (await api("/api/portal/trash")).items };
   else if (["bookmark", "article", "movie", "mood"].includes(kind))
     nextListing = await api(
@@ -221,15 +235,39 @@ async function load() {
   else if (["links", "online"].includes(kind))
     nextListing = await api("/api/portal/" + kind);
   if (version !== loadVersion || token() !== credential) return;
+  if (
+    ["inbox", "collections"].includes(kind) &&
+    nextListing.total !== undefined &&
+    nextListing.offset > 0 &&
+    nextListing.offset >= nextListing.total
+  ) {
+    const current = new URL(location.href);
+    current.searchParams.set(
+      "offset",
+      String(Math.max(0, Math.floor((nextListing.total - 1) / 20) * 20)),
+    );
+    history.replaceState(null, "", current);
+    return load();
+  }
   me = nextMe;
   listing = nextListing;
-  if (listing.total !== undefined && offset > 0 && offset >= listing.total) {
+  if (
+    !["home", "inbox", "collections"].includes(kind) &&
+    listing.total !== undefined &&
+    offset > 0 &&
+    offset >= listing.total
+  ) {
     offset = Math.max(0, Math.floor((listing.total - 1) / 20) * 20);
     state();
     return load();
   }
   const focused = root.contains(document.activeElement);
   render();
+  if (kind === "home")
+    void hydrateHome(
+      api,
+      () => version === loadVersion && credential === token(),
+    );
   if (focused) focusHeading(root.querySelector("main")!);
   const incoming = new URL(location.href);
   if (incoming.searchParams.has("captureUrl")) {
@@ -326,8 +364,9 @@ function download(value: Blob, name: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 root.addEventListener("submit", (event) => {
-  event.preventDefault();
   const form = event.target as HTMLFormElement;
+  if (form.dataset.workspaceForm) return;
+  event.preventDefault();
   const fields = new FormData(form),
     input = Object.fromEntries(fields) as Record<string, string>;
   void run(async () => {
@@ -638,11 +677,13 @@ const restore = async () => {
   audience = params.get("audience") === "friends" ? "friends" : "mine";
   kind = Object.hasOwn(labels, location.hash.slice(1))
     ? location.hash.slice(1)
-    : "bookmark";
+    : "home";
   await run(load, false);
   restoring = false;
 };
 addEventListener("popstate", restore);
 addEventListener("hashchange", restore);
+installCapture(api, load);
+installWorkspace(root, api, load, () => listing);
 render();
 void run(load, false);

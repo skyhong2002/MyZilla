@@ -73,6 +73,11 @@ try {
     for (let i=0; i<100 && !document.querySelector('#capture-status')?.textContent.includes('已暫停'); i++) await wait();
     if (!document.querySelector('#capture-status')?.textContent.includes('已暫停')) throw new Error('Extension UI did not initialize: '+document.body.innerText);
     const command = async (type, extra = {}) => { const result = await browser.runtime.sendMessage({type, ...extra}); if (!result.ok) throw new Error(result.error); return result.data; };
+    const tab=await browser.tabs.create({url:'http://127.0.0.1:18145/health',active:false});
+    for(let i=0;i<100;i++){ const loaded=await browser.tabs.get(tab.id); if(loaded.status==='complete' && loaded.url==='http://127.0.0.1:18145/health')break; await wait(); }
+    const selected=await command('collect-tabs');
+    if(!selected.items.some(t=>t.url==='http://127.0.0.1:18145/health'))throw new Error('Firefox tab collection missing page');
+    await browser.tabs.remove(tab.id);
     await command('toggle');
     await browser.history.addUrl({url:'https://example.org/firefox-live', title:'Firefox live fixture', visitTime:Date.now()});
     await wait(); await command('toggle');

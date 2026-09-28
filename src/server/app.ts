@@ -8,6 +8,7 @@ import {
 } from "../accounts/google";
 import { registerAccounts } from "../accounts/routes";
 import { registerInsights } from "../insights/routes";
+import { registerCuration } from "../curation/routes";
 import { registerPortal } from "../portal/routes";
 import { registerSocial } from "../social/routes";
 import { registerIngest } from "../browsing/ingest";
@@ -35,6 +36,7 @@ export function createApp(
     registerSocial(app, registry);
     registerPortal(app, registry);
     registerInsights(app, registry);
+    registerCuration(app, registry);
   }
   return app;
 }

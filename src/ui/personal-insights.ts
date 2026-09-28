@@ -1,3 +1,4 @@
+import { captureButton, topicLink } from "./curation";
 import "./personal-insights.css";
 import {
   errorMessage,
@@ -22,7 +23,7 @@ const empty = (s: string) => `<p class="insight-empty">${s}</p>`;
 const evidence = (id: string) =>
   `<details class="insight-evidence" data-evidence="${esc(id)}"><summary>查看依據</summary><div></div></details>`;
 const link = (p: any) =>
-  `<a href="${esc(p.url)}" target="_blank" rel="noopener noreferrer">${esc(p.title || p.url)}</a>`;
+  `<a href="${esc(p.url)}" target="_blank" rel="noopener noreferrer">${esc(p.title || p.url)}</a>${location.protocol.startsWith("http") ? captureButton({ url: p.url, title: p.title || p.url }) : ""}`;
 export function personalInsights(api: Api) {
   let query = "",
     current: any,
@@ -57,7 +58,7 @@ export function personalInsights(api: Api) {
     const tiles = d.topics
       .map(
         (t: any) =>
-          `<article class="topic-card"><div class="topic-head"><h3>${esc(t.label)}</h3><span>${t.mode === "work" ? "工作需要" : t.kind === "rule" ? "規則線索" : "標題關鍵詞"}</span></div><p>${t.days} 天 · ${t.months} 個月 · ${t.pages} 頁 · ${t.sites} 站</p><meter min="0" max="${d.topics[0]?.score || 1}" value="${t.score}" aria-label="${esc(t.label)}的持續出現程度"></meter>${evidence(t.id)}<details><summary>調整這個主題</summary><form data-topic="${t.id}"><label>主題名稱<input name="label" maxlength="80" value="${esc(t.label)}"></label><label>這對我的意義<select name="mode"><option value="interest" ${t.mode === "interest" ? "selected" : ""}>關注的內容</option><option value="work" ${t.mode === "work" ? "selected" : ""}>只是工作需要</option><option value="exclude">分類不準／不重要，排除</option></select></label><button>儲存調整</button></form></details></article>`,
+          `<article class="topic-card"><div class="topic-head"><h3>${esc(t.label)}</h3><span>${t.mode === "work" ? "工作需要" : t.kind === "rule" ? "規則線索" : "標題關鍵詞"}</span></div><p>${t.days} 天 · ${t.months} 個月 · ${t.pages} 頁 · ${t.sites} 站</p><meter min="0" max="${d.topics[0]?.score || 1}" value="${t.score}" aria-label="${esc(t.label)}的持續出現程度"></meter>${evidence(t.id)}${location.protocol.startsWith("http") ? topicLink(t.id, t.label, query) : ""}<details><summary>調整這個主題</summary><form data-topic="${t.id}"><label>主題名稱<input name="label" maxlength="80" value="${esc(t.label)}"></label><label>這對我的意義<select name="mode"><option value="interest" ${t.mode === "interest" ? "selected" : ""}>關注的內容</option><option value="work" ${t.mode === "work" ? "selected" : ""}>只是工作需要</option><option value="exclude">分類不準／不重要，排除</option></select></label><button>儲存調整</button></form></details></article>`,
       )
       .join("");
     root.innerHTML = `<div class="section-heading"><div><h2>看見你的關注方式</h2><p>從 ${d.pages.toLocaleString()} 個頁面，整理持續關注與探索中的變化。<a href="/help.html#insights">如何解讀？</a></p></div></div><details class="insight-method"><summary>分析依據與範圍</summary><p>${d.selected.toLocaleString()} 筆造訪，${d.eligible.toLocaleString()} 筆參與分析；主題涵蓋 ${d.matchedPages.toLocaleString()} 個頁面。${d.utility.toLocaleString()} 筆工具／空白頁與 ${d.nonWeb.toLocaleString()} 筆非網頁紀錄未參與分析，歷史完整保留。依標題與網址判斷，可能分類不準，可逐項修正；同一頁每天只計一次，月份依 ${esc(d.zone)}。主題可重疊，統計不代表實際閱讀時間或人格。</p></details>

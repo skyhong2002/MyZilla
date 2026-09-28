@@ -1,17 +1,22 @@
 {
   "manifest_version": 3,
   "name": "MyZilla — 個人瀏覽回顧",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "回顧造訪紀錄與估計前景時間，同步至自己的 MyZilla 伺服器。",
   "minimum_chrome_version": "120",
-  "permissions": ["history", "tabs", "storage", "idle", "alarms"],
+  "permissions": ["history", "tabs", "storage", "idle", "alarms", "tabGroups"],
   "optional_host_permissions": [
     "https://*/*",
     "http://localhost/*",
     "http://127.0.0.1/*",
     "http://[::1]/*"
   ],
-  "background": { "service_worker": "background.js", "type": "module" },
-  "action": { "default_title": "開啟 MyZilla" },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "開啟 MyZilla"
+  },
   "incognito": "not_allowed"
 }

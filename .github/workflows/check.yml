@@ -24,6 +24,7 @@ jobs:
       - run: npm run test:google
       - run: npm run test:insights
       - run: npm run test:usability
+      - run: npm run test:curation
       - run: npm run test:portal
       - run: npm run test:firefox
       - run: docker build -t myzilla:check .

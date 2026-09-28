@@ -113,6 +113,16 @@ export function registerSocial(app: Hono, registry: Registry) {
     db.prepare(
       "DELETE FROM friendships WHERE (sender=? AND receiver=?) OR (sender=? AND receiver=?)",
     ).run(id, other, other, id);
+    if (
+      db
+        .prepare(
+          "SELECT 1 FROM sqlite_master WHERE type='table' AND name='curation_members'",
+        )
+        .get()
+    )
+      db.prepare(
+        "DELETE FROM curation_members WHERE (account=? AND collection IN (SELECT id FROM curation_collections WHERE account=?)) OR (account=? AND collection IN (SELECT id FROM curation_collections WHERE account=?))",
+      ).run(id, other, other, id);
     return c.json({ ok: true });
   });
   app.get("/api/community/matches", (c) => {
@@ -130,6 +140,7 @@ export function registerSocial(app: Hono, registry: Registry) {
       .map((friend) => {
         const profile = analyze(registry, friend.id);
         return {
+          id: friend.id,
           handle: friend.handle,
           name: friend.name,
           ...compare(mine, profile),

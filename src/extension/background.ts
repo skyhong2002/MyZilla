@@ -301,6 +301,35 @@ browser.runtime.onMessage.addListener(
     )
       return;
     const execute = async () => {
+      if (message.type === "collect-tabs") {
+        const tabs = await browser.tabs.query({});
+        const items = [];
+        let excluded = 0;
+        for (const tab of tabs) {
+          const url = tab.url && webUrl(tab.url);
+          if (tab.incognito || !url) {
+            excluded++;
+            continue;
+          }
+          let group = "未分組";
+          const groupId = (tab as unknown as { groupId?: number }).groupId;
+          if (
+            typeof groupId === "number" &&
+            groupId >= 0 &&
+            typeof chrome !== "undefined" &&
+            chrome.tabGroups?.get
+          ) {
+            try {
+              const g = await chrome.tabGroups.get(groupId);
+              group = `${g.title || "未命名群組"}${g.shared ? "（共享）" : ""} · ${groupId}`;
+            } catch {
+              group = "分頁群組";
+            }
+          }
+          items.push({ url, title: (tab.title || url).slice(0, 500), group });
+        }
+        return { items, excluded };
+      }
       if (message.type === "status")
         return {
           config: await serial(settings),
