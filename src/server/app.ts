@@ -1,3 +1,4 @@
+import { registerFavicons } from "../favicons/routes";
 import type { DatabaseSync } from "node:sqlite";
 import { initializeDatabase } from "../data/database";
 import { Registry } from "../accounts/registry";
@@ -30,6 +31,7 @@ export function createApp(
   const app = createBaseApp(token, registry);
   registerIngest(app, (c) => registry.repository(c.get("account").id));
   if (mode === "combined") {
+    registerFavicons(app);
     registerBrowsing(app, (c) => registry.repository(c.get("account").id));
     registerAccounts(app, registry);
     registerGoogle(app, registry, google, exchange);

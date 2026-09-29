@@ -1,3 +1,4 @@
+import { favicon, configureFavicons } from "./favicons";
 import { installTabCollector } from "./tab-collector";
 import { captureButton, installCapture } from "./curation";
 import "./style.css";
@@ -242,6 +243,10 @@ async function api(path: string, method = "GET", body?: unknown) {
   }
   return response.json();
 }
+configureFavicons(() => ({
+  token,
+  server: extension ? (config?.server ?? "") : "",
+}));
 installUX($("app"));
 const personal = personalInsights(api);
 const dwell = dwellPanel(api);
@@ -295,7 +300,7 @@ function render() {
       .slice(0, 8)
       .map(
         (s, i) =>
-          `<div class="rank"><span class="rank-number">${String(i + 1).padStart(2, "0")}</span><span class="site-icon" aria-hidden="true">${escape(s.domain.slice(0, 1).toUpperCase())}</span><div class="rank-main"><div class="rank-label"><strong>${escape(s.domain)}</strong><span>${value(s[state.metric])}</span></div><div class="bar"><i style="width:${(s[state.metric] / active[0][state.metric]) * 100}%"></i></div></div></div>`,
+          `<div class="rank"><span class="rank-number">${String(i + 1).padStart(2, "0")}</span>${favicon("https://" + s.domain, true)}<div class="rank-main"><div class="rank-label"><strong>${escape(s.domain)}</strong><span>${value(s[state.metric])}</span></div><div class="bar"><i style="width:${(s[state.metric] / active[0][state.metric]) * 100}%"></i></div></div></div>`,
       )
       .join("");
     const parts = active
@@ -322,7 +327,7 @@ function render() {
     .slice(0, siteLimit)
     .map(
       (s) =>
-        `<tr><th scope="row">${escape(s.domain)}</th><td>${s.visits.toLocaleString()}</td><td>${duration(s.milliseconds)}</td></tr>`,
+        `<tr><th scope="row">${favicon("https://" + s.domain)}${escape(s.domain)}</th><td>${s.visits.toLocaleString()}</td><td>${duration(s.milliseconds)}</td></tr>`,
     )
     .join("");
   $("more-sites").hidden = sites.length <= siteLimit;

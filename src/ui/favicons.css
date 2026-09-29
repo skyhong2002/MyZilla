@@ -1,0 +1,51 @@
+.link-favicon {
+  display: inline-flex;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  margin-inline-end: 8px;
+  border-radius: 5px;
+  background: #eaf0f6;
+  color: #34536b;
+  font:
+    600 13px/1 system-ui,
+    sans-serif;
+  vertical-align: middle;
+  overflow: hidden;
+}
+.link-favicon img {
+  position: absolute;
+  inset: 2px;
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+.link-favicon.favicon-loaded {
+  color: transparent;
+  background: transparent;
+}
+.link-favicon.favicon-large {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  font-size: 20px;
+}
+.link-favicon.favicon-large img {
+  width: 28px;
+  height: 28px;
+  inset: 8px;
+}
+.launch-tile > .link-favicon {
+  margin-inline-end: 0;
+}
+.resume-domain .link-favicon {
+  width: 20px;
+  height: 20px;
+  margin-inline-end: 0;
+}
+.resume-domain .link-favicon img {
+  inset: 0;
+}

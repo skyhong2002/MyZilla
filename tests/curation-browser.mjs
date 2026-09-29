@@ -79,6 +79,21 @@ try {
       ? route.continue()
       : route.fulfill({ status: 200, body: "Fixture destination" }),
   );
+  let faviconRequests = 0;
+  await context.route("**/api/favicon?*", (route) => {
+    faviconRequests++;
+    assert.equal(route.request().headers().authorization, `Bearer ${token}`);
+    const url = new URL(route.request().url());
+    assert.deepEqual([...url.searchParams.keys()], ["host"]);
+    return route.fulfill({
+      json: {
+        icon:
+          url.searchParams.get("host") === "missing.example.org"
+            ? null
+            : "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=",
+      },
+    });
+  });
   const page = await context.newPage(),
     errors = [];
   page.on("console", (m) => {
@@ -96,6 +111,24 @@ try {
     page.getByRole("heading", { name: "今天，從這裡開始。" }),
   ).toBeVisible();
   await expect(page.locator(".launch-tile")).toHaveCount(1);
+  await expect(page.locator(".launch-tile .favicon-loaded img")).toHaveCount(1);
+  await expect(page.locator(".resume-card .favicon-loaded")).toHaveCount(6);
+  assert.equal(faviconRequests, 1, "same host shares one favicon request");
+  await page.locator("main").evaluate((main) => {
+    const link = document.createElement("a");
+    link.href = "https://missing.example.org/private?secret=fixture";
+    link.id = "favicon-fallback-fixture";
+    link.textContent = "Missing favicon fixture";
+    main.prepend(link);
+  });
+  await expect.poll(() => faviconRequests).toBe(2);
+  await expect(
+    page.locator("#favicon-fallback-fixture .link-favicon"),
+  ).toHaveText("M");
+  await expect(page.locator("#favicon-fallback-fixture img")).toHaveCount(0);
+  await page
+    .locator("#favicon-fallback-fixture")
+    .evaluate((node) => node.remove());
   const popupPromise = page.waitForEvent("popup");
   await page.locator(".launch-tile").click();
   const popup = await popupPromise;
@@ -113,6 +146,7 @@ try {
   await homeSearch.getByRole("button", { name: "搜尋", exact: true }).click();
   await expect(page.locator("#search")).toHaveValue("OAuth");
   await expect(page.locator(".visit").first()).toBeVisible();
+  await expect(page.locator(".visit .favicon-loaded").first()).toBeVisible();
   await page.goto(base);
   const google = page.locator('[data-workspace-form="home-search"]');
   await google.locator('[name="where"]').selectOption("google");

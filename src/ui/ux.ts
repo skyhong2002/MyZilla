@@ -1,3 +1,4 @@
+import { installFavicons } from "./favicons";
 import { installIcons } from "./icons";
 import "./ux.css";
 export const escapeText = (value: unknown) =>
@@ -194,6 +195,7 @@ export async function discardChanges(root: ParentNode) {
 }
 export function installUX(root: HTMLElement) {
   installIcons(root);
+  installFavicons(root);
   root.addEventListener("input", (e) => {
     const input = e.target as HTMLInputElement;
     const form = input.closest("form");

@@ -1,3 +1,4 @@
+import { favicon } from "./favicons";
 import { icon } from "./icons";
 import { webUrl } from "../shared/model";
 import {
@@ -132,12 +133,12 @@ export function workspace(kind: string, data: any) {
         .slice(0, 8)
         .map(
           (v: any) =>
-            `<button type="button" class="launch-tile" data-action="open" data-id="${v.id}"><span class="icon-tile">${icon("globe")}</span><strong>${esc(v.title)}</strong><small>${esc(new URL(v.url).hostname)}</small></button>`,
+            `<button type="button" class="launch-tile" data-action="open" data-id="${v.id}">${favicon(v.url, true)}<strong>${esc(v.title)}</strong><small>${esc(new URL(v.url).hostname)}</small></button>`,
         )
         .join("") ||
       `<a class="shortcut-empty" href="/#bookmark"><span class="icon-tile">${icon("plus")}</span><span><strong>把每天會用的網站放在這裡</strong><small>從「我的網址」新增收藏，常開的會排在前面。</small></span></a>`
     }</div></section>
-    <section class="workspace-section"><div class="heading"><h2>${icon("clock")}接著上次看</h2><a href="/dashboard.html#history">全部瀏覽紀錄 →</a></div><div class="resume-grid">${recent.map((v: any) => `<article class="resume-card"><span class="resume-domain">${icon("globe")}${esc(new URL(v.url).hostname)} · ${date(v.visitedAt)}</span><h3><a href="${esc(v.url)}" target="_blank" rel="noopener noreferrer">${esc(v.title || v.url)}</a></h3><div class="actions">${captureButton(v, "整理這個連結")}<a class="save-shortcut" href="/?captureUrl=${encodeURIComponent(v.url)}&captureTitle=${encodeURIComponent((v.title || v.url).slice(0, 500))}#bookmark">${icon("bookmark")}加到我的網址</a></div></article>`).join("") || '<p class="empty">同步瀏覽紀錄後，可以從這裡接著看。<a href="/dashboard.html#settings">設定同步 →</a></p>'}</div></section>
+    <section class="workspace-section"><div class="heading"><h2>${icon("clock")}接著上次看</h2><a href="/dashboard.html#history">全部瀏覽紀錄 →</a></div><div class="resume-grid">${recent.map((v: any) => `<article class="resume-card"><span class="resume-domain">${favicon(v.url)}${esc(new URL(v.url).hostname)} · ${date(v.visitedAt)}</span><h3><a href="${esc(v.url)}" target="_blank" rel="noopener noreferrer">${esc(v.title || v.url)}</a></h3><div class="actions">${captureButton(v, "整理這個連結")}<a class="save-shortcut" href="/?captureUrl=${encodeURIComponent(v.url)}&captureTitle=${encodeURIComponent((v.title || v.url).slice(0, 500))}#bookmark">${icon("bookmark")}加到我的網址</a></div></article>`).join("") || '<p class="empty">同步瀏覽紀錄後，可以從這裡接著看。<a href="/dashboard.html#settings">設定同步 →</a></p>'}</div></section>
     <nav class="entry-doors" aria-label="生活入口"><a class="entry-door" href="/#movie"><span class="icon-tile">${icon("movie")}</span><span><strong>我的電影</strong><small>想看的、看過的，留在一起</small></span></a><a class="entry-door" href="/#mood"><span class="icon-tile">${icon("heart")}</span><span><strong>記下心情</strong><small>留一點今天的自己</small></span></a><a class="entry-door" href="/#article"><span class="icon-tile">${icon("article")}</span><span><strong>我的網摘</strong><small>找回值得重讀的文章</small></span></a></nav>
     <section class="workspace-section"><div class="heading"><h2>${icon("compass")}持續關注的線索</h2><a href="/dashboard.html#insights">全部洞察 →</a></div><div data-home-insights aria-label="關注線索"><p class="note">關注線索整理中；你可以先使用上方的入口。</p></div></section>
     <section class="workspace-section"><div class="heading"><h2>${icon("layers")}繼續整理</h2><a href="/#collections">所有選集 →</a></div><div class="workspace-grid">${data.collections?.items.slice(0, 3).map(card).join("") || `<div class="home-empty"><span class="icon-tile">${icon("layers")}</span><p>有幾篇想放在一起？為它們建立一份選集。</p>${action("create", "建立主題選集")}</div>`}</div></section>

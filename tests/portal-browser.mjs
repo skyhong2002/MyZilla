@@ -54,7 +54,7 @@ try {
   await page
     .getByRole("heading", { name: "研究書籤 <img src=x>", exact: true })
     .waitFor();
-  assert.equal(await page.locator("main img").count(), 0);
+  assert.equal(await page.locator("main img:not([data-favicon])").count(), 0);
   await page.locator("#scope").selectOption("home");
   await page
     .getByText("目前沒有項目。新增收藏，或調整搜尋與分類。", { exact: true })
