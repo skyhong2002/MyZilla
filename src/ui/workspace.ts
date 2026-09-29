@@ -1,3 +1,5 @@
+import { icon } from "./icons";
+import { webUrl } from "../shared/model";
 import {
   captureButton,
   chooseDestination,
@@ -30,7 +32,7 @@ const pager = (
 const card = (v: any) =>
   v.archived
     ? `<article class="collection-card"><h3>${esc(v.title)}</h3><p>${v.count} 個連結 · 已封存</p>${action("restore-collection", "復原為私人選集", v.id)}</article>`
-    : `<a class="collection-card" href="${href("collections", { collection: v.id })}"><small>${v.role === "editor" ? "共同編輯" : v.role === "reader" ? esc(v.owner) + " 分享" : v.visibility === "friends" ? "朋友可見" : "私人選集"}</small><h3>${esc(v.title)}</h3><p>${esc(v.description || "把值得留下的連結放在一起。")}</p><span>${v.count} 個連結 · ${date(v.updated)}</span><p>${v.tags.map((t: string) => `<span class="tag">${esc(t)}</span>`).join("")}</p></a>`;
+    : `<a class="collection-card" href="${href("collections", { collection: v.id })}"><span class="icon-tile">${icon(v.role === "editor" ? "users" : "layers")}</span><small>${v.role === "editor" ? "共同編輯" : v.role === "reader" ? esc(v.owner) + " 分享" : v.visibility === "friends" ? "朋友可見" : "私人選集"}</small><h3>${esc(v.title)}</h3><p>${esc(v.description || "把值得留下的連結放在一起。")}</p><span>${v.count} 個連結 · ${date(v.updated)}</span><p>${v.tags.map((t: string) => `<span class="tag">${esc(t)}</span>`).join("")}</p></a>`;
 export async function hydrateHome(api: Api, valid: () => boolean) {
   const target = document.querySelector<HTMLElement>("[data-home-insights]");
   if (!target) return;
@@ -42,11 +44,17 @@ export async function hydrateHome(api: Api, valid: () => boolean) {
         ?.filter((t: any) => t.mode !== "work")
         .map(
           (t: any) =>
-            `<article class="topic-preview"><small>${t.days} 個活躍日 · ${t.months} 個月</small><h3>${esc(t.label)}</h3><p>${t.pages} 個不同頁面，來自 ${t.sites} 個網站。</p>${topicLink(t.id, t.label)}</article>`,
+            `<article class="topic-preview"><span class="icon-tile">${icon("compass")}</span><small>${t.days} 個活躍日 · ${t.months} 個月</small><h3>${esc(t.label)}</h3><p>${t.pages} 個不同頁面，來自 ${t.sites} 個網站。</p>${topicLink(t.id, t.label)}</article>`,
         )
         .join("") ||
       '<p class="empty">更多不同日期的內容累積後，這裡會出現主題。<a href="/dashboard.html#history">先從歷史挑選 →</a></p>'
     }</div>`;
+    const revisit = data.highlights?.long;
+    if (revisit)
+      target.insertAdjacentHTML(
+        "beforeend",
+        `<article class="home-lens revisit-lens"><div class="lens-label">${icon("undo")}值得再打開</div><h3><a href="${esc(revisit.url)}" target="_blank" rel="noopener noreferrer">${esc(revisit.title || revisit.url)}</a></h3><p>曾在 ${revisit.months} 個月份、${revisit.days} 個不同日期回訪。</p><div class="actions">${captureButton(revisit, "放進選集")}<a href="${esc(revisit.url)}" target="_blank" rel="noopener noreferrer">再次開啟 →</a></div></article>`,
+      );
   } catch (e) {
     if (valid() && target.isConnected)
       target.innerHTML = `<p role="alert">${esc(errorMessage(e))} ${action("retry", "重試")}</p>`;
@@ -61,14 +69,18 @@ export async function loadWorkspace(kind: string, api: Api) {
       api("/api/curation/inbox"),
       api("/api/curation/collections"),
       api("/api/curation/collections?audience=friends"),
+      api("/api/portal/items?kind=bookmark&sort=clicks"),
+      api(`/api/visits?from=0&to=${end()}&offset=0&limit=50`),
     ]);
-    const [inbox, collections, friends] = results.map((r) =>
+    const [inbox, collections, friends, bookmarks, recent] = results.map((r) =>
       r.status === "fulfilled" ? r.value : null,
     );
     return {
       inbox,
       collections,
       friends,
+      bookmarks,
+      recent,
       failed: results.some((r) => r.status === "rejected"),
     };
   }
@@ -104,17 +116,42 @@ export function workspace(kind: string, data: any) {
   const p = new URL(location.href).searchParams;
   const search = (placeholder: string) =>
     `<form data-workspace-form="search" class="workspace-search"><label>搜尋<input name="q" type="search" maxlength="2000" value="${esc(p.get("q") ?? "")}" placeholder="${placeholder}"></label><button>搜尋</button></form>`;
-  if (kind === "home")
-    return `<div data-workspace><div class="workspace-intro"><span class="eyebrow">我的入口</span><h1>從看過的，找到值得留下的。</h1><p>接著探索你的關注，或把幾個連結整理成自己的選集。</p><div class="actions"><a class="button primary" href="/#inbox">待整理 ${data.inbox?.total ?? ""}</a>${action("paste", "加入連結")}<a href="/dashboard.html#history">找回看過的頁面 →</a></div></div>${data.failed ? `<p role="alert">部分內容尚未讀取。${action("retry", "重試")}</p>` : ""}<section class="workspace-section"><div class="heading"><h2>持續關注的線索</h2><a href="/dashboard.html#insights">全部洞察 →</a></div><div data-home-insights aria-label="關注線索"><p class="note">關注線索整理中；你可以先繼續整理選集。</p></div></section><section class="workspace-section"><div class="heading"><h2>繼續整理</h2><a href="/#collections">所有選集 →</a></div><div class="workspace-grid">${data.collections?.items.slice(0, 3).map(card).join("") || `<p>先挑幾個頁面，為它們取個名字。${action("create", "建立主題選集")}</p>`}</div></section><section class="workspace-section"><div class="heading"><h2>待整理</h2><a href="/#inbox">全部 ${data.inbox?.total ?? 0} 筆 →</a></div>${
+  if (kind === "home") {
+    const visited = new Set<string>();
+    const recent = (data.recent?.visits ?? [])
+      .filter((v: any) => {
+        if (!webUrl(v.url) || visited.has(v.url)) return false;
+        visited.add(v.url);
+        return true;
+      })
+      .slice(0, 6);
+    return `<div data-workspace class="daily-home"><div class="workspace-intro"><span class="eyebrow">${esc(new Date().toLocaleDateString("zh-TW", { month: "long", day: "numeric", weekday: "long" }))}</span><h1>今天，從這裡開始。</h1><p>找回看過的、打開常用的，接著自己的步調。</p><form class="home-search" data-workspace-form="home-search"><label><span class="sr-only">搜尋關鍵字</span><input name="q" type="search" required maxlength="2000" placeholder="找一篇看過的文章，或開始新的搜尋…"></label><label class="search-destination"><span class="sr-only">搜尋範圍</span><select name="where"><option value="history">我的瀏覽紀錄</option><option value="google">Google</option></select></label><button class="primary">${icon("search")}搜尋</button></form></div>
+    ${data.failed ? `<p role="alert">部分內容尚未讀取。${action("retry", "重試")}</p>` : ""}
+    <section class="workspace-section daily-shortcuts"><div class="heading"><h2>${icon("bookmark")}常用收藏</h2><a href="/#bookmark">管理我的網址 →</a></div><div class="shortcut-grid">${
+      data.bookmarks?.items
+        .slice(0, 8)
+        .map(
+          (v: any) =>
+            `<button type="button" class="launch-tile" data-action="open" data-id="${v.id}"><span class="icon-tile">${icon("globe")}</span><strong>${esc(v.title)}</strong><small>${esc(new URL(v.url).hostname)}</small></button>`,
+        )
+        .join("") ||
+      `<a class="shortcut-empty" href="/#bookmark"><span class="icon-tile">${icon("plus")}</span><span><strong>把每天會用的網站放在這裡</strong><small>從「我的網址」新增收藏，常開的會排在前面。</small></span></a>`
+    }</div></section>
+    <section class="workspace-section"><div class="heading"><h2>${icon("clock")}接著上次看</h2><a href="/dashboard.html#history">全部瀏覽紀錄 →</a></div><div class="resume-grid">${recent.map((v: any) => `<article class="resume-card"><span class="resume-domain">${icon("globe")}${esc(new URL(v.url).hostname)} · ${date(v.visitedAt)}</span><h3><a href="${esc(v.url)}" target="_blank" rel="noopener noreferrer">${esc(v.title || v.url)}</a></h3><div class="actions">${captureButton(v, "整理這個連結")}<a class="save-shortcut" href="/?captureUrl=${encodeURIComponent(v.url)}&captureTitle=${encodeURIComponent((v.title || v.url).slice(0, 500))}#bookmark">${icon("bookmark")}加到我的網址</a></div></article>`).join("") || '<p class="empty">同步瀏覽紀錄後，可以從這裡接著看。<a href="/dashboard.html#settings">設定同步 →</a></p>'}</div></section>
+    <nav class="entry-doors" aria-label="生活入口"><a class="entry-door" href="/#movie"><span class="icon-tile">${icon("movie")}</span><span><strong>我的電影</strong><small>想看的、看過的，留在一起</small></span></a><a class="entry-door" href="/#mood"><span class="icon-tile">${icon("heart")}</span><span><strong>記下心情</strong><small>留一點今天的自己</small></span></a><a class="entry-door" href="/#article"><span class="icon-tile">${icon("article")}</span><span><strong>我的網摘</strong><small>找回值得重讀的文章</small></span></a></nav>
+    <section class="workspace-section"><div class="heading"><h2>${icon("compass")}持續關注的線索</h2><a href="/dashboard.html#insights">全部洞察 →</a></div><div data-home-insights aria-label="關注線索"><p class="note">關注線索整理中；你可以先使用上方的入口。</p></div></section>
+    <section class="workspace-section"><div class="heading"><h2>${icon("layers")}繼續整理</h2><a href="/#collections">所有選集 →</a></div><div class="workspace-grid">${data.collections?.items.slice(0, 3).map(card).join("") || `<div class="home-empty"><span class="icon-tile">${icon("layers")}</span><p>有幾篇想放在一起？為它們建立一份選集。</p>${action("create", "建立主題選集")}</div>`}</div></section>
+    <section class="workspace-section"><div class="heading"><h2>${icon("inbox")}待整理 <small>${data.inbox?.total ?? 0}</small></h2><div class="actions">${action("paste", "加入連結")}<a href="/#inbox">全部待整理 →</a></div></div>${
       data.inbox?.items
         .slice(0, 3)
         .map(
           (v: any) =>
             `<div class="workspace-row"><strong>${esc(v.title)}</strong>${captureButton(v, "放進選集")}</div>`,
         )
-        .join("") ||
-      "<p>在瀏覽歷史、洞察依據或我的網址中按「整理這個連結」，就能先留下來。</p>"
-    }</section><section class="workspace-section"><div class="heading"><h2>朋友正在分享</h2><a href="/?audience=friends#collections">探索朋友選集 →</a></div><div class="workspace-grid">${data.friends?.items.slice(0, 3).map(card).join("") || '<p>朋友主動分享的選集會出現在這裡。<a href="/community.html#friends">找朋友一起整理 →</a></p>'}</div></section></div>`;
+        .join("") || "<p>隨手留下的連結會在這裡，想整理時再回來。</p>"
+    }</section>
+    <section class="workspace-section"><div class="heading"><h2>${icon("users")}朋友正在分享</h2><a href="/?audience=friends#collections">探索朋友選集 →</a></div><div class="workspace-grid">${data.friends?.items.slice(0, 3).map(card).join("") || '<p>朋友主動分享的選集會出現在這裡。<a href="/community.html#friends">找朋友一起整理 →</a></p>'}</div></section></div>`;
+  }
   if (kind === "inbox")
     return `<div data-workspace><div class="heading"><h1>${data.evidence ? esc(p.get("topicName") || "主題") + "：挑選頁面" : "待整理"}</h1>${action("paste", "加入連結")}</div><p>${data.evidence ? "依據你的瀏覽紀錄整理。勾選值得留下的頁面，再加入待整理或選集。" : "先留下，再決定如何整理。略過與保留都不會刪除原始瀏覽紀錄。"}</p>${
       !data.evidence
@@ -205,6 +242,28 @@ export function installWorkspace(
       data = current(),
       d = data.detail;
     void run(async () => {
+      if (form.dataset.workspaceForm === "home-search") {
+        if (fields.where === "google") {
+          const popup = window.open("", "_blank");
+          if (popup) popup.opener = null;
+          try {
+            const result = await api("/api/portal/search", "POST", {
+              engine: "google",
+              query: String(fields.q),
+            });
+            if (popup) popup.location.href = result.url;
+            else location.href = result.url;
+          } catch (error) {
+            popup?.close();
+            throw error;
+          }
+        } else
+          location.href =
+            "/dashboard.html?" +
+            new URLSearchParams({ q: String(fields.q) }) +
+            "#history";
+        return;
+      }
       if (form.dataset.workspaceForm === "search") {
         const u = new URL(location.href);
         u.searchParams.set("q", String(fields.q));

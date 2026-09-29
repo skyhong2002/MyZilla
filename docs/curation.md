@@ -60,3 +60,10 @@ API 參考：[Chromium tabGroups](https://developer.chrome.com/docs/extensions/r
 正式資料保護：部署前建立 `data/backups/pre-curation-20260929.sqlite`，依 `data/final-expected-reconciliation.json` 核對 14 個來源的 100,665 筆歷史；測試一律使用隔離資料庫與瀏覽器 profile。主機 `/tmp` 空間不足時，測試可設 `TMPDIR=$PWD/data/test-tmp`。新前端先建置至 `data/curation-preview`，用 `MYZILLA_WEB_ROOT=./data/curation-preview` 驗證後才切換正式 HTML；舊版雜湊資產暫時保留，供已開啟頁面完成載入。
 
 本次驗證結果：40 項 API／模型測試、2 項匯入／備份測試，以及選集、舊收藏、可用性、洞察、帳號社交、Chromium 與 Firefox 執行測試通過。正式 HTTPS health=200，匿名 sources／inbox／collections=401，登入後首頁與真實主題依據可讀，部署後原始歷史 SHA256／來源對帳通過。Firefox lint 無 errors／notices，仍有 37 項打包程式碼的動態 HTML／eval 警告；動態文字使用 escaping，XSS 測試通過，未將 lint 警告描述成全數消除。
+
+
+## 日常入口與圖示
+
+首頁優先呈現日期、搜尋、常用收藏與最近看過的六個不同網頁，再呈現電影／心情／網摘入口、主題洞察、跨月回訪、選集與朋友分享。常用收藏取「我的網址」依既有點閱次數排序的前八筆；點擊沿用原本的開啟計數。搜尋可選自己的全部歷史或 Google，後者沿用私人搜尋記錄。最近頁面的日期是實際造訪日期，不把匯入的舊資料描述成今天的活動。首頁的小型清單是展示範圍，完整歷史與收藏仍有原入口可讀。
+
+`src/ui/icons.ts` 提供本站 SVG 圖示與動態頁面的圖示套用；導覽、操作及對話框保留文字標籤，圖示標記 aria-hidden，沒有 icon font、遠端 favicon 或圖示服務請求。`tests/curation-browser.mjs` 增加首頁收藏開啟計數、歷史搜尋、Google 搜尋記錄及圖示呈現驗證，使用獨立 18149 port。

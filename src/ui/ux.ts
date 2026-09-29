@@ -1,3 +1,4 @@
+import { installIcons } from "./icons";
 import "./ux.css";
 export const escapeText = (value: unknown) =>
   String(value ?? "").replace(
@@ -72,6 +73,8 @@ export function confirmAction(
   dialog.setAttribute("aria-labelledby", "ux-confirm-title");
   dialog.setAttribute("aria-describedby", "ux-confirm-description");
   dialog.innerHTML = `<h2 id="ux-confirm-title">${escapeText(title)}</h2><p id="ux-confirm-description">${escapeText(description)}</p><div class="actions"><button data-cancel autofocus>取消</button><button data-confirm class="primary">${escapeText(verb)}</button></div>`;
+  const stopIcons = installIcons(dialog);
+  dialog.addEventListener("close", stopIcons, { once: true });
   document.body.append(dialog);
   return new Promise((resolve) => {
     let done = false;
@@ -190,6 +193,7 @@ export async function discardChanges(root: ParentNode) {
   );
 }
 export function installUX(root: HTMLElement) {
+  installIcons(root);
   root.addEventListener("input", (e) => {
     const input = e.target as HTMLInputElement;
     const form = input.closest("form");
@@ -364,6 +368,8 @@ export function reauthenticate(account: string): Promise<boolean> {
         stop();
       }
     });
+    const stopIcons = installIcons(dialog);
+    dialog.addEventListener("close", stopIcons, { once: true });
     document.body.append(dialog);
     dialog.showModal();
   }).finally(() => {

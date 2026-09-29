@@ -391,3 +391,77 @@ aside nav {
     display: none;
   }
 }
+/* Keep everyday actions above the fold while retaining the MyZilla wordmark. */
+.portal-shell > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  text-align: left;
+  padding: 16px 22px;
+  border-radius: 12px 12px 0 0;
+}
+.portal-shell > header .wordmark {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 27px;
+  white-space: nowrap;
+}
+.portal-shell > header .wordmark span {
+  font-size: 15px;
+  margin-left: 0;
+}
+.portal-shell > header .portal-logo {
+  display: inline-block;
+  width: 48px;
+  height: 36px;
+  margin: 0;
+}
+.portal-shell > header p {
+  font-size: 12px;
+  max-width: 180px;
+}
+.portal-shell .top-nav {
+  gap: 4px 10px;
+}
+.portal-shell .top-nav a,
+.portal-shell .top-nav button {
+  font-size: 14px;
+}
+.portal-shell aside nav a {
+  text-align: left;
+  padding: 6px 10px;
+}
+.portal-shell aside h2 .mz-icon {
+  width: 16px;
+  height: 16px;
+}
+@media (max-width: 720px) {
+  .portal-shell > header {
+    padding: 14px;
+    flex-wrap: wrap;
+  }
+  .portal-shell > header p {
+    display: none;
+  }
+  .portal-shell > header .wordmark {
+    font-size: 24px;
+  }
+  .portal-shell .top-nav {
+    justify-content: flex-start;
+    gap: 4px;
+  }
+  .portal-shell .top-nav a,
+  .portal-shell .top-nav button {
+    font-size: 13px;
+  }
+  .portal-shell .quick-nav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 38px;
+  }
+  .portal-shell .quick-nav {
+    gap: 3px 12px;
+  }
+}

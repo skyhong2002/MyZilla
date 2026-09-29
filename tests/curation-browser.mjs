@@ -5,12 +5,12 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import assert from "node:assert/strict";
 const temp = await mkdtemp(join(tmpdir(), "myzilla-curation-")),
-  base = "http://127.0.0.1:18148",
+  base = "http://127.0.0.1:18149",
   token = "curation-browser-fixture-".repeat(3);
 const server = spawn(process.execPath, ["--import", "tsx", "src/index.ts"], {
   env: {
     ...process.env,
-    PORT: "18148",
+    PORT: "18149",
     HOST: "127.0.0.1",
     MYZILLA_DB: join(temp, "test.sqlite"),
     MYZILLA_TOKEN: token,
@@ -60,6 +60,12 @@ try {
     },
     events,
   });
+  const bookmarkId = crypto.randomUUID();
+  await call("/api/portal/items/" + bookmarkId, "PUT", {
+    kind: "bookmark",
+    title: "每天的研究入口",
+    url: "https://example.org/daily",
+  });
   browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({
     viewport: { width: 1360, height: 1000 },
@@ -67,6 +73,11 @@ try {
   await context.addInitScript(
     (t) => sessionStorage.setItem("myzilla-token", t),
     token,
+  );
+  await context.route("**/*", (route) =>
+    new URL(route.request().url()).origin === base
+      ? route.continue()
+      : route.fulfill({ status: 200, body: "Fixture destination" }),
   );
   const page = await context.newPage(),
     errors = [];
@@ -82,8 +93,38 @@ try {
   });
   await page.goto(base);
   await expect(
-    page.getByRole("heading", { name: "從看過的，找到值得留下的。" }),
+    page.getByRole("heading", { name: "今天，從這裡開始。" }),
   ).toBeVisible();
+  await expect(page.locator(".launch-tile")).toHaveCount(1);
+  const popupPromise = page.waitForEvent("popup");
+  await page.locator(".launch-tile").click();
+  const popup = await popupPromise;
+  await popup.waitForLoadState();
+  await popup.close();
+  await expect
+    .poll(
+      async () => (await call("/api/portal/items?sort=clicks")).items[0].clicks,
+    )
+    .toBe(1);
+  await expect(page.locator(".resume-card")).toHaveCount(6);
+  assert.ok((await page.locator("svg[data-icon]").count()) > 10);
+  const homeSearch = page.locator('[data-workspace-form="home-search"]');
+  await homeSearch.locator('[name="q"]').fill("OAuth");
+  await homeSearch.getByRole("button", { name: "搜尋", exact: true }).click();
+  await expect(page.locator("#search")).toHaveValue("OAuth");
+  await expect(page.locator(".visit").first()).toBeVisible();
+  await page.goto(base);
+  const google = page.locator('[data-workspace-form="home-search"]');
+  await google.locator('[name="where"]').selectOption("google");
+  await google.locator('[name="q"]').fill("閱讀與部署");
+  const googlePopupPromise = page.waitForEvent("popup");
+  await google.getByRole("button", { name: "搜尋", exact: true }).click();
+  const googlePopup = await googlePopupPromise;
+  await googlePopup.waitForLoadState();
+  await googlePopup.close();
+  await expect
+    .poll(async () => (await call("/api/portal/searches")).items[0]?.query)
+    .toBe("閱讀與部署");
   await page.getByRole("link", { name: "挑選相關頁面 →" }).first().click();
   await expect(page.locator("[data-pick]"))
     .toHaveCount(20)

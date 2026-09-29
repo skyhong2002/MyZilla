@@ -1,3 +1,4 @@
+import { installIcons } from "./icons";
 import "./curation.css";
 import {
   escapeText as esc,
@@ -65,6 +66,8 @@ export function modal(title: string, body: string) {
     () => window.removeEventListener("beforeunload", beforeUnload),
     { once: true },
   );
+  const stopIcons = installIcons(dialog);
+  dialog.addEventListener("close", stopIcons, { once: true });
   document.body.append(dialog);
   dialog.showModal();
   return dialog;
