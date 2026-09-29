@@ -1,3 +1,4 @@
+import { siteHeader } from "./shell";
 import { favicon } from "./favicons";
 import { captureButton, installCapture } from "./curation";
 import {
@@ -124,7 +125,12 @@ function state() {
   history.pushState(null, "", u);
 }
 function header() {
-  return `<header><a class="wordmark" href="/"><img class="portal-logo" src="./myzilla-mark.svg" width="96" height="72" alt="">MyZilla<span>我的個人入口</span></a><p>搜尋、收藏、回顧，從自己的生活出發。</p></header><nav class="top-nav" aria-label="主要導覽"><a href="/#home" ${kind !== "collections" ? 'aria-current="page"' : ""}>我的入口</a><a href="/#collections" ${kind === "collections" ? 'aria-current="page"' : ""}>主題選集</a><a href="/dashboard.html">瀏覽回顧</a><a href="/dashboard.html#settings">匯入與設定</a><a href="/community.html">帳號與朋友</a><a href="/help.html">使用說明</a>${me || token() ? '<button data-action="logout">登出</button>' : '<a href="/community.html">登入</a>'}</nav>`;
+  return siteHeader(
+    kind === "collections" ? "collections" : "home",
+    me || token()
+      ? '<button data-action="logout">登出</button>'
+      : '<a href="/community.html">登入</a>',
+  );
 }
 function sidebar() {
   return `<aside><section><h2>快速搜尋</h2><form data-form="search"><label>關鍵字<input name="query" required maxlength="2000"></label><label>搜尋引擎<select name="engine">${options(Object.fromEntries(Object.entries(engines).map(([id, value]) => [id, value.label])), "google")}</select></label><button>搜尋並記錄</button><small>送至所選搜尋網站；記錄僅自己可見。</small></form></section><section><h2>功能選單</h2><nav aria-label="功能選單">${Object.entries(

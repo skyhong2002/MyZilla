@@ -129,6 +129,115 @@ try {
   await page
     .locator("#favicon-fallback-fixture")
     .evaluate((node) => node.remove());
+  const genericRoute = "**/api/visits?*";
+  await page.route(genericRoute, async (route) => {
+    const response = await route.fetch();
+    const body = await response.json();
+    body.visits.unshift(
+      {
+        url: "https://www.facebook.com/photo/?fbid=123",
+        title: "Facebook",
+        visitedAt: Date.now(),
+      },
+      {
+        url: "https://www.facebook.com/reel/456",
+        title: "Facebook",
+        visitedAt: Date.now(),
+      },
+      {
+        url: "https://www.facebook.com/reel/456",
+        title: "Facebook",
+        visitedAt: Date.now() - 1000,
+      },
+    );
+    body.visits = body.visits.slice(0, 50);
+    await route.fulfill({ json: body });
+  });
+  await page.reload();
+  await expect(page.locator(".resume-card")).toHaveCount(6);
+  assert.ok(
+    !(await page.locator(".resume-card h3").allTextContents()).some(
+      (t) => t === "Facebook",
+    ),
+  );
+  const unknown = page.locator(".history-group");
+  await expect(unknown.locator("summary")).toContainText(
+    "Facebook · 3 次造訪 · 2 個網址",
+  );
+  await expect(unknown.locator("li").first()).not.toBeVisible();
+  await unknown.locator("summary").click();
+  await expect(unknown.locator("li")).toHaveCount(2);
+  await expect(unknown.locator("li").first()).toContainText("Facebook · 相片");
+  await expect(unknown.locator("li").first()).toContainText("fbid=123");
+  await expect(unknown.locator("li").nth(1)).toContainText("短片（Reel）");
+  await expect(unknown.locator("li").nth(1)).toContainText("2 次造訪");
+  await page.unroute(genericRoute);
+  await page.reload();
+  for (const width of [1360, 390]) {
+    await page.setViewportSize({ width, height: 1000 });
+    let expectedFrame;
+    for (const path of [
+      "/",
+      "/dashboard.html",
+      "/community.html",
+      "/help.html",
+    ]) {
+      await page.goto(base + path);
+      await expect(page.locator(".app-brand-row")).toBeVisible();
+      let frame;
+      await expect
+        .poll(async () => {
+          frame = await page.locator(".app-brand-row").boundingBox();
+          return !!frame;
+        })
+        .toBe(true);
+      if (!expectedFrame) expectedFrame = frame;
+      for (const key of ["x", "y", "width", "height"])
+        assert.ok(
+          Math.abs(frame[key] - expectedFrame[key]) < 1,
+          `${path} ${width}px: header ${key} ${frame[key]} matches portal ${expectedFrame[key]}`,
+        );
+      assert.ok(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+        `${path} ${width}px fits`,
+      );
+      await expect(page.locator('.app-nav a[aria-current="page"]')).toHaveCount(
+        1,
+      );
+    }
+  }
+  await page.setViewportSize({ width: 1360, height: 1000 });
+  await page.goto(base);
+  const metadata = page
+    .locator(".resume-card")
+    .first()
+    .locator(".resume-domain");
+  const iconBox = await metadata.locator(".link-favicon").boundingBox();
+  const hostBox = await metadata.locator(".resume-host").boundingBox();
+  assert.ok(
+    hostBox.x - (iconBox.x + iconBox.width) >= 6,
+    "favicon has a visible gap before the host",
+  );
+  await page
+    .locator(".resume-card h3")
+    .first()
+    .evaluate(
+      (node) =>
+        (node.textContent =
+          "A deliberately long title that wraps across two lines to check that actions stay aligned with the adjacent short title"),
+    );
+  const actions = await page
+    .locator(".resume-card .actions")
+    .evaluateAll((nodes) =>
+      nodes.slice(0, 2).map((node) => node.getBoundingClientRect().bottom),
+    );
+  assert.ok(
+    Math.abs(actions[0] - actions[1]) < 1,
+    "card actions align despite differing title lengths",
+  );
+  await page.reload();
   const popupPromise = page.waitForEvent("popup");
   await page.locator(".launch-tile").click();
   const popup = await popupPromise;

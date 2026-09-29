@@ -1,3 +1,4 @@
+import { pageLabel } from "../shared/page-label";
 import { captureButton, topicLink } from "./curation";
 import "./personal-insights.css";
 import {
@@ -23,7 +24,7 @@ const empty = (s: string) => `<p class="insight-empty">${s}</p>`;
 const evidence = (id: string) =>
   `<details class="insight-evidence" data-evidence="${esc(id)}"><summary>查看依據</summary><div></div></details>`;
 const link = (p: any) =>
-  `<a href="${esc(p.url)}" target="_blank" rel="noopener noreferrer">${esc(p.title || p.url)}</a>${location.protocol.startsWith("http") ? captureButton({ url: p.url, title: p.title || p.url }) : ""}`;
+  `<a href="${esc(p.url)}" target="_blank" rel="noopener noreferrer">${esc(pageLabel(p).title)}</a>${pageLabel(p).detail ? `<small class="page-clue">${esc(pageLabel(p).detail)}</small>` : ""}${location.protocol.startsWith("http") ? captureButton({ url: p.url, title: p.title || p.url }) : ""}`;
 export function personalInsights(api: Api) {
   let query = "",
     current: any,

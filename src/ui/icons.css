@@ -330,3 +330,159 @@ h2 > .mz-icon {
     flex-wrap: wrap;
   }
 }
+
+/* Card content uses explicit rows, with shared spacing and anchored actions. */
+.daily-home .workspace-section {
+  margin: 28px 0;
+}
+.daily-home .heading {
+  margin-bottom: 12px;
+  align-items: center;
+}
+.daily-home .heading h2 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.daily-home .heading h2 > .mz-icon {
+  margin: 0;
+}
+.daily-home .heading > a {
+  font-size: 13px;
+  flex: none;
+}
+.resume-grid {
+  gap: 16px;
+}
+.resume-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+}
+.resume-card .resume-domain {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  white-space: normal;
+  overflow: visible;
+  font-size: 12px;
+}
+.resume-domain .link-favicon {
+  margin: 0;
+  flex: none;
+}
+.resume-domain .resume-host {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.resume-domain time {
+  margin-left: auto;
+  white-space: nowrap;
+  font-size: 11px;
+  flex: none;
+}
+.resume-card h3 {
+  margin: 0;
+  font-size: 16px;
+  min-height: 0;
+  line-height: 1.5;
+}
+.resume-card .actions {
+  margin: auto 0 0;
+  padding-top: 2px;
+  gap: 8px 12px;
+}
+.resume-card .actions > button,
+.resume-card .actions > a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.resume-card .actions .mz-icon {
+  margin: 0;
+  width: 16px;
+  height: 16px;
+}
+.daily-home .topic-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+}
+.topic-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.topic-meta .icon-tile {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  margin: 0;
+}
+.topic-meta .icon-tile .mz-icon {
+  width: 20px;
+  height: 20px;
+}
+.topic-meta small {
+  line-height: 1.5;
+}
+.daily-home .topic-preview h3,
+.daily-home .topic-preview p {
+  margin: 0;
+  line-height: 1.5;
+}
+.daily-home .topic-preview p {
+  font-size: 14px;
+}
+.daily-home .topic-preview > .button {
+  margin-top: auto;
+  align-self: flex-start;
+}
+.history-group summary .link-favicon {
+  margin-inline-end: 8px;
+}
+@media (max-width: 420px) {
+  .resume-card {
+    padding: 14px;
+  }
+  .resume-card .resume-domain {
+    gap: 6px;
+  }
+  .daily-home .heading {
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
+.collection-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.collection-meta .icon-tile {
+  margin: 0;
+  width: 36px;
+  height: 36px;
+}
+.collection-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.collection-card h3,
+.collection-card p {
+  margin: 0;
+}
+.collection-card p:empty {
+  display: none;
+}

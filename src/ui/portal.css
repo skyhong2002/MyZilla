@@ -292,7 +292,7 @@ footer {
 }
 @media (max-width: 720px) {
   .portal-shell {
-    padding: 12px;
+    padding: 14px;
   }
   .portal-layout {
     grid-template-columns: 1fr;

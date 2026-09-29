@@ -1,3 +1,4 @@
+import { siteHeader } from "./shell";
 import "./style.css";
 import "./classic.css";
 import "./community.css";
@@ -84,7 +85,7 @@ function render() {
     new URL(location.href).searchParams.has("google_complete");
   renderedURL = location.href;
   document.title = `${signedIn ? views[view() as keyof typeof views] : "登入"} · MyZilla`;
-  root.innerHTML = `<a class="skip-link" href="#community-main">跳到主要內容</a><header class="site-header"><a class="brand" href="/"><img class="brand-logo" src="./myzilla-mark.svg" width="48" height="36" alt=""><strong>MyZilla</strong></a><nav class="site-nav" aria-label="主要導覽"><a href="/">我的入口</a><a href="/#collections">主題選集</a><a href="/dashboard.html">瀏覽回顧</a><a href="/dashboard.html#settings">匯入與設定</a><a href="/community.html" aria-current="page">帳號與朋友</a><a href="/help.html">使用說明</a>${signedIn ? '<button data-action="logout">登出</button>' : ""}</nav></header><main id="community-main" tabindex="-1" class="site-main community-main"><section class="profile"><div><div class="eyebrow">YOUR SPACE, YOUR CONNECTIONS</div><h1>${data ? `${esc(data.me.name)} 的空間` : signedIn ? "我的空間" : "你的瀏覽，也能成為交流的起點"}</h1><p>私人歷史留給自己；選擇要分享的興趣摘要。</p></div></section><p id="community-message" role="status" aria-live="polite">${esc(output)}</p>${copyControl(output)}${
+  root.innerHTML = `<a class="skip-link" href="#community-main">跳到主要內容</a>${siteHeader("community", signedIn ? '<button data-action="logout">登出</button>' : "")}<main id="community-main" tabindex="-1" class="site-main community-main"><section class="profile"><div><h1>${data ? `${esc(data.me.name)} 的空間` : signedIn ? "我的空間" : "你的瀏覽，也能成為交流的起點"}</h1><p>私人歷史留給自己；選擇要分享的興趣摘要。</p></div></section><p id="community-message" role="status" aria-live="polite">${esc(output)}</p>${copyControl(output)}${
     data
       ? loggedIn()
       : signedIn

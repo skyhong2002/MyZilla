@@ -1,3 +1,5 @@
+import { siteHeader } from "./shell";
+import { pageLabel } from "../shared/page-label";
 import { favicon, configureFavicons } from "./favicons";
 import { installTabCollector } from "./tab-collector";
 import { captureButton, installCapture } from "./curation";
@@ -78,9 +80,9 @@ const colors = [
 
 $("app").innerHTML = `
 <a class="skip-link" href="#page-title">跳到主要內容</a>
-<header class="site-header"><a class="brand" href="#overview" data-view="overview"><img class="brand-logo" src="./myzilla-mark.svg" width="48" height="36" alt=""><span><strong>MyZilla</strong><small>BROWSING, REVISITED</small></span></a><nav class="site-nav" aria-label="主要導覽">${extension ? "" : '<a href="/">我的入口</a><a href="/#collections">主題選集</a>'}<a href="#overview" data-view="overview" data-main-nav="dashboard">瀏覽回顧</a><a href="#settings" data-view="settings" data-main-nav="settings">匯入與設定</a>${extension ? "" : '<a href="/community.html">帳號與朋友</a><a href="/help.html">使用說明</a><button id="logout" type="button" hidden>登出</button>'}</nav></header>
+${siteHeader("dashboard", extension ? "" : '<button id="logout" type="button" hidden>登出</button>', true, extension)}
 <main class="site-main">
-<section class="profile"><div class="avatar" aria-hidden="true">M</div><div class="profile-copy"><div class="eyebrow">PERSONAL BROWSING ARCHIVE</div><div class="title-row"><h1 id="page-title" tabindex="-1">我的瀏覽空間</h1><span class="private-badge">私人</span></div><p id="page-scope">總覽 · 全部紀錄</p></div><a href="#settings" data-view="settings" class="button profile-action">匯入紀錄 <span aria-hidden="true">↗</span></a></section>
+<section class="profile"><div class="profile-copy"><div class="title-row"><h1 id="page-title" tabindex="-1">瀏覽回顧</h1><span class="private-badge">私人</span></div><p id="page-scope">總覽 · 全部紀錄</p></div><a href="#settings" data-view="settings" class="button profile-action">匯入紀錄 <span aria-hidden="true">↗</span></a></section>
 <nav class="page-nav" aria-label="瀏覽紀錄導覽">${(["overview", "insights", "history", "recap"] as View[]).map((view) => `<a href="#${view}" data-view="${view}">${viewLabels[view]}</a>`).join("")}</nav>
 <div id="range-controls" class="range-controls"><div class="period" role="group" aria-label="回顧範圍"><button data-days="1">今天</button><button data-days="7">近 7 天</button><button data-days="30">近 30 天</button><button data-days="0">全部</button></div><span id="range-label"></span></div>
 <div id="message" role="status" aria-live="polite">${extension ? "預設暫停記錄。設定連線後，即可開始同步。" : token ? "" : "解鎖後，查看自己的瀏覽紀錄。"}</div>
@@ -105,6 +107,7 @@ function message(text: string, error = false) {
 function applyNavigation(focus = false) {
   renderedURL = location.href;
   const settings = state.view === "settings";
+  $("page-title").textContent = settings ? "匯入與設定" : "瀏覽回顧";
   $("settings").hidden = authenticated && !settings;
   $("setup-guide").hidden = authenticated && !settings;
   $("dashboard").hidden = !authenticated || settings;
@@ -337,12 +340,13 @@ function render() {
     : '<div class="empty"><h3>等待你的第一段瀏覽足跡</h3><p>切換期間或先匯入紀錄，再回來看看。</p></div>';
 }
 function visitMarkup(v: HistoryVisit, className: string) {
+  const label = pageLabel(v);
   const safe = webUrl(v.url);
   let host = "內部頁面";
   try {
     host = new URL(v.url).hostname || host;
   } catch {}
-  return `<${safe ? "a" : "div"} class="${className}" ${safe ? `href="${escape(safe)}" target="_blank" rel="noopener noreferrer"` : ""}><span class="site-icon" aria-hidden="true">${escape(host.slice(0, 1).toUpperCase())}</span><div><strong>${escape(v.title || v.url || "（來源無網址）")}</strong><span>${escape(v.url)}</span><small>${escape(v.source.browser)} · ${escape(v.source.profile)} · ${escape(v.source.device)}</small></div><time>${new Date(v.visitedAt).toLocaleString("zh-TW", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}</time><span aria-hidden="true">${safe ? "↗" : "·"}</span></${safe ? "a" : "div"}>${!extension && safe ? captureButton({ url: safe, title: (v.title || safe).slice(0, 500) }) + `<a class="save-history-link" href="/?captureUrl=${encodeURIComponent(safe)}&captureTitle=${encodeURIComponent(v.title.slice(0, 500))}#bookmark">加入我的網址</a>` : ""}`;
+  return `<${safe ? "a" : "div"} class="${className}" ${safe ? `href="${escape(safe)}" target="_blank" rel="noopener noreferrer"` : ""}><span class="site-icon" aria-hidden="true">${escape(host.slice(0, 1).toUpperCase())}</span><div><strong>${escape(label.title)}</strong>${label.detail ? `<small class="page-clue">${escape(label.detail)}</small>` : ""}<span>${escape(v.url)}</span><small>${escape(v.source.browser)} · ${escape(v.source.profile)} · ${escape(v.source.device)}</small></div><time>${new Date(v.visitedAt).toLocaleString("zh-TW", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}</time><span aria-hidden="true">${safe ? "↗" : "·"}</span></${safe ? "a" : "div"}>${!extension && safe ? captureButton({ url: safe, title: (v.title || safe).slice(0, 500) }) + `<a class="save-history-link" href="/?captureUrl=${encodeURIComponent(safe)}&captureTitle=${encodeURIComponent(v.title.slice(0, 500))}#bookmark">加入我的網址</a>` : ""}`;
 }
 async function loadRecent(from: number, to: number) {
   const version = generation;

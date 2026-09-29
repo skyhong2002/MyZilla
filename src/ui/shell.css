@@ -1,0 +1,164 @@
+/* Shared frame for the portal, review, account and help pages. */
+:root {
+  font:
+    15px/1.6 system-ui,
+    sans-serif;
+  color-scheme: light;
+}
+.app-header {
+  font:
+    15px/1.6 system-ui,
+    sans-serif;
+  max-width: 1040px;
+  width: calc(100% - 40px);
+  margin: 20px auto 0;
+}
+.portal-shell .app-header {
+  width: 100%;
+  margin: 0;
+}
+.app-header .app-brand-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  max-width: none;
+  padding: 16px 22px;
+  margin: 0;
+  background: #fff;
+  border: 1px solid #c2d3df;
+  border-radius: 12px 12px 0 0;
+  text-align: left;
+}
+.app-header .app-wordmark {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #244a87;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.app-wordmark img {
+  flex: none;
+  width: 48px;
+  height: 36px;
+}
+.app-wordmark strong {
+  font-size: 27px;
+  font-weight: 800;
+}
+.app-wordmark span {
+  font-size: 15px;
+  color: #263846;
+}
+.app-header .app-brand-row p {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #627580;
+  max-width: 180px;
+  margin: 6px 0;
+}
+.app-header .app-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  padding: 9px;
+  margin-top: 4px;
+  background: #b7d0de;
+  border: 1px solid #a6c0d1;
+}
+.app-header .app-nav a,
+.app-header .app-nav button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 4px;
+  font:
+    500 14px/1.6 system-ui,
+    sans-serif;
+  color: #213a4b;
+  background: transparent;
+  white-space: nowrap;
+}
+.app-header .app-nav .mz-icon {
+  margin: 0;
+  width: 18px;
+  height: 18px;
+}
+.app-header .app-nav a[aria-current="page"] {
+  color: #213a4b;
+  background: transparent;
+  text-decoration: underline;
+  text-underline-offset: 7px;
+  text-decoration-thickness: 2px;
+  font-weight: 700;
+}
+.app-header .app-nav a:hover,
+.app-header .app-nav button:hover {
+  background: #d4e6f0;
+}
+#app .site-main,
+#community .site-main,
+#help .site-main {
+  max-width: 1080px;
+  padding: 24px 20px 36px;
+  margin: auto;
+}
+#app .profile,
+#community .profile {
+  margin: 0 0 24px;
+}
+#app .profile h1,
+#community .profile h1 {
+  font-size: clamp(24px, 3vw, 34px);
+  letter-spacing: normal;
+  line-height: 1.4;
+}
+#app button,
+#app .button,
+#community button,
+#community .button,
+#help button {
+  border-radius: 6px;
+}
+#app .page-nav,
+#community .page-nav {
+  gap: 24px;
+}
+@media (max-width: 720px) {
+  .app-header {
+    width: calc(100% - 28px);
+    margin-top: 14px;
+  }
+  .portal-shell {
+    padding: 14px;
+  }
+  .app-header .app-brand-row {
+    padding: 14px;
+  }
+  .app-wordmark strong {
+    font-size: 24px;
+  }
+  .app-header .app-brand-row p {
+    display: none;
+  }
+  .app-header .app-nav {
+    justify-content: flex-start;
+    gap: 4px;
+  }
+  .app-header .app-nav a,
+  .app-header .app-nav button {
+    font-size: 13px;
+  }
+  #app .site-main,
+  #community .site-main,
+  #help .site-main {
+    padding: 24px 14px;
+  }
+}

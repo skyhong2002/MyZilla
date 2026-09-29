@@ -217,3 +217,37 @@ summary {
   );
   max-width: 640px;
 }
+
+.page-clue {
+  display: block;
+  color: #526b7b;
+  font-size: 0.85rem;
+  font-weight: normal;
+  overflow-wrap: anywhere;
+  margin: 0.35rem 0;
+}
+.unresolved-history {
+  margin-top: 1rem;
+}
+.history-group {
+  background: #fff;
+  border: 1px solid #ccdce8;
+  border-radius: 8px;
+  margin: 0.65rem 0;
+  padding: 0.8rem 1rem;
+}
+.history-group summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.history-group ul {
+  list-style: none;
+  padding: 0;
+}
+.history-group li {
+  border-top: 1px solid #e0e8f0;
+  padding: 1rem 0;
+}
+.history-group li > a {
+  font-weight: 600;
+}
