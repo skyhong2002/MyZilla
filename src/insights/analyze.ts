@@ -63,7 +63,7 @@ const rules: [string, RegExp][] = [
 ];
 const id = (s: string) =>
   createHash("sha256").update(s).digest("hex").slice(0, 20);
-function key(url: URL) {
+export function key(url: URL) {
   const u = new URL(url);
   for (const k of [...u.searchParams.keys()])
     if (/^utm_|^(fbclid|gclid|msclkid)$/i.test(k)) u.searchParams.delete(k);
@@ -76,6 +76,27 @@ function day(at: number, zone: string) {
     month: "2-digit",
     day: "2-digit",
   }).format(at);
+}
+// Tool, login, inbox and bare home pages carry no content signal; shared with the AI digest.
+export function isUtility(u: URL, title: string) {
+  const common =
+    /^(www\.)?(google\.[a-z.]+|facebook.com|instagram.com|youtube.com|docs.google.com|accounts.google.com|mail.google.com|x.com)$/i.test(
+      u.hostname,
+    );
+  return (
+    /(^|\.)(mail.google.com|outlook.com|outlook.office.com|accounts.google.com)$/.test(
+      u.hostname,
+    ) ||
+    /\b(inbox|收件匣)\b/i.test(title) ||
+    /\/(login|signin|sign-in|logout|callback|oauth)(\/|$)/i.test(u.pathname) ||
+    /^\d+\.\d+\.\d+\.\d+$/.test(u.hostname) ||
+    u.hostname === "localhost" ||
+    (common && u.pathname === "/" && !u.search) ||
+    !title ||
+    /^(new tab|新分頁|google docs|google sheets|google drive|facebook|instagram|loading|載入中|收件匣)$/i.test(
+      title,
+    )
+  );
 }
 export function analyze(
   rows: Row[],
@@ -154,26 +175,7 @@ export function analyze(
     }
     const u = new URL(safe),
       title = row.title.trim();
-    const common =
-      /^(www\.)?(google\.[a-z.]+|facebook.com|instagram.com|youtube.com|docs.google.com|accounts.google.com|mail.google.com|x.com)$/i.test(
-        u.hostname,
-      );
-    if (
-      /(^|\.)(mail.google.com|outlook.com|outlook.office.com|accounts.google.com)$/.test(
-        u.hostname,
-      ) ||
-      /\b(inbox|收件匣)\b/i.test(title) ||
-      /\/(login|signin|sign-in|logout|callback|oauth)(\/|$)/i.test(
-        u.pathname,
-      ) ||
-      /^\d+\.\d+\.\d+\.\d+$/.test(u.hostname) ||
-      u.hostname === "localhost" ||
-      (common && u.pathname === "/" && !u.search) ||
-      !title ||
-      /^(new tab|新分頁|google docs|google sheets|google drive|facebook|instagram|loading|載入中|收件匣)$/i.test(
-        title,
-      )
-    ) {
+    if (isUtility(u, title)) {
       if (inside) utility++;
       continue;
     }
