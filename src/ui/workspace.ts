@@ -62,6 +62,16 @@ export async function hydrateHome(api: Api, valid: () => boolean) {
       target.innerHTML = `<p role="alert">${esc(errorMessage(e))} ${action("retry", "重試")}</p>`;
   }
 }
+// Short form of the AI weekly digest; the full text and its evidence live on the dashboard overview.
+function homeDigest(d: any) {
+  if (!d) return "";
+  const day = (n: number) =>
+    new Date(n).toLocaleDateString("zh-TW", {
+      month: "numeric",
+      day: "numeric",
+    });
+  return `<section class="workspace-section home-digest"><div class="heading"><h2>${icon("spark")}本週回顧</h2><a href="/dashboard.html#overview">看完整回顧與依據 →</a></div><div class="home-digest-card"><small>${day(d.from)}—${day(d.to - 1)} · AI 依標題與網址整理</small><p class="home-digest-headline">${esc(d.headline)}</p><ul>${d.observations.map((o: any) => `<li>${esc(o.title)}</li>`).join("")}</ul>${d.threads.length ? `<p class="home-digest-threads"><strong>值得繼續：</strong>${d.threads.map((t: any) => esc(t.title)).join("、")}</p>` : ""}</div></section>`;
+}
 export async function loadWorkspace(kind: string, api: Api) {
   const p = new URL(location.href).searchParams,
     offset = Number(p.get("offset")) || 0,
@@ -73,16 +83,17 @@ export async function loadWorkspace(kind: string, api: Api) {
       api("/api/curation/collections?audience=friends"),
       api("/api/portal/items?kind=bookmark&sort=clicks"),
       api(`/api/visits?from=0&to=${end()}&offset=0&limit=50`),
+      api("/api/digest"),
     ]);
-    const [inbox, collections, friends, bookmarks, recent] = results.map((r) =>
-      r.status === "fulfilled" ? r.value : null,
-    );
+    const [inbox, collections, friends, bookmarks, recent, digest] =
+      results.map((r) => (r.status === "fulfilled" ? r.value : null));
     return {
       inbox,
       collections,
       friends,
       bookmarks,
       recent,
+      digest: digest?.digest,
       failed: results.some((r) => r.status === "rejected"),
     };
   }
@@ -137,6 +148,7 @@ export function workspace(kind: string, data: any) {
       : "";
     return `<div data-workspace class="daily-home"><div class="workspace-intro"><span class="eyebrow">${esc(new Date().toLocaleDateString("zh-TW", { month: "long", day: "numeric", weekday: "long" }))}</span><h1>今天，從這裡開始。</h1><p>找回看過的、打開常用的，接著自己的步調。</p><form class="home-search" data-workspace-form="home-search"><label><span class="sr-only">搜尋關鍵字</span><input name="q" type="search" required maxlength="2000" placeholder="找一篇看過的文章，或開始新的搜尋…"></label><label class="search-destination"><span class="sr-only">搜尋範圍</span><select name="where"><option value="history">我的瀏覽紀錄</option><option value="google">Google</option></select></label><button class="primary">${icon("search")}搜尋</button></form></div>
     ${data.failed ? `<p role="alert">部分內容尚未讀取。${action("retry", "重試")}</p>` : ""}
+    ${homeDigest(data.digest)}
     <section class="workspace-section daily-shortcuts"><div class="heading"><h2>${icon("bookmark")}常用收藏</h2><a href="/#bookmark">管理我的網址 →</a></div><div class="shortcut-grid">${
       data.bookmarks?.items
         .slice(0, 8)

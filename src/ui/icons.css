@@ -486,3 +486,31 @@ h2 > .mz-icon {
 .collection-card p:empty {
   display: none;
 }
+
+/* Weekly digest summary on the home page. */
+.home-digest-card {
+  padding: 18px 20px;
+  border: 1px solid #d0dceb;
+  border-radius: 12px;
+  background: #fff;
+}
+.home-digest-card small {
+  color: #667a90;
+}
+.home-digest-headline {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.6;
+  margin: 6px 0 10px;
+}
+.home-digest-card ul {
+  margin: 0;
+  padding-left: 20px;
+  line-height: 1.8;
+}
+.home-digest-threads {
+  margin: 10px 0 0;
+  font-size: 14px;
+  color: #4a5d72;
+  line-height: 1.7;
+}

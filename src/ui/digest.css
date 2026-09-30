@@ -1,0 +1,25 @@
+/* Layout comes from .personal-cards and .section-heading, matching 你的瀏覽線索. */
+#ai-digest {
+  margin: 0 0 40px;
+}
+.digest-more {
+  margin-top: 16px;
+}
+.digest-more > summary {
+  margin-bottom: 16px;
+}
+.digest-tag {
+  font-size: 12px;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0 8px;
+  white-space: nowrap;
+}
+#ai-digest .insight-evidence li small {
+  display: block;
+  color: var(--muted);
+}
+#ai-digest .insight-evidence details {
+  margin: 4px 0 0;
+}
