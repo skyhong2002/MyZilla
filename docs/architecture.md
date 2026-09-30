@@ -32,7 +32,7 @@ npm run db:backup -- data/backups/manual-YYYYMMDD.sqlite --source /path/to/myzil
 
 備份工具使用 SQLite backup API 取得包含已提交 WAL 的一致快照，以 0600 建立輸出、執行 quick_check，拒絕覆寫既有檔案。工具讀取 shell 的 `MYZILLA_DB`，不自行載入 `.env`；自訂路徑請明確傳 `--source`。
 
-`.github/workflows/check.yml` 定義建置、單元測試、匯入／備份測試、Chromium／Firefox 執行測試與容器建置。此專案尚無 Git remote，因此 CI 尚未在託管平台執行，也未連接 urtube 的 Komodo/CD；不宣稱已有自動部署。
+`.github/workflows/check.yml` 定義建置、單元測試、匯入／備份測試、Chromium／Firefox 執行測試與容器建置。程式碼位於 [skyhong2002/MyZilla](https://github.com/skyhong2002/MyZilla)，每次 push 與 pull request 都會在 GitHub Actions 執行這些檢查。尚未連接 urtube 的 Komodo/CD；正式站仍需手動更新，沒有自動部署。
 
 ## 帳號與社交領域
 

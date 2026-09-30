@@ -45,7 +45,7 @@ Mac-side verification reported stale local DNS NXDOMAIN despite working public/u
 - 部署前完成 `data/backups/pre-community-20260927.sqlite` 一致性備份，備份與部署後正式 DB 的 100,665 筆事件／來源 SHA256 對帳通過。
 - 正式 HTTPS `/community.html` 正常；匿名歷史與社交 API 回傳 401；擁有者驗證後查詢正常。取現有一筆紀錄原樣重播同步，accepted 1、duplicates 1、inserted 0、rejected 0。
 - 正式帳號僅有既有擁有者私人空間，尚未替使用者設定密碼；朋友、配對同意與分享都未自動建立或開啟。後續由使用者在介面設定。
-- 部署仍為原 systemd + loopback 18140 + Cloudflare Tunnel；容器及 CI 定義已驗證本機可用，尚無 remote/CD。
+- 部署仍為原 systemd + loopback 18140 + Cloudflare Tunnel；容器及 CI 定義已驗證本機可用。2026-10-01 起 CI 在 GitHub Actions 執行，仍無 CD。
 
 ## 經典 MyZilla 入口（2026-09-28）
 
