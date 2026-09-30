@@ -10,6 +10,7 @@ import {
 import { registerAccounts } from "../accounts/routes";
 import { registerInsights } from "../insights/routes";
 import { registerCuration } from "../curation/routes";
+import { registerDigest } from "../digest/routes";
 import { registerPortal } from "../portal/routes";
 import { registerSocial } from "../social/routes";
 import { registerIngest } from "../browsing/ingest";
@@ -39,6 +40,7 @@ export function createApp(
     registerPortal(app, registry);
     registerInsights(app, registry);
     registerCuration(app, registry);
+    registerDigest(app, registry);
   }
   return app;
 }
