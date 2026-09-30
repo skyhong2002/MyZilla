@@ -1,0 +1,14 @@
+[Unit]
+Description=Build the MyZilla AI weekly digest when new browsing history arrived
+After=network-online.target myzilla.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/deck/Projects/MyZilla
+EnvironmentFile=/home/deck/Projects/MyZilla/.env
+# codex (ChatGPT login in ~/.codex) and node both live in ~/.local/bin.
+Environment=PATH=/home/deck/.local/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/home/deck/.local/bin/node --import tsx src/digest/job.ts
+TimeoutStartSec=2h
+UMask=0077
+NoNewPrivileges=true

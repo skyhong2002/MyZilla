@@ -52,3 +52,7 @@ npm run db:backup -- data/backups/manual-YYYYMMDD.sqlite --source /path/to/myzil
 ## 整理與共同選集
 
 `src/curation/` 承接瀏覽、洞察與舊收藏的明確挑選，提供私人待整理、主題選集、共同編輯與可撤銷分享快照。`src/ui/curation.ts` 是共用加入介面，`workspace.ts` 提供首頁、待整理與選集；`tab-collector.ts` 將擴充功能選取的分頁送到同一個收件入口。原始歷史與個人洞察不自動轉成分享內容。完整角色、資料及分享契約見 [整理與選集](curation.md)。
+
+## AI 週回顧
+
+`src/digest/` 由每天 08:00 的 systemd timer 執行，只在擁有者有新紀錄時透過本機 `codex exec` 呼叫 gpt-6-luna／gpt-6.1-sol，結果存入 `ai_*` 資料表；`GET /api/digest` 只讀取最新一份，`src/ui/digest.ts` 顯示於總覽最上方。這是唯一送出瀏覽資料到外部 AI 的模組。流程、資料表與限制見 [AI 週回顧](ai-digest.md)。

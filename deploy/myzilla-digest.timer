@@ -1,0 +1,10 @@
+[Unit]
+Description=Check for new MyZilla history daily at 08:00 Asia/Taipei and build the AI digest
+
+[Timer]
+OnCalendar=*-*-* 08:00:00 Asia/Taipei
+Persistent=true
+Unit=myzilla-digest.service
+
+[Install]
+WantedBy=timers.target
