@@ -27,7 +27,7 @@ MYZILLA_LLM_API_KEY=<ai-gateway clients.env 中 myzilla= 的金鑰>
 # MYZILLA_INTERPRETER_MODEL=sky-quality
 ```
 
-未設定 `MYZILLA_LLM_BASE_URL` 時改用本機 `codex exec`（`~/.codex` 的 ChatGPT 登入，空暫存目錄、唯讀沙箱），別名照停用時的對應換成 `gpt-6-luna`／`gpt-6.1-sol`，紀錄會印出「falling back to codex exec」。這只是過渡用，主機設好閘道後即不再使用。
+兩個變數都必須設定；缺任一個時排程在開啟資料庫前就以錯誤結束，並在紀錄中指出缺少的變數。
 
 每筆分類、段落解讀與回顧都記下「要求的別名→實際回答的模型」（例如 `sky-fast→gpt-6-luna`，取自閘道回應的 `model`），畫面顯示實際模型。
 

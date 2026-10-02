@@ -6,7 +6,7 @@ After=network-online.target myzilla.service
 Type=oneshot
 WorkingDirectory=/home/deck/Projects/MyZilla
 EnvironmentFile=/home/deck/Projects/MyZilla/.env
-# Models come from the AI gateway set in .env (MYZILLA_LLM_BASE_URL); without it, codex (ChatGPT login in ~/.codex) from ~/.local/bin.
+# Models come from the AI gateway set in .env (MYZILLA_LLM_BASE_URL and MYZILLA_LLM_API_KEY, both required).
 Environment=PATH=/home/deck/.local/bin:/usr/local/bin:/usr/bin:/bin
 ExecStart=/home/deck/.local/bin/node --import tsx src/digest/job.ts
 TimeoutStartSec=2h

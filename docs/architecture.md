@@ -55,4 +55,4 @@ npm run db:backup -- data/backups/manual-YYYYMMDD.sqlite --source /path/to/myzil
 
 ## AI 週回顧
 
-`src/digest/` 由每天 08:00 的 systemd timer 執行，只在擁有者有新紀錄時透過本機 `codex exec` 呼叫 gpt-6-luna／gpt-6.1-sol，結果存入 `ai_*` 資料表；`GET /api/digest` 只讀取最新一份，`src/ui/digest.ts` 顯示於總覽最上方。這是唯一送出瀏覽資料到外部 AI 的模組。流程、資料表與限制見 [AI 週回顧](ai-digest.md)。
+`src/digest/` 由每天 08:00 的 systemd timer 執行，只在擁有者有新紀錄時透過 sky-mini 的中央 AI 閘道呼叫 `sky-fast`／`sky-quality` 別名，結果存入 `ai_*` 資料表；`GET /api/digest` 只讀取最新一份，`src/ui/digest.ts` 顯示於總覽最上方。這是唯一送出瀏覽資料到外部 AI 的模組。流程、資料表與限制見 [AI 週回顧](ai-digest.md)。

@@ -4,8 +4,17 @@ import { DatabaseSync } from "node:sqlite";
 import { BrowsingRepository } from "../browsing/repository";
 import { DigestStore } from "./store";
 import { runDigest } from "./pipeline";
-import { codexAsk } from "./codex";
 import { gatewayAsk } from "./gateway";
+
+// The central AI gateway is required (docs/ai-digest.md); fail before touching the database when it is not configured.
+const env = process.env;
+for (const name of ["MYZILLA_LLM_BASE_URL", "MYZILLA_LLM_API_KEY"])
+  if (!env[name]) {
+    console.error(
+      `[digest] ${name} is not set; configure the AI gateway in .env (docs/ai-digest.md)`,
+    );
+    process.exit(1);
+  }
 
 const arg = (name: string) => {
   const i = process.argv.indexOf(name);
@@ -19,12 +28,11 @@ const repo = new BrowsingRepository(db, "events");
 const log = (line: string) =>
   console.log(`[digest ${new Date().toISOString()}] ${line}`);
 
-// The AI gateway when configured; otherwise local `codex exec`, so a host whose .env predates the gateway keeps working.
-const env = process.env;
-const models = await (env.MYZILLA_LLM_BASE_URL
-  ? gatewayAsk(env.MYZILLA_LLM_BASE_URL, env.MYZILLA_LLM_API_KEY ?? "", log)
-  : (log("MYZILLA_LLM_BASE_URL is not set; falling back to codex exec"),
-    codexAsk(log)));
+const models = await gatewayAsk(
+  env.MYZILLA_LLM_BASE_URL!,
+  env.MYZILLA_LLM_API_KEY!,
+  log,
+);
 try {
   const result = await runDigest(
     store,
