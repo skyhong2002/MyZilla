@@ -3,8 +3,9 @@ import { webUrl } from "../shared/model";
 import { isUtility, key, type Row } from "../insights/analyze";
 import { DigestStore, type Taxon } from "./store";
 
-export const CLASSIFIER = "gpt-6-luna";
-export const INTERPRETER = "gpt-6.1-sol";
+// Gateway aliases (see the ai-gateway repo); the gateway decides which model answers.
+export const CLASSIFIER = "sky-fast";
+export const INTERPRETER = "sky-quality";
 export const MISC = "工具與雜項";
 // Bump when prompts or the stored shape change so the next run regenerates.
 const VERSION = 1;
@@ -17,7 +18,7 @@ export type Ask = (
   effort: "low" | "medium" | "high",
   prompt: string,
   schema: object,
-) => Promise<any>;
+) => Promise<{ answer: any; model: string }>; // model: the one that actually answered
 export type Page = {
   id: string;
   url: string;
@@ -178,7 +179,14 @@ export async function runDigest(
   store: DigestStore,
   source: { rows(): Row[]; revision(): unknown },
   ask: Ask,
-  { days = 7, zone = "Asia/Taipei", force = false, now = Date.now() } = {},
+  {
+    days = 7,
+    zone = "Asia/Taipei",
+    force = false,
+    now = Date.now(),
+    classifier = CLASSIFIER,
+    interpreter = INTERPRETER,
+  } = {},
 ): Promise<RunResult> {
   const revision = JSON.stringify([VERSION, days, zone, source.revision()]);
   const previous = store.latest();
@@ -191,9 +199,17 @@ export async function runDigest(
     to = latest + 1;
   const { pages, sessions, visits, excluded } = prepare(rows, from, to, zone);
   const calls: string[] = [];
-  const call: Ask = (step, ...rest) => {
-    calls.push(step);
-    return ask(step, ...rest);
+  // Requested model → the model that last answered it; stored as "requested→resolved" when they differ.
+  const resolved = new Map<string, string>();
+  const provenance = (model: string) => {
+    const used = resolved.get(model) ?? model;
+    return used === model ? model : `${model}→${used}`;
+  };
+  const call = async (...args: Parameters<Ask>) => {
+    calls.push(args[0]);
+    const { answer, model } = await ask(...args);
+    resolved.set(args[1], model);
+    return answer;
   };
   const fmt = (at: number, opts: Intl.DateTimeFormatOptions) =>
     formatter(zone, opts).format(at);
@@ -213,7 +229,7 @@ export async function runDigest(
     const batch = fresh.slice(i, i + 300);
     const answer = await call(
       `classify-${i / 300 + 1}`,
-      CLASSIFIER,
+      classifier,
       "low",
       `你在幫一位使用者整理自己的瀏覽記錄。為每個頁面指定一個主題標籤。${STYLE}
 規則：
@@ -237,7 +253,7 @@ ${batch.map((p) => `${p.id}｜${p.host}｜${p.path}｜${p.title}`).join("\n")}`,
       topics.set(p.url, raw);
       runLabels.add(raw);
     }
-    store.savePageTopics(found, CLASSIFIER);
+    store.savePageTopics(found, provenance(classifier));
   }
   for (const p of pages) p.topic = topics.get(p.url) ?? "未分類";
 
@@ -267,7 +283,7 @@ ${batch.map((p) => `${p.id}｜${p.host}｜${p.path}｜${p.title}`).join("\n")}`,
     };
     const answer = await call(
       "taxonomy",
-      INTERPRETER,
+      interpreter,
       "medium",
       `以下是替瀏覽記錄自動產生的主題標籤，彼此常常是同一件事的不同說法或不同面向。請整理成兩層：
 - group（主題）：一個專案、活動或長期興趣，例如「口琴」「FtO 首爾出訪」「SITCON 2027」。同一件事的所有標籤都歸到同一個主題。
@@ -320,7 +336,7 @@ ${unmapped.map(sample).join("\n")}`,
     const batch = pending.slice(i, i + 40);
     const answer = await call(
       `sessions-${i / 40 + 1}`,
-      INTERPRETER,
+      interpreter,
       "medium",
       `以下是使用者的瀏覽段落（同一瀏覽器連續瀏覽、間隔不超過 30 分鐘）。只有標題和網址，沒有內文。${STYLE}
 為每段判斷：
@@ -370,7 +386,7 @@ ${batch
       found.push([s.key, value]);
       interpreted.set(s.key, value);
     }
-    store.saveSessions(found, INTERPRETER);
+    store.saveSessions(found, provenance(interpreter));
   }
   for (const s of sessions) s.interpretation = interpreted.get(s.key);
 
@@ -454,7 +470,8 @@ ${
     )
     .join("\n") || "（無）"
 }`;
-  const inputHash = hash([VERSION, INTERPRETER, prompt]);
+  // Keyed on the requested alias: a gateway policy change alone does not regenerate the digest.
+  const inputHash = hash([VERSION, interpreter, prompt]);
   // Anything the models skipped is retried next run, even if no new visits arrive.
   const complete =
     pages.every((p) => topics.has(p.url) && taxonomy.has(p.topic)) &&
@@ -466,7 +483,7 @@ ${
   }
   const answer = await call(
     "digest",
-    INTERPRETER,
+    interpreter,
     "high",
     prompt,
     obj({
@@ -543,7 +560,12 @@ ${
       sessions: sessions.length,
       open: sessions.filter((s) => s.interpretation?.outcome === "open").length,
     },
-    models: { classifier: CLASSIFIER, interpreter: INTERPRETER },
+    // Shown on the page: the models that answered (the alias if that step made no call this run).
+    models: {
+      classifier: resolved.get(classifier) ?? classifier,
+      interpreter: resolved.get(interpreter) ?? interpreter,
+      requested: { classifier, interpreter },
+    },
     zone,
   };
   store.saveDigest({
@@ -552,7 +574,7 @@ ${
     to,
     revision: stored,
     inputHash,
-    model: INTERPRETER,
+    model: provenance(interpreter),
     data,
   });
   return { status: "created", calls };

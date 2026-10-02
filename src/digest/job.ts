@@ -5,6 +5,7 @@ import { BrowsingRepository } from "../browsing/repository";
 import { DigestStore } from "./store";
 import { runDigest } from "./pipeline";
 import { codexAsk } from "./codex";
+import { gatewayAsk } from "./gateway";
 
 const arg = (name: string) => {
   const i = process.argv.indexOf(name);
@@ -18,7 +19,12 @@ const repo = new BrowsingRepository(db, "events");
 const log = (line: string) =>
   console.log(`[digest ${new Date().toISOString()}] ${line}`);
 
-const codex = await codexAsk(log);
+// The AI gateway when configured; otherwise local `codex exec`, so a host whose .env predates the gateway keeps working.
+const env = process.env;
+const models = await (env.MYZILLA_LLM_BASE_URL
+  ? gatewayAsk(env.MYZILLA_LLM_BASE_URL, env.MYZILLA_LLM_API_KEY ?? "", log)
+  : (log("MYZILLA_LLM_BASE_URL is not set; falling back to codex exec"),
+    codexAsk(log)));
 try {
   const result = await runDigest(
     store,
@@ -26,8 +32,10 @@ try {
       rows: () => repo.insightRows(),
       revision: () => repo.insightRevision(),
     },
-    codex.ask,
+    models.ask,
     {
+      classifier: env.MYZILLA_CLASSIFIER_MODEL || undefined,
+      interpreter: env.MYZILLA_INTERPRETER_MODEL || undefined,
       days: Number(arg("--days") ?? 7),
       force: process.argv.includes("--force"),
     },
@@ -38,6 +46,6 @@ try {
       : `${result.status}; model calls: ${result.calls.join(", ") || "none"}`,
   );
 } finally {
-  await codex.close();
+  await models.close();
   db.close();
 }

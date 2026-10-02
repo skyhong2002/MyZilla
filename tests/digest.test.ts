@@ -10,6 +10,9 @@ import {
 } from "../src/digest/pipeline";
 import { DigestStore } from "../src/digest/store";
 import { createApp } from "../src/server/app";
+import { createServer } from "node:http";
+import type { AddressInfo } from "node:net";
+import { gatewayAsk } from "../src/digest/gateway";
 
 const DAY = 86400000;
 const base = Date.parse("2026-09-20T02:00:00Z");
@@ -46,7 +49,11 @@ const fixture = () => [
 function fakeModels() {
   const calls: string[] = [];
   const prompts: Record<string, string> = {};
-  const ask: Ask = async (step, _model, _effort, prompt) => {
+  const ask: Ask = async (step, model, _effort, prompt) => ({
+    answer: answer(step, prompt),
+    model: model + "-resolved",
+  });
+  const answer = (step: string, prompt: string) => {
     calls.push(step);
     prompts[step] = prompt;
     const ids = (prefix: string) =>
@@ -134,6 +141,12 @@ test("digest runs once per data revision, reuses stored work and keeps only vali
     "digest",
   ]);
   const d = store.latest()!.data;
+  assert.equal(store.latest()!.model, "sky-quality→sky-quality-resolved");
+  assert.deepEqual(d.models, {
+    classifier: "sky-fast-resolved",
+    interpreter: "sky-quality-resolved",
+    requested: { classifier: "sky-fast", interpreter: "sky-quality" },
+  });
   assert.equal(d.headline, "這週都在吹口琴");
   assert.deepEqual(d.observations[0].evidence, ["S1", "P1"]);
   assert.equal(d.dropped, 1);
@@ -178,9 +191,9 @@ test("a partial model answer is retried on the next run without new data", async
   const source = { rows: fixture, revision: () => 1 };
   const flaky = fakeModels();
   const ask: Ask = async (step, ...rest) => {
-    const answer = await flaky.ask(step, ...rest);
-    if (step.startsWith("sessions")) answer.sessions = [];
-    return answer;
+    const reply = await flaky.ask(step, ...rest);
+    if (step.startsWith("sessions")) reply.answer.sessions = [];
+    return reply;
   };
   await runDigest(store, source, ask);
   const retry = fakeModels();
@@ -212,4 +225,51 @@ test("GET /api/digest returns the account's latest digest", async () => {
   const { digest } = await get();
   assert.equal(digest.headline, "這週都在吹口琴");
   assert.equal(digest.to - digest.from, 7 * DAY);
+});
+
+test("gatewayAsk sends a strict schema and reasoning effort, and reports the resolved model", async () => {
+  const seen: any[] = [];
+  const server = createServer((req, res) => {
+    let body = "";
+    req.on("data", (c) => (body += c));
+    req.on("end", () => {
+      seen.push({
+        url: req.url,
+        auth: req.headers.authorization,
+        body: JSON.parse(body),
+      });
+      res.setHeader("content-type", "application/json");
+      res.end(
+        JSON.stringify({
+          model: "upstream-model",
+          choices: [
+            { finish_reason: "stop", message: { content: '{"ok":true}' } },
+          ],
+        }),
+      );
+    });
+  });
+  await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
+  try {
+    const { port } = server.address() as AddressInfo;
+    const { ask } = await gatewayAsk(`http://127.0.0.1:${port}/v1/`, "k");
+    const schema = { type: "object", properties: { ok: { type: "boolean" } } };
+    assert.deepEqual(await ask("classify-1", "sky-fast", "low", "hi", schema), {
+      answer: { ok: true },
+      model: "upstream-model",
+    });
+    assert.equal(seen[0].url, "/v1/chat/completions");
+    assert.equal(seen[0].auth, "Bearer k");
+    assert.deepEqual(seen[0].body, {
+      model: "sky-fast",
+      reasoning_effort: "low",
+      messages: [{ role: "user", content: "hi" }],
+      response_format: {
+        type: "json_schema",
+        json_schema: { name: "classify-1", strict: true, schema },
+      },
+    });
+  } finally {
+    server.close();
+  }
 });
