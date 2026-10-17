@@ -125,6 +125,8 @@ function state() {
   history.pushState(null, "", u);
 }
 function header() {
+  if (!me && !token())
+    return `<div class="app-header"><header class="site-header app-brand-row"><a class="app-wordmark" href="/"><img src="./myzilla-mark.svg" width="48" height="36" alt=""><strong>MyZilla</strong><span>我的個人入口</span></a><p>搜尋、收藏、回顧，從自己的生活出發。</p></header><nav class="site-nav top-nav app-nav" aria-label="主要導覽"><a href="/#home" aria-current="page">我的入口</a><a href="/help.html">使用說明</a></nav></div>`;
   return siteHeader(
     kind === "collections" ? "collections" : "home",
     me || token()
@@ -144,19 +146,27 @@ function sidebar() {
       "",
     )}<a href="/dashboard.html#history">瀏覽記錄</a><a href="/dashboard.html#settings">擴充功能與同步</a></nav></section><section><h2>你的帳號</h2><p>${me ? esc(me.account.name) : token() ? "我的帳號" : "尚未登入"}</p>${me ? `<p>@${esc(me.account.handle)}</p><label class="check"><input id="online-opt" type="checkbox" ${me.online ? "checked" : ""}>顯示我在線上</label><small>勾選後，站內登入者可看到你的名稱；最近五分鐘開啟入口視為在線。</small>` : token() ? "" : '<a href="/community.html">帳號登入／邀請註冊</a>'}</section></aside>`;
 }
+function welcome(legacyOpen: boolean) {
+  return `<section class="panel public-welcome"><h1>歡迎回到自己的入口</h1><p>將網址與網摘整理成主題選集，回顧自己的瀏覽記錄。私人內容會在登入後顯示。</p><a class="button primary" href="/community.html">帳號登入</a><p class="note">收到邀請的新使用者，也可前往帳號頁建立帳號。</p><details class="legacy-access" ${legacyOpen ? "open" : ""}><summary>使用既有存取金鑰</summary><form data-form="unlock"><p><a href="/help.html#login">金鑰是什麼？第一次登入說明</a></p><label>存取金鑰<input name="token" type="password" minlength="32" required autocomplete="off"></label><button>開啟我的入口</button></form></details></section>`;
+}
 function render() {
   renderedURL = location.href;
+  const signedIn = !!(me || token());
+  // Keep key entry available after a rejected key or an expired saved session.
+  const legacyOpen =
+    !!root.querySelector<HTMLDetailsElement>(".legacy-access")?.open ||
+    !!root.querySelector(".session-placeholder");
   document.title = `${me || token() ? labels[kind] : "登入"} · MyZilla`;
-  root.innerHTML = `<a class="skip-link" href="#portal-main">跳到主要內容</a><div class="portal-shell">${header()}<div class="portal-layout"><main id="portal-main" tabindex="-1"><nav class="quick-nav" aria-label="快速切換">${Object.entries(
-    labels,
-  )
-    .map(
-      ([id, label]) =>
-        `<a href="#${id}" ${kind === id ? 'aria-current="page"' : ""}>${label}</a>`,
-    )
-    .join(
-      "",
-    )}</nav><div id="notice" role="status" aria-live="polite">${esc(notice)}</div>${copyControl(notice)}${me ? content() : token() ? `<section class="panel"><h1>${labels[kind]}</h1><div class="session-placeholder" aria-label="正在讀取內容"></div></section>` : `<section class="panel"><h1>歡迎回到自己的入口</h1><p>以帳號登入，或用既有金鑰開啟私人收藏與瀏覽回顧。</p><a class="button" href="/community.html">帳號登入／建立帳號</a><form data-form="unlock"><p><a href="/help.html#login">金鑰是什麼？第一次登入說明</a></p><label>存取金鑰<input name="token" type="password" minlength="32" required autocomplete="off"></label><button>開啟我的入口</button></form></section>`}</main>${sidebar()}</div><footer>MyZilla</footer><dialog id="editor" aria-label="收藏編輯與分享"></dialog></div>`;
+  root.innerHTML = `<a class="skip-link" href="#portal-main">跳到主要內容</a><div class="portal-shell${signedIn ? "" : " portal-public"}">${header()}<div class="portal-layout"><main id="portal-main" tabindex="-1">${
+    signedIn
+      ? `<nav class="quick-nav" aria-label="快速切換">${Object.entries(labels)
+          .map(
+            ([id, label]) =>
+              `<a href="#${id}" ${kind === id ? 'aria-current="page"' : ""}>${label}</a>`,
+          )
+          .join("")}</nav>`
+      : ""
+  }<div id="notice" role="status" aria-live="polite">${esc(notice)}</div>${copyControl(notice)}${me ? content() : token() ? `<section class="panel"><h1>${labels[kind]}</h1><div class="session-placeholder" aria-label="正在讀取內容"></div></section>` : welcome(legacyOpen)}</main>${signedIn ? sidebar() : ""}</div><footer>MyZilla</footer><dialog id="editor" aria-label="收藏編輯與分享"></dialog></div>`;
 }
 function content() {
   if (["home", "inbox", "collections"].includes(kind))

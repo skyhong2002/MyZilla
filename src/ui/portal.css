@@ -335,6 +335,40 @@ footer {
 .quick-nav {
   display: none;
 }
+/* The public entry introduces the private workspace before sign-in. */
+.portal-public .portal-layout {
+  grid-template-columns: minmax(0, 1fr);
+}
+.portal-public .public-welcome {
+  max-width: 680px;
+  margin: 12px auto;
+}
+.portal-public .public-welcome .primary {
+  background: #285d7b;
+  color: #fff;
+}
+.portal-public .public-welcome .primary:hover {
+  background: #204c66;
+}
+.portal-public .public-welcome a,
+.portal-public .public-welcome button,
+.portal-public .public-welcome input,
+.portal-public .legacy-access summary {
+  min-height: 44px;
+}
+.portal-public .public-welcome a {
+  display: inline-flex;
+  align-items: center;
+}
+.portal-public .legacy-access {
+  border-top: 1px solid #c5d6e1;
+  margin-top: 24px;
+  padding-top: 12px;
+}
+.portal-public .legacy-access summary {
+  cursor: pointer;
+  padding: 10px 0;
+}
 aside form {
   gap: 5px;
 }
