@@ -1,0 +1,11 @@
+[Unit]
+Description=Check MyZilla public health and rejection of unauthenticated API access
+After=network.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/deck/Projects/MyZilla
+ExecStart=/usr/bin/python3 scripts/health_monitor.py
+TimeoutStartSec=45s
+UMask=0077
+NoNewPrivileges=true

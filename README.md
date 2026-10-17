@@ -106,6 +106,23 @@ npm run test:firefox
 
 本機部署的 `myzilla-monitor.timer` 每分鐘檢查 HTTPS、匿名 401、驗證後 API 與來源筆數，直到 **2026-09-27 11:00 Asia/Taipei**。最新結果在 `data/monitor/latest.json`，歷次結果在 `data/monitor/checks.jsonl`；只記錄統計，不記錄網址。這是健康監測，不代表已對所有瀏覽器安裝持續擷取功能。
 
+### 獨立常態健康監測
+
+上述 monitor 是有截止日的一次性匯入觀測；到期後保留停止，不延長。另提供不會到期自停的 `scripts/health_monitor.py` 與獨立的 `deploy/myzilla-health-monitor.{service,timer}`，timer 每分鐘探測公開 HTTPS `/health` 的 `ok: true`、匿名與刻意無效的 token 存取 `/api/sources` 都必須回 401。重導向、403、網路逾時與錯誤健康內容都視為失敗。它不讀正式 token、瀏覽紀錄或私人 API 回應內容，也不呼叫模型或發送通知；不驗證授權後 API 或匯入是否持續更新。
+
+```bash
+# 手動探測，結果僅含時間、狀態碼與成功／失敗，不使用 .env
+python3 scripts/health_monitor.py
+# 只讀取已保存結果，預設最長 300 秒，可按監測頻率調整
+python3 scripts/health_monitor.py --check-freshness --max-age-seconds 300
+# 隔離測試，不接觸正式資料
+python3 -m unittest discover -s tests -p 'health_monitor_test.py'
+```
+
+探測原子寫入 `data/health-monitor/latest.json`（0600），不覆寫舊 monitor 結果；成功 exit 0，失敗 exit 1。freshness 檢查不發網路請求，缺檔、無效結果、未來時間、過期或最近探測失敗都 exit 1；`--max-age-seconds` 是保存結果的新鮮度，與瀏覽紀錄／匯入新鮮度無關。可用 `--base-url`、`--timeout-seconds` 與 `--output` 指定 HTTPS origin、單次請求逾時（預設 10 秒）及獨立輸出位置；隔離測試允許 loopback HTTP。腳本不讀取既有 Cookie 或登入設定。
+
+新增 unit 只是部署範本，尚未安裝或啟動。日後部署時僅安裝／啟用 `myzilla-health-monitor.timer`，勿重啟舊 `myzilla-monitor.timer`。常態 unit 不載入 `.env`，單次最多 45 秒；執行結果會出現在該 service journal。需由獨立的排程／監測端定期執行 freshness 檢查，才能偵測 timer 停止更新；腳本本身沒有通知傳輸。
+
 ## 範圍與後續
 
 目前支援邀請制多帳號、網站規則分類、雙方同意的朋友配對及摘要分享。已支援 Google 帳號連結與登入；朋友配對仍用規則分類，外部 AI 只用於擁有者的 [AI 週回顧](docs/ai-digest.md)；尚無公開陌生人配對或策展投遞箱。Infovore 整合評估見 [摘要來源設計](docs/infovore-summary.md)。
