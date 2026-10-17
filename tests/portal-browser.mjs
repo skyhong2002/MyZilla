@@ -38,6 +38,7 @@ try {
     errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto(base + "/#bookmark");
+  await page.getByText("使用既有存取金鑰", { exact: true }).click();
   await page.locator('[name="token"]').fill(token);
   await page.getByRole("button", { name: "開啟我的入口", exact: true }).click();
   await page.getByRole("button", { name: "新增網址", exact: true }).waitFor();
