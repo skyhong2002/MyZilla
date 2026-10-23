@@ -110,3 +110,46 @@ Mac-side verification reported stale local DNS NXDOMAIN despite working public/u
 - 慢請求瀏覽器測試以 DOM observer 確認三個入口沒有登入表單閃現、超過提示原本的 500 ms 門檻仍沒有全頁浮動提示、讀取中可切換收藏頁；另驗證失效工作階段與原有復原／匯入／登入流程。
 
 正式三個入口已確認透過 HTTPS 提供新版本資產；健康檢查 200，100,665 筆歷史完整 SHA256／來源對帳仍通過。
+
+## 公開入口 SEO 與私人隔離（2026-10-23，GSC-20261023）
+
+根因：首頁 `/` 回 200，但原始 HTML 只有空的 `#portal` 與 JS，沒有 description／canonical；`/robots.txt`、`/sitemap.xml` 皆 404。`/` 與 `/index.html` 為同一內容卻沒有 canonical。這只證明首頁內容依賴 JS，不代表 Google 渲染一定失敗；部署前 GSC 對首頁的儲存紀錄未知。未知路由原本即正確回 404。
+
+修正（commit `2f6bd83`）：
+
+- `index.html` 加入 description、`canonical https://myzilla.observe.tw/`、Open Graph，以及可直接抓取的 h1 與「認識 MyZilla」產品介紹。`portal.ts` 保留此段於未登入畫面；登入後不顯示。原歡迎區、帳號登入與「使用既有存取金鑰」legacy 入口不變。
+- `help.html` 加 description 與 `canonical https://myzilla.observe.tw/help.html`；內容仍由 JS 呈現（原始 HTML 無 h1）。
+- `dashboard.html`、`community.html` 為私人回顧／登入殼，加 `<meta name="robots" content="noindex">`，不列入 sitemap。
+- `public/robots.txt`：允許全站，`Disallow: /api/`、`Disallow: /auth/`，宣告 sitemap。分享路由 `/s/`、`/share/`、`/collection/` 不封鎖，維持原有 `X-Robots-Tag: noindex` 與不可預測 token。
+- `public/sitemap.xml` 只列原本公開的 2 頁。沒有改變任何私人功能的預設可見性或身分規則，資料庫未變更。
+
+測試（隔離 DB、`MYZILLA_WEB_ROOT=./data/seo-preview`）：
+
+- 新增 `npm run test:seo`：先植入帶唯一標記的私人歷史、私人收藏與搜尋紀錄，再以未登入身分檢查 `/`、`/index.html`、`/help.html`、私人殼、robots、sitemap、6 個未知／失效分享路徑（404）與 9 個私人 API（401），標記皆未出現；sitemap 每個 URL 為 200、自我 canonical、無 noindex；Chromium 確認未登入首頁保留介紹、單一 h1，legacy 金鑰仍能開啟私人收藏且登入後不顯示介紹。PASS。
+- `npm test` 52/52、`test:portal`、`test:community`、`test:usability` PASS；`tsc --noEmit` 通過。`test:usability` 第一次在主機高 swap 時伺服器啟動逾時失敗，重跑通過；程式未改。
+- 未登入首頁 1280／390 px 無水平溢出，截圖在私密 `data/seo-evidence/`。dashboard／community／help 的 JS 雜湊與正式版相同，僅 HTML metadata 改變；未重建擴充功能 ZIP。
+
+部署：伺服器程式未變，未重啟 `myzilla.service`。依既有流程先備份 `dist/web` 至 `dist/.web-before-2f6bd83`，於主機建置鎖下建置到 `data/seo-preview` 驗證，再新增雜湊資產（保留舊資產）並以原子 `mv` 切換 4 個 HTML 與 robots／sitemap。正式首頁現載入 `assets/main-C-4cDEUp.js`。回復：把 `dist/.web-before-2f6bd83` 的 HTML 複製回 `dist/web`，刪除 robots／sitemap。
+
+正式 HTTPS 證據（2026-10-23）：
+
+| URL | 狀態 | 要點 |
+| --- | --- | --- |
+| `/`、`/index.html` | 200 text/html | canonical `https://myzilla.observe.tw/`、description、h1 與產品介紹在原始 HTML |
+| `/help.html` | 200 | canonical `https://myzilla.observe.tw/help.html`、description |
+| `/dashboard.html`、`/community.html` | 200 | `robots noindex`，無 canonical |
+| `/robots.txt` | 200 text/plain | 如上 |
+| `/sitemap.xml` | 200 application/xml | 2 個 URL |
+| `/nope`、`/nope.html` | 404 | |
+| `/s/…`、`/share/…`、`/collection/…`（無效 token） | 404 | 原有 `X-Robots-Tag: noindex` |
+| 匿名 `/api/sources`、`/api/visits`、`/api/portal/items`、`/api/portal/searches`、`/api/community/me` | 401 | |
+
+全部回應 `Cache-Control: no-store`。以 Googlebot UA 取首頁同為 200。正式站 Chromium（390 px）未登入渲染：歡迎區、產品介紹、legacy 金鑰欄位皆在，h1 1 個，pageerror 0。
+
+有效 sitemap：`https://myzilla.observe.tw/sitemap.xml`，共 2 個 URL：`https://myzilla.observe.tw/`、`https://myzilla.observe.tw/help.html`。
+
+未完成：
+
+- `http://myzilla.observe.tw/` 直接回 200，未轉址到 HTTPS（Cloudflare zone 層設定，屬 observe.tw 共用設定，本專案未修改）；canonical 已指向 HTTPS。`www.myzilla.observe.tw` 無 DNS。
+- 使用說明內容仍需 JS 呈現；首頁之外沒有預先渲染。
+- Search Console 資源、sitemap 提交與 Google 端即時檢查由 Codex 負責；提交或讀取不等於已索引，本紀錄不宣稱索引結果。
