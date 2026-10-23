@@ -40,7 +40,7 @@ npm run build
 npm start
 ```
 
-資料庫預設 `data/myzilla.sqlite`，金鑰透過 `Authorization: Bearer …` 驗證。公開網站提供登入介面、擴充功能下載、健康檢查與使用者主動建立的限時摘要分享；`/api/*` 一律驗證身分。開發介面可另跑 `npm run dev`。
+資料庫預設 `data/myzilla.sqlite`，金鑰透過 `Authorization: Bearer …` 驗證。公開網站提供登入介面、擴充功能下載、健康檢查與使用者主動建立的限時摘要分享；`/api/*` 一律驗證身分。搜尋引擎只會看到首頁產品介紹與使用說明：`/sitemap.xml` 僅列這兩頁並各自 canonical，`/robots.txt` 排除 `/api/` 與 `/auth/`，瀏覽回顧與帳號頁標記 noindex；私人內容的可見性規則不因 SEO 改變。開發介面可另跑 `npm run dev`。
 
 現有部署由使用者 systemd 管理：`systemctl --user status myzilla`。正式 `.env` 與 `data/client-token` 權限為 0600，均不納入 Git。請透過自己的 SSH 連線取用金鑰，然後貼入網站或擴充功能。服務只綁定 loopback，外部走既有 tunnel。
 
@@ -93,6 +93,7 @@ npm run test:importer
 npm run test:browser
 npm run test:community
 npm run test:portal
+npm run test:seo
 npm run test:google
 npm run test:insights
 npm run test:usability

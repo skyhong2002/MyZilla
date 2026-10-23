@@ -339,7 +339,8 @@ footer {
 .portal-public .portal-layout {
   grid-template-columns: minmax(0, 1fr);
 }
-.portal-public .public-welcome {
+.portal-public .public-welcome,
+.portal-public .product-intro {
   max-width: 680px;
   margin: 12px auto;
 }

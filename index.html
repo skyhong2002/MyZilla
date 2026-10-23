@@ -6,9 +6,55 @@
     <meta name="color-scheme" content="light" />
     <link rel="icon" type="image/svg+xml" href="./myzilla-mark.svg" />
     <title>MyZilla · 我的個人入口</title>
+    <meta
+      name="description"
+      content="MyZilla 是自架的個人入口與瀏覽回顧：收藏網址與網摘、整理主題選集，並搜尋自己在各瀏覽器留下的瀏覽紀錄。私人內容只在登入後顯示。"
+    />
+    <link rel="canonical" href="https://myzilla.observe.tw/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="MyZilla" />
+    <meta property="og:title" content="MyZilla · 我的個人入口" />
+    <meta
+      property="og:description"
+      content="自架的個人入口與瀏覽回顧：收藏、主題選集與私人瀏覽紀錄搜尋。"
+    />
+    <meta property="og:url" content="https://myzilla.observe.tw/" />
   </head>
   <body>
-    <div id="portal"></div>
+    <div id="portal">
+      <div class="portal-shell portal-public">
+        <main>
+          <h1>MyZilla · 我的個人入口</h1>
+          <!-- Public product introduction; portal.ts keeps this section in the signed-out entry. -->
+          <section id="product-intro" class="panel product-intro">
+            <h2>認識 MyZilla</h2>
+            <p>
+              MyZilla 是自架的個人入口與瀏覽回顧。延續 2000 年代 MyZilla
+              的經典入口，把常用網址、網摘、電影與心情整理在同一頁，也能回顧自己在各瀏覽器留下的瀏覽紀錄。
+            </p>
+            <ul>
+              <li>
+                <strong>我的入口：</strong>收藏網址與網摘，用生活分類、標籤與筆記整理，並提供多站搜尋與可撤銷的短網址。
+              </li>
+              <li>
+                <strong>瀏覽回顧：</strong>搜尋全部瀏覽歷史，查看常訪網站、個人洞察與停留時間推估；Chromium
+                與 Firefox／Zen 擴充功能可持續記錄新活動。
+              </li>
+              <li>
+                <strong>主題選集：</strong>從看過的內容挑選連結、寫下推薦理由，再發布可撤銷的分享快照。
+              </li>
+              <li>
+                <strong>帳號與朋友：</strong>邀請制帳號；雙方同意後才比較興趣分類。
+              </li>
+            </ul>
+            <p>
+              瀏覽歷史、收藏與搜尋紀錄預設只有本人可見，登入後才會顯示；只有自己主動分享的內容會對外開放。
+            </p>
+            <p><a href="/help.html">閱讀使用說明</a></p>
+          </section>
+        </main>
+      </div>
+    </div>
     <script type="module" src="/src/ui/portal.ts"></script>
   </body>
 </html>

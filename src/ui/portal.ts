@@ -22,6 +22,8 @@ import {
 } from "./ux";
 import { engines, scopes, type PortalItem } from "../portal/model";
 const root = document.getElementById("portal")!;
+// The static product introduction in index.html stays crawlable and is kept in the signed-out entry.
+const productIntro = root.querySelector("#product-intro")?.outerHTML ?? "";
 const esc = (s: unknown) =>
   String(s ?? "").replace(
     /[&<>"']/g,
@@ -147,7 +149,7 @@ function sidebar() {
     )}<a href="/dashboard.html#history">瀏覽記錄</a><a href="/dashboard.html#settings">擴充功能與同步</a></nav></section><section><h2>你的帳號</h2><p>${me ? esc(me.account.name) : token() ? "我的帳號" : "尚未登入"}</p>${me ? `<p>@${esc(me.account.handle)}</p><label class="check"><input id="online-opt" type="checkbox" ${me.online ? "checked" : ""}>顯示我在線上</label><small>勾選後，站內登入者可看到你的名稱；最近五分鐘開啟入口視為在線。</small>` : token() ? "" : '<a href="/community.html">帳號登入／邀請註冊</a>'}</section></aside>`;
 }
 function welcome(legacyOpen: boolean) {
-  return `<section class="panel public-welcome"><h1>歡迎回到自己的入口</h1><p>將網址與網摘整理成主題選集，回顧自己的瀏覽記錄。私人內容會在登入後顯示。</p><a class="button primary" href="/community.html">帳號登入</a><p class="note">收到邀請的新使用者，也可前往帳號頁建立帳號。</p><details class="legacy-access" ${legacyOpen ? "open" : ""}><summary>使用既有存取金鑰</summary><form data-form="unlock"><p><a href="/help.html#login">金鑰是什麼？第一次登入說明</a></p><label>存取金鑰<input name="token" type="password" minlength="32" required autocomplete="off"></label><button>開啟我的入口</button></form></details></section>`;
+  return `<section class="panel public-welcome"><h1>歡迎回到自己的入口</h1><p>將網址與網摘整理成主題選集，回顧自己的瀏覽記錄。私人內容會在登入後顯示。</p><a class="button primary" href="/community.html">帳號登入</a><p class="note">收到邀請的新使用者，也可前往帳號頁建立帳號。</p><details class="legacy-access" ${legacyOpen ? "open" : ""}><summary>使用既有存取金鑰</summary><form data-form="unlock"><p><a href="/help.html#login">金鑰是什麼？第一次登入說明</a></p><label>存取金鑰<input name="token" type="password" minlength="32" required autocomplete="off"></label><button>開啟我的入口</button></form></details></section>${productIntro}`;
 }
 function render() {
   renderedURL = location.href;
