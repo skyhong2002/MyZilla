@@ -127,6 +127,7 @@ Mac-side verification reported stale local DNS NXDOMAIN despite working public/u
 
 - 新增 `npm run test:seo`：先植入帶唯一標記的私人歷史、私人收藏與搜尋紀錄，再以未登入身分檢查 `/`、`/index.html`、`/help.html`、私人殼、robots、sitemap、6 個未知／失效分享路徑（404）與 9 個私人 API（401），標記皆未出現；sitemap 每個 URL 為 200、自我 canonical、無 noindex；Chromium 確認未登入首頁保留介紹、單一 h1，legacy 金鑰仍能開啟私人收藏且登入後不顯示介紹。PASS。
 - `npm test` 52/52、`test:portal`、`test:community`、`test:usability` PASS；`tsc --noEmit` 通過。`test:usability` 第一次在主機高 swap 時伺服器啟動逾時失敗，重跑通過；程式未改。
+- GitHub Actions run `39929324858`（`80a3c79`）全部步驟 success，含 `test:seo`、Firefox、Docker 建置與非 root 容器 smoke。
 - 未登入首頁 1280／390 px 無水平溢出，截圖在私密 `data/seo-evidence/`。dashboard／community／help 的 JS 雜湊與正式版相同，僅 HTML metadata 改變；未重建擴充功能 ZIP。
 
 部署：伺服器程式未變，未重啟 `myzilla.service`。依既有流程先備份 `dist/web` 至 `dist/.web-before-2f6bd83`，於主機建置鎖下建置到 `data/seo-preview` 驗證，再新增雜湊資產（保留舊資產）並以原子 `mv` 切換 4 個 HTML 與 robots／sitemap。正式首頁現載入 `assets/main-C-4cDEUp.js`。回復：把 `dist/.web-before-2f6bd83` 的 HTML 複製回 `dist/web`，刪除 robots／sitemap。
