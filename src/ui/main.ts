@@ -1,4 +1,5 @@
 import { siteHeader } from "./shell";
+import { minuteFormat } from "./format";
 import { pageLabel } from "../shared/page-label";
 import { favicon, configureFavicons } from "./favicons";
 import { installTabCollector } from "./tab-collector";
@@ -230,7 +231,7 @@ async function status() {
   if (data.syncStatus?.error) message(data.syncStatus.error, true);
   else if (data.syncStatus?.at)
     message(
-      `最近同步：${new Date(data.syncStatus.at).toLocaleString("zh-TW")}`,
+      `最近同步：${new Date(data.syncStatus.at).toLocaleString("zh-TW", minuteFormat)}`,
     );
 }
 async function api(path: string, method = "GET", body?: unknown) {
@@ -307,7 +308,7 @@ async function refresh() {
 }
 function render() {
   if (!report) return;
-  $("dashboard").classList.remove("is-loading");
+  $("dashboard").classList.remove("is-loading", "load-failed");
   const totalTime = report.sites.reduce((sum, s) => sum + s.milliseconds, 0);
   $("visits-stat").textContent = report.visitCount.toLocaleString();
   $("sites-stat").textContent = report.sites.length.toLocaleString();
@@ -456,6 +457,7 @@ async function run(job: () => Promise<void>, blocking = true) {
     // Nothing loaded yet: keep one explanation with a retry instead of an empty page.
     if (!report && token && authenticated) {
       $("dashboard").classList.remove("is-loading");
+      $("dashboard").classList.add("load-failed");
       message(`${errorMessage(error)} 瀏覽紀錄沒有變動。`, true, refresh);
     } else {
       message(errorMessage(error), true);

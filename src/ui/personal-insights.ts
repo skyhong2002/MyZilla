@@ -1,4 +1,5 @@
 import { pageLabel } from "../shared/page-label";
+import { minuteFormat } from "./format";
 import { captureButton, topicLink } from "./curation";
 import {
   errorMessage,
@@ -18,7 +19,7 @@ const esc = (s: unknown) =>
       ]!,
   );
 const date = (n: number) => new Date(n).toLocaleDateString("zh-TW");
-const time = (n: number) => new Date(n).toLocaleString("zh-TW");
+const time = (n: number) => new Date(n).toLocaleString("zh-TW", minuteFormat);
 const empty = (s: string) => `<p class="insight-empty">${s}</p>`;
 const evidence = (id: string) =>
   `<details class="insight-evidence" data-evidence="${esc(id)}"><summary>查看依據</summary><div></div></details>`;

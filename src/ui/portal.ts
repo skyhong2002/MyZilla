@@ -1,4 +1,5 @@
 import { siteHeader } from "./shell";
+import { minuteFormat } from "./format";
 import { favicon } from "./favicons";
 import { captureButton, installCapture } from "./curation";
 import {
@@ -59,6 +60,8 @@ let me: any,
   editing: any;
 let cancelImport = false;
 let loadFailed = false;
+// A finished import or save gets a success tone and, for imports, a next step.
+let noticeTone: "" | "success" = "";
 let loadVersion = 0;
 let renderedURL = location.href,
   restoring = false;
@@ -162,7 +165,7 @@ function sidebar() {
     )
     .join(
       "",
-    )}</nav><section class="rail-search" aria-labelledby="rail-search-title"><h2 id="rail-search-title">快速搜尋</h2><form data-form="search"><label>關鍵字<input name="query" required maxlength="2000"></label><label>搜尋網站<select name="engine">${options(Object.fromEntries(Object.entries(engines).map(([id, value]) => [id, value.label])), "google")}</select></label><button>搜尋並記錄</button><small>在新分頁開啟；記錄只有自己看得到。</small></form></section></aside>`;
+    )}</nav>${kind === "home" ? "" : `<section class="rail-search" aria-labelledby="rail-search-title"><h2 id="rail-search-title">快速搜尋</h2><form data-form="search"><label>關鍵字<input name="query" required maxlength="2000"></label><label>搜尋網站<select name="engine">${options(Object.fromEntries(Object.entries(engines).map(([id, value]) => [id, value.label])), "google")}</select></label><button>搜尋並記錄</button><small>在新分頁開啟；記錄只有自己看得到。</small></form></section>`}</aside>`;
 }
 function welcome(legacyOpen: boolean) {
   return `<section class="public-welcome"><div><h1>瀏覽過的、收藏的，都在自己手上。</h1><p class="lead">MyZilla 是自架的個人入口：收藏網址與網摘、整理主題選集，並搜尋自己在各瀏覽器留下的瀏覽紀錄。</p><p class="note">私人內容只在登入後顯示，存在自己的伺服器。</p></div><div class="welcome-card"><h2>登入我的入口</h2><p>使用帳號、Google，或收到的邀請碼。</p><a class="button primary" href="/community.html">帳號登入</a><details class="legacy-access" ${legacyOpen ? "open" : ""}><summary>使用既有存取金鑰</summary><form data-form="unlock"><label>存取金鑰<input name="token" type="password" minlength="32" required autocomplete="off"></label><button>開啟我的入口</button><p class="note"><a href="/help.html#login">金鑰是什麼？第一次登入說明</a></p></form></details></div></section>${productIntro}`;
@@ -175,7 +178,7 @@ function render() {
     !!root.querySelector<HTMLDetailsElement>(".legacy-access")?.open ||
     !!root.querySelector(".session-placeholder");
   document.title = `${me || token() ? labels[kind] : "登入"} · MyZilla`;
-  root.innerHTML = `<a class="skip-link" href="#portal-main">跳到主要內容</a><div class="portal-shell${signedIn ? "" : " portal-public"}">${header()}<div class="portal-layout"><main id="portal-main" tabindex="-1"><div id="notice" role="status" aria-live="polite">${loadFailed && !me ? "" : esc(notice)}</div>${copyControl(notice)}${me ? content() : token() ? (loadFailed ? `<h1>${labels[kind]}</h1><section class="error-state" role="alert"><h2>暫時讀不到你的入口</h2><p>${esc(notice)}</p><p class="note">收藏與瀏覽紀錄都沒有變動。</p><button class="primary" data-action="retry-load">重新載入</button></section>` : `<h1>${labels[kind]}</h1><div class="session-placeholder" aria-label="正在讀取內容"></div>`) : welcome(legacyOpen)}</main>${signedIn ? sidebar() : ""}</div><footer><span>MyZilla</span><span>私人內容只有自己看得到</span></footer><dialog id="editor" aria-label="收藏編輯與分享"></dialog></div>`;
+  root.innerHTML = `<a class="skip-link" href="#portal-main">跳到主要內容</a><div class="portal-shell${signedIn ? "" : " portal-public"}">${header()}<div class="portal-layout"><main id="portal-main" tabindex="-1"><div id="notice" class="${noticeTone}" role="status" aria-live="polite">${loadFailed && !me ? "" : esc(notice)}${noticeTone && notice.startsWith("匯入") ? ' <a href="#bookmark">查看我的網址</a>' : ""}</div>${copyControl(notice)}${me ? content() : token() ? (loadFailed ? `<h1>${labels[kind]}</h1><section class="error-state" role="alert"><h2>暫時讀不到你的入口</h2><p>${esc(notice)}</p><p class="note">收藏與瀏覽紀錄都沒有變動。</p><button class="primary" data-action="retry-load">重新載入</button></section>` : `<h1>${labels[kind]}</h1><div class="session-placeholder" aria-label="正在讀取內容"></div>`) : welcome(legacyOpen)}</main>${signedIn ? sidebar() : ""}</div><footer><span>MyZilla</span><span>私人內容只有自己看得到</span></footer><dialog id="editor" aria-label="收藏編輯與分享"></dialog></div>`;
 }
 function content() {
   if (["home", "inbox", "collections"].includes(kind))
@@ -184,19 +187,19 @@ function content() {
   if (kind === "online")
     return `<h1>線上使用者</h1><p>只列出主動開啟在線顯示、最近五分鐘使用入口的帳號。</p><section class="panel"><label class="check"><input id="online-opt" type="checkbox" ${me.online ? "checked" : ""}>顯示我在線上</label><p class="note">勾選後，站內登入者可看到你的名稱；最近五分鐘開啟入口視為在線。</p></section>${listing.users?.map((u: any) => `<article class="item"><strong>${esc(u.name)}</strong> @${esc(u.handle)} <a href="/community.html#friends">加入朋友</a></article>`).join("") || '<p class="empty">目前沒有其他人開啟在線顯示。</p>'}`;
   if (kind === "links")
-    return `<h1>短網址管理</h1><p>從收藏的「建立分享連結」產生。持有連結可開啟該網址；編輯收藏網址會更新轉址目的地。刪除收藏、撤銷或到期後失效。</p>${listing.links?.map((link: any) => `<article class="item"><strong>${esc(link.title)}</strong><p>${link.clicks} 次開啟 · ${esc(new Date(link.expires).toLocaleString("zh-TW"))} 到期</p><button data-action="revoke" data-id="${link.id}">撤銷連結</button></article>`).join("") || '<p class="empty">還沒有分享連結。</p>'}`;
+    return `<h1>短網址管理</h1><p>從收藏的「建立分享連結」產生。持有連結可開啟該網址；編輯收藏網址會更新轉址目的地。刪除收藏、撤銷或到期後失效。</p>${listing.links?.map((link: any) => `<article class="item"><strong>${esc(link.title)}</strong><p>${link.clicks} 次開啟 · ${esc(new Date(link.expires).toLocaleString("zh-TW", minuteFormat))} 到期</p><button data-action="revoke" data-id="${link.id}">撤銷連結</button></article>`).join("") || '<p class="empty">還沒有分享連結。</p>'}`;
   if (kind === "search")
-    return `<h1>我的搜尋記錄</h1><p>只包含從「快速搜尋」送出的關鍵字。</p>${listing.items.map((item: any) => `<article class="item"><strong>${esc(item.query)}</strong><p>${esc(engines[item.engine as keyof typeof engines]?.label)} · ${item.uses} 次 · ${esc(new Date(item.last_used).toLocaleString("zh-TW"))}</p><button data-action="search-again" data-id="${item.id}">再次搜尋</button><button data-action="delete-search" data-id="${item.id}">刪除</button></article>`).join("") || '<p class="empty">尚無搜尋記錄。</p>'}${pagination()}`;
+    return `<h1>我的搜尋記錄</h1><p>只包含從「快速搜尋」送出的關鍵字。</p>${listing.items.map((item: any) => `<article class="item"><strong>${esc(item.query)}</strong><p>${esc(engines[item.engine as keyof typeof engines]?.label)} · ${item.uses} 次 · ${esc(new Date(item.last_used).toLocaleString("zh-TW", minuteFormat))}</p><button data-action="search-again" data-id="${item.id}">再次搜尋</button><button data-action="delete-search" data-id="${item.id}">刪除</button></article>`).join("") || '<p class="empty">尚無搜尋記錄。</p>'}${pagination()}`;
   return `<div class="heading"><h1>${labels[kind]}</h1><button class="primary" data-action="new">新增${kind === "movie" ? "電影" : kind === "mood" ? "心情" : "網址"}</button></div><form data-form="find"><label for="find-query">搜尋${labels[kind]}<input id="find-query" name="query" type="search" value="${esc(query)}" placeholder="標題、網址或標籤"></label><button>搜尋</button></form><div class="filters"><label>生活分類<select id="scope">${options({ all: "全部", ...scopes }, scope)}</select></label><label>排序<select id="sort">${options({ recent: "最近使用", clicks: "點閱次數", created: "最新加入" }, sort)}</select></label><label>內容來源<select id="audience">${options({ mine: "自己的收藏", friends: "朋友分享的收藏" }, audience)}</select></label><span>${scope === "all" ? "全部分類" : scopes[scope as keyof typeof scopes]} · ${listing.total ?? 0} 筆</span></div>${query || scope !== "all" || audience !== "mine" ? `<div class="filter-summary"><span>${query ? `關鍵字：${esc(query)}` : ""} ${scope !== "all" ? esc(scopes[scope as keyof typeof scopes]) : ""}</span><button data-action="clear-filters">清除篩選</button></div>` : ""}${audience === "friends" ? '<p class="note">只顯示已接受的朋友主動分享的項目。</p>' : ""}${listing.items.map(itemMarkup).join("") || '<p class="empty">目前沒有項目。新增收藏，或調整搜尋與分類。</p>'}${pagination()}`;
 }
 function itemMarkup(item: any) {
-  return `<article class="item"><div class="heading"><h2>${favicon(item.url)}${esc(item.title)}</h2><small>${item.owner ? esc(item.owner.name) : item.visibility === "friends" ? "朋友可見" : "私人"}</small></div>${item.url ? `<p class="item-url">${esc(item.url)}</p>` : ""}<p>${esc(scopes[item.scope as keyof typeof scopes])} ${item.tags.map((t: string) => `<span class="tag">${esc(t)}</span>`).join("")}</p>${item.kind === "movie" ? `<p>評分 ${item.rating || "尚未評分"}${item.rating ? "/10" : ""} · 看過 ${item.watched} 次${item.wishlist ? " · 願望清單" : ""}${item.collection ? ` · 收藏：${esc(item.collection)}` : ""}</p>` : ""}${item.kind === "mood" ? `<p>${esc(moods[item.mood as keyof typeof moods])} · ${esc(new Date(item.created).toLocaleString("zh-TW"))}</p>` : ""}<p class="notes">${esc(item.notes)}</p><small>${item.clicks} 次開啟${item.lastUsed ? " · 最近 " + esc(new Date(item.lastUsed).toLocaleString("zh-TW")) : ""}</small><div class="actions">${item.url ? captureButton({ url: item.url, title: item.title }, "放進主題選集") : ""}${item.url ? (item.owner ? `<a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">開啟網址 ↗</a>` : `<button data-action="open" data-id="${item.id}">開啟網址 ↗</button>`) : ""}${!item.owner ? `<button data-action="edit" data-id="${item.id}">編輯</button>${item.kind === "movie" ? `<button data-action="movie-summary" data-id="${item.id}">朋友觀影概況</button>` : ""}${item.url ? `<button data-action="link" data-id="${item.id}">建立分享連結</button>` : ""}<button data-action="delete" data-id="${item.id}">刪除</button>` : ""}</div></article>`;
+  return `<article class="item"><div class="heading"><h2>${favicon(item.url)}${esc(item.title)}</h2><small>${item.owner ? esc(item.owner.name) : item.visibility === "friends" ? "朋友可見" : "私人"}</small></div>${item.url ? `<p class="item-url">${esc(item.url)}</p>` : ""}<p>${esc(scopes[item.scope as keyof typeof scopes])} ${item.tags.map((t: string) => `<span class="tag">${esc(t)}</span>`).join("")}</p>${item.kind === "movie" ? `<p>評分 ${item.rating || "尚未評分"}${item.rating ? "/10" : ""} · 看過 ${item.watched} 次${item.wishlist ? " · 願望清單" : ""}${item.collection ? ` · 收藏：${esc(item.collection)}` : ""}</p>` : ""}${item.kind === "mood" ? `<p>${esc(moods[item.mood as keyof typeof moods])} · ${esc(new Date(item.created).toLocaleString("zh-TW", minuteFormat))}</p>` : ""}<p class="notes">${esc(item.notes)}</p><small>${item.clicks} 次開啟${item.lastUsed ? " · 最近 " + esc(new Date(item.lastUsed).toLocaleString("zh-TW", minuteFormat)) : ""}</small><div class="actions">${item.url ? captureButton({ url: item.url, title: item.title }, "放進主題選集") : ""}${item.url ? (item.owner ? `<a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">開啟網址 ↗</a>` : `<button data-action="open" data-id="${item.id}">開啟網址 ↗</button>`) : ""}${!item.owner ? `<button data-action="edit" data-id="${item.id}">編輯</button>${item.kind === "movie" ? `<button data-action="movie-summary" data-id="${item.id}">朋友觀影概況</button>` : ""}${item.url ? `<button data-action="link" data-id="${item.id}">建立分享連結</button>` : ""}<button data-action="delete" data-id="${item.id}">刪除</button>` : ""}</div></article>`;
 }
 function pagination() {
   return `<div class="pagination"><button data-action="previous" ${offset === 0 ? "disabled" : ""}>上一頁</button><span>${listing.total ? offset + 1 : 0}–${Math.min(offset + 20, listing.total ?? 0)} / ${listing.total ?? 0}</span><button data-action="next" ${offset + 20 >= (listing.total ?? 0) ? "disabled" : ""}>下一頁</button></div>`;
 }
 function tools() {
-  return `<h1>匯入與工具</h1><section class="panel"><h2>最近刪除的收藏</h2><p>刪除後 10 分鐘內可復原，原分享連結不會恢復。</p>${listing.trash?.map((item: any) => `<div class="source-row"><span>${esc(item.title)} · ${esc(new Date(item.expires).toLocaleTimeString("zh-TW"))} 前可復原</span><button data-action="restore" data-id="${esc(item.id)}">復原收藏</button></div>`).join("") || "<p>目前沒有可復原的收藏。</p>"}</section><section class="panel"><h2>收藏備份與 RSS</h2><p>下載完整收藏備份，或從備份還原。匯入前會確認更新筆數與朋友可見的項目。</p><div class="actions"><button data-action="export">下載 JSON 備份</button><button data-action="rss">下載私人書籤 RSS</button></div><form data-form="import"><label>匯入 MyZilla JSON<input type="file" name="file" accept="application/json,.json" required></label><button>匯入全部項目</button></form><details><summary>備份內容與 RSS 使用方式</summary><p>備份不含帳號密碼或分享連結。RSS 是供自己使用的匯出檔。</p><a href="/help.html#collections">收藏備份與還原說明</a></details></section><section class="panel"><h2>瀏覽器歷史</h2><p>Brave、Chrome、Arc、Dia、Zen 所有設定檔的既有歷史，繼續使用原生 SQLite 工具全量匯入；新活動由擴充功能同步。</p><a href="/dashboard.html#settings">安裝、匯入與同步設定 →</a></section>`;
+  return `<h1>匯入與工具</h1><section class="panel"><h2>最近刪除的收藏</h2><p>刪除後 10 分鐘內可復原，原分享連結不會恢復。</p>${listing.trash?.map((item: any) => `<div class="source-row"><span>${esc(item.title)} · ${esc(new Date(item.expires).toLocaleTimeString("zh-TW"))} 前可復原</span><button data-action="restore" data-id="${esc(item.id)}">復原收藏</button></div>`).join("") || "<p>目前沒有可復原的收藏。</p>"}</section><section class="panel"><h2>收藏備份與 RSS</h2><p>下載完整收藏備份，或從備份還原。匯入前會確認更新筆數與朋友可見的項目。</p><div class="actions"><button data-action="export">下載 JSON 備份</button><button data-action="rss">下載私人書籤 RSS</button></div><form data-form="import"><label class="file-pick"><span>匯入 MyZilla JSON</span><span class="file-row"><span class="button" aria-hidden="true">選擇檔案</span><span data-file-name>尚未選擇檔案</span></span><input class="sr-only" type="file" name="file" accept="application/json,.json" required></label><button>匯入全部項目</button></form><details><summary>備份內容與 RSS 使用方式</summary><p>備份不含帳號密碼或分享連結。RSS 是供自己使用的匯出檔。</p><a href="/help.html#collections">收藏備份與還原說明</a></details></section><section class="panel"><h2>瀏覽器歷史</h2><p>Brave、Chrome、Arc、Dia、Zen 所有設定檔的既有歷史，繼續使用原生 SQLite 工具全量匯入；新活動由擴充功能同步。</p><a href="/dashboard.html#settings">安裝、匯入與同步設定 →</a></section>`;
 }
 function editor(item?: any) {
   editing = item ?? {
@@ -400,6 +403,7 @@ root.addEventListener("submit", (event) => {
   const form = event.target as HTMLFormElement;
   if (form.dataset.workspaceForm) return;
   event.preventDefault();
+  noticeTone = "";
   const fields = new FormData(form),
     input = Object.fromEntries(fields) as Record<string, string>;
   void run(async () => {
@@ -437,6 +441,7 @@ root.addEventListener("submit", (event) => {
         clearDirty(root);
         (document.getElementById("editor") as HTMLDialogElement).close();
         notice = "已儲存";
+        noticeTone = "success";
         announce(notice);
         break;
       }
@@ -506,6 +511,7 @@ root.addEventListener("submit", (event) => {
             el.textContent = `匯入進度 ${accepted + rejected}/${backup.items.length}`;
         }
         cancel.remove();
+        noticeTone = rejected || cancelImport ? "" : "success";
         notice = `${cancelImport ? "匯入已停止" : "匯入完成"}：接受 ${accepted}、拒收 ${rejected}、未處理 ${backup.items.length - accepted - rejected}。重送相同 ID 不會新增重複項目。`;
         if (errors.length)
           download(
@@ -541,6 +547,7 @@ root.addEventListener("click", (event) => {
     kind = link.hash.slice(1);
     offset = 0;
     notice = "";
+    noticeTone = "";
     state();
     void run(load, false);
     return;
@@ -700,6 +707,12 @@ root.addEventListener("click", (event) => {
 });
 root.addEventListener("change", (event) => {
   const target = event.target as HTMLSelectElement;
+  if ((target as unknown as HTMLInputElement).type === "file") {
+    const name = (target as unknown as HTMLInputElement).files?.[0]?.name;
+    const label = target.closest("label")?.querySelector("[data-file-name]");
+    if (label) label.textContent = name ?? "尚未選擇檔案";
+    return;
+  }
   if (!["scope", "sort", "audience", "online-opt"].includes(target.id)) return;
   void run(async () => {
     if (target.id === "scope") scope = target.value;

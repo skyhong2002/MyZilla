@@ -1,4 +1,5 @@
 import { pageLabel, recentPages } from "../shared/page-label";
+import { minuteFormat } from "./format";
 import { favicon } from "./favicons";
 import { icon } from "./icons";
 import { webUrl } from "../shared/model";
@@ -141,7 +142,7 @@ export function workspace(kind: string, data: any) {
               `<details class="history-group"><summary>${favicon(g.items[0].url)}${esc(g.site)} · ${g.count} 次造訪 · ${g.items.length} 個網址</summary><ul>${g.items
                 .map((v) => {
                   const label = pageLabel(v);
-                  return `<li><a href="${esc(v.url)}" target="_blank" rel="noopener noreferrer">${esc(label.title)}</a><p class="page-clue">${esc(label.detail)}</p><small>${esc(new Date(v.visitedAt).toLocaleString("zh-TW"))} · ${v.count} 次造訪</small><div class="actions">${captureButton(v, "整理這個連結")}</div></li>`;
+                  return `<li><a href="${esc(v.url)}" target="_blank" rel="noopener noreferrer">${esc(label.title)}</a><p class="page-clue">${esc(label.detail)}</p><small>${esc(new Date(v.visitedAt).toLocaleString("zh-TW", minuteFormat))} · ${v.count} 次造訪</small><div class="actions">${captureButton(v, "整理這個連結")}</div></li>`;
                 })
                 .join("")}</ul></details>`,
           )
