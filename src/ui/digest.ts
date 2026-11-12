@@ -1,6 +1,5 @@
 import { pageLabel } from "../shared/page-label";
 import { captureButton } from "./curation";
-import "./digest.css";
 type Api = (path: string) => Promise<any>;
 const esc = (s: unknown) =>
   String(s ?? "").replace(

@@ -1,6 +1,5 @@
 import { installFavicons } from "./favicons";
 import { installIcons } from "./icons";
-import "./ux.css";
 export const escapeText = (value: unknown) =>
   String(value ?? "").replace(
     /[&<>"']/g,

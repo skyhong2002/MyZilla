@@ -1,7 +1,5 @@
 import { siteHeader } from "./shell";
-import "./style.css";
-import "./classic.css";
-import "./community.css";
+import "./app.css";
 import {
   installUX,
   pendingUI,
@@ -85,7 +83,7 @@ function render() {
     new URL(location.href).searchParams.has("google_complete");
   renderedURL = location.href;
   document.title = `${signedIn ? views[view() as keyof typeof views] : "登入"} · MyZilla`;
-  root.innerHTML = `<a class="skip-link" href="#community-main">跳到主要內容</a>${siteHeader("community", signedIn ? '<button data-action="logout">登出</button>' : "")}<main id="community-main" tabindex="-1" class="site-main community-main"><section class="profile"><div><h1>${data ? `${esc(data.me.name)} 的空間` : signedIn ? "我的空間" : "你的瀏覽，也能成為交流的起點"}</h1><p>私人歷史留給自己；選擇要分享的興趣摘要。</p></div></section><p id="community-message" role="status" aria-live="polite">${esc(output)}</p>${copyControl(output)}${
+  root.innerHTML = `<a class="skip-link" href="#community-main">跳到主要內容</a>${siteHeader("community", signedIn ? `${data ? `<span class="account-name">${esc(data.me.name)}</span>` : ""}<button data-action="logout">登出</button>` : "")}<main id="community-main" tabindex="-1" class="site-main community-main"><section class="profile"><div><h1>${data ? `${esc(data.me.name)} 的帳號` : signedIn ? "帳號與朋友" : "登入 MyZilla"}</h1><p>${signedIn ? "管理登入方式、同步金鑰、朋友與分享。原始瀏覽歷史只有自己看得到。" : "登入後回到自己的入口與瀏覽回顧。"}</p></div></section><p id="community-message" role="status" aria-live="polite">${esc(output)}</p>${copyControl(output)}${
     data
       ? loggedIn()
       : signedIn
@@ -100,7 +98,7 @@ function render() {
               "",
             )}</nav><section class="community-section"><h2>${views[view() as keyof typeof views]}</h2><div class="session-placeholder" aria-label="正在讀取內容"></div></section>`
         : login()
-  }<footer>MyZilla · 原始瀏覽歷史僅供本人存取</footer></main>`;
+  }<footer><span>MyZilla</span><span>原始瀏覽歷史僅供本人存取</span></footer></main>`;
   renderSites();
 }
 function login() {

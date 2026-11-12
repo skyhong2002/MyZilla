@@ -1,6 +1,5 @@
 import { pageLabel } from "../shared/page-label";
 import { captureButton, topicLink } from "./curation";
-import "./personal-insights.css";
 import {
   errorMessage,
   announce,

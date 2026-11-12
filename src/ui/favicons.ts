@@ -1,4 +1,3 @@
-import "./favicons.css";
 let credentials = () => ({
   token: sessionStorage.getItem("myzilla-token") ?? "",
   server: "",

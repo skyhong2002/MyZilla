@@ -7,7 +7,7 @@ import {
   installWorkspace,
   hydrateHome,
 } from "./workspace";
-import "./portal.css";
+import "./app.css";
 import {
   installUX,
   pendingUI,
@@ -72,6 +72,9 @@ let scope = params.get("scope") ?? "all",
   offset = Math.max(0, Number(params.get("offset")) || 0),
   audience = params.get("audience") === "friends" ? "friends" : "mine";
 const token = () => sessionStorage.getItem("myzilla-token") ?? "";
+// The private RSS export only changes when this account writes something, so a
+// download is reused until the next write or a different credential.
+let feedCache: { credential: string; blob: Blob } | undefined;
 const options = (values: Record<string, string>, selected: string) =>
   Object.entries(values)
     .map(
@@ -80,6 +83,7 @@ const options = (values: Record<string, string>, selected: string) =>
     )
     .join("");
 async function api(path: string, method = "GET", body?: unknown) {
+  if (method !== "GET") feedCache = undefined;
   const r = await fetch(path, {
     method,
     headers: {
@@ -127,29 +131,40 @@ function state() {
   history.pushState(null, "", u);
 }
 function header() {
-  if (!me && !token())
-    return `<div class="app-header"><header class="site-header app-brand-row"><a class="app-wordmark" href="/"><img src="./myzilla-mark.svg" width="48" height="36" alt=""><strong>MyZilla</strong><span>我的個人入口</span></a><p>搜尋、收藏、回顧，從自己的生活出發。</p></header><nav class="site-nav top-nav app-nav" aria-label="主要導覽"><a href="/#home" aria-current="page">我的入口</a><a href="/help.html">使用說明</a></nav></div>`;
+  const signedIn = !!(me || token());
   return siteHeader(
     kind === "collections" ? "collections" : "home",
-    me || token()
-      ? '<button data-action="logout">登出</button>'
-      : '<a href="/community.html">登入</a>',
+    signedIn
+      ? `${me ? `<span class="account-name">${esc(me.account.name)}</span>` : ""}<button data-action="logout">登出</button>`
+      : '<a class="button primary" href="/community.html">登入</a>',
+    false,
+    false,
+    !signedIn,
   );
 }
+const railGroups: [string, string[]][] = [
+  ["整理", ["home", "inbox", "collections"]],
+  ["收藏", ["bookmark", "article", "movie", "mood"]],
+  ["更多", ["search", "links", "online", "tools"]],
+];
+// One section nav: a left rail on desktop, a scrolling chip row on phones.
 function sidebar() {
-  return `<aside><section><h2>快速搜尋</h2><form data-form="search"><label>關鍵字<input name="query" required maxlength="2000"></label><label>搜尋引擎<select name="engine">${options(Object.fromEntries(Object.entries(engines).map(([id, value]) => [id, value.label])), "google")}</select></label><button>搜尋並記錄</button><small>送至所選搜尋網站；記錄僅自己可見。</small></form></section><section><h2>功能選單</h2><nav aria-label="功能選單">${Object.entries(
-    labels,
-  )
+  return `<aside class="portal-rail"><nav class="quick-nav rail-nav" aria-label="入口功能">${railGroups
     .map(
-      ([id, label]) =>
-        `<a href="#${id}" ${id === kind ? 'aria-current="page"' : ""}>${label}</a>`,
+      ([group, ids]) =>
+        `<div class="rail-group"><span aria-hidden="true">${group}</span>${ids
+          .map(
+            (id) =>
+              `<a href="#${id}" ${id === kind ? 'aria-current="page"' : ""}>${labels[id]}</a>`,
+          )
+          .join("")}</div>`,
     )
     .join(
       "",
-    )}<a href="/dashboard.html#history">瀏覽記錄</a><a href="/dashboard.html#settings">擴充功能與同步</a></nav></section><section><h2>你的帳號</h2><p>${me ? esc(me.account.name) : token() ? "我的帳號" : "尚未登入"}</p>${me ? `<p>@${esc(me.account.handle)}</p><label class="check"><input id="online-opt" type="checkbox" ${me.online ? "checked" : ""}>顯示我在線上</label><small>勾選後，站內登入者可看到你的名稱；最近五分鐘開啟入口視為在線。</small>` : token() ? "" : '<a href="/community.html">帳號登入／邀請註冊</a>'}</section></aside>`;
+    )}</nav><section class="rail-search" aria-labelledby="rail-search-title"><h2 id="rail-search-title">快速搜尋</h2><form data-form="search"><label>關鍵字<input name="query" required maxlength="2000"></label><label>搜尋網站<select name="engine">${options(Object.fromEntries(Object.entries(engines).map(([id, value]) => [id, value.label])), "google")}</select></label><button>搜尋並記錄</button><small>在新分頁開啟；記錄只有自己看得到。</small></form></section></aside>`;
 }
 function welcome(legacyOpen: boolean) {
-  return `<section class="panel public-welcome"><h1>歡迎回到自己的入口</h1><p>將網址與網摘整理成主題選集，回顧自己的瀏覽記錄。私人內容會在登入後顯示。</p><a class="button primary" href="/community.html">帳號登入</a><p class="note">收到邀請的新使用者，也可前往帳號頁建立帳號。</p><details class="legacy-access" ${legacyOpen ? "open" : ""}><summary>使用既有存取金鑰</summary><form data-form="unlock"><p><a href="/help.html#login">金鑰是什麼？第一次登入說明</a></p><label>存取金鑰<input name="token" type="password" minlength="32" required autocomplete="off"></label><button>開啟我的入口</button></form></details></section>${productIntro}`;
+  return `<section class="public-welcome"><div><h1>瀏覽過的、收藏的，都在自己手上。</h1><p class="lead">MyZilla 是自架的個人入口：收藏網址與網摘、整理主題選集，並搜尋自己在各瀏覽器留下的瀏覽紀錄。</p><p class="note">私人內容只在登入後顯示，存在自己的伺服器。</p></div><div class="welcome-card"><h2>登入我的入口</h2><p>使用帳號、Google，或收到的邀請碼。</p><a class="button primary" href="/community.html">帳號登入</a><details class="legacy-access" ${legacyOpen ? "open" : ""}><summary>使用既有存取金鑰</summary><form data-form="unlock"><label>存取金鑰<input name="token" type="password" minlength="32" required autocomplete="off"></label><button>開啟我的入口</button><p class="note"><a href="/help.html#login">金鑰是什麼？第一次登入說明</a></p></form></details></div></section>${productIntro}`;
 }
 function render() {
   renderedURL = location.href;
@@ -159,23 +174,14 @@ function render() {
     !!root.querySelector<HTMLDetailsElement>(".legacy-access")?.open ||
     !!root.querySelector(".session-placeholder");
   document.title = `${me || token() ? labels[kind] : "登入"} · MyZilla`;
-  root.innerHTML = `<a class="skip-link" href="#portal-main">跳到主要內容</a><div class="portal-shell${signedIn ? "" : " portal-public"}">${header()}<div class="portal-layout"><main id="portal-main" tabindex="-1">${
-    signedIn
-      ? `<nav class="quick-nav" aria-label="快速切換">${Object.entries(labels)
-          .map(
-            ([id, label]) =>
-              `<a href="#${id}" ${kind === id ? 'aria-current="page"' : ""}>${label}</a>`,
-          )
-          .join("")}</nav>`
-      : ""
-  }<div id="notice" role="status" aria-live="polite">${esc(notice)}</div>${copyControl(notice)}${me ? content() : token() ? `<section class="panel"><h1>${labels[kind]}</h1><div class="session-placeholder" aria-label="正在讀取內容"></div></section>` : welcome(legacyOpen)}</main>${signedIn ? sidebar() : ""}</div><footer>MyZilla</footer><dialog id="editor" aria-label="收藏編輯與分享"></dialog></div>`;
+  root.innerHTML = `<a class="skip-link" href="#portal-main">跳到主要內容</a><div class="portal-shell${signedIn ? "" : " portal-public"}">${header()}<div class="portal-layout"><main id="portal-main" tabindex="-1"><div id="notice" role="status" aria-live="polite">${esc(notice)}</div>${copyControl(notice)}${me ? content() : token() ? `<h1>${labels[kind]}</h1><div class="session-placeholder" aria-label="正在讀取內容"></div>` : welcome(legacyOpen)}</main>${signedIn ? sidebar() : ""}</div><footer><span>MyZilla</span><span>私人內容只有自己看得到</span><a href="/help.html">使用說明</a></footer><dialog id="editor" aria-label="收藏編輯與分享"></dialog></div>`;
 }
 function content() {
   if (["home", "inbox", "collections"].includes(kind))
     return workspace(kind, listing);
   if (kind === "tools") return tools();
   if (kind === "online")
-    return `<h1>線上使用者</h1><p>只列出主動開啟在線顯示、最近五分鐘使用入口的帳號。</p>${listing.users?.map((u: any) => `<article class="item"><strong>${esc(u.name)}</strong> @${esc(u.handle)} <a href="/community.html#friends">加入朋友</a></article>`).join("") || '<p class="empty">目前沒有其他人開啟在線顯示。</p>'}`;
+    return `<h1>線上使用者</h1><p>只列出主動開啟在線顯示、最近五分鐘使用入口的帳號。</p><section class="panel"><label class="check"><input id="online-opt" type="checkbox" ${me.online ? "checked" : ""}>顯示我在線上</label><p class="note">勾選後，站內登入者可看到你的名稱；最近五分鐘開啟入口視為在線。</p></section>${listing.users?.map((u: any) => `<article class="item"><strong>${esc(u.name)}</strong> @${esc(u.handle)} <a href="/community.html#friends">加入朋友</a></article>`).join("") || '<p class="empty">目前沒有其他人開啟在線顯示。</p>'}`;
   if (kind === "links")
     return `<h1>短網址管理</h1><p>從收藏的「建立分享連結」產生。持有連結可開啟該網址；編輯收藏網址會更新轉址目的地。刪除收藏、撤銷或到期後失效。</p>${listing.links?.map((link: any) => `<article class="item"><strong>${esc(link.title)}</strong><p>${link.clicks} 次開啟 · ${esc(new Date(link.expires).toLocaleString("zh-TW"))} 到期</p><button data-action="revoke" data-id="${link.id}">撤銷連結</button></article>`).join("") || '<p class="empty">還沒有分享連結。</p>'}`;
   if (kind === "search")
@@ -650,11 +656,20 @@ root.addEventListener("click", (event) => {
         announce("已下載收藏備份");
         return;
       case "rss": {
-        const r = await fetch("/api/portal/feed", {
-          headers: { Authorization: `Bearer ${token()}` },
-        });
-        if (!r.ok) throw Error("RSS 匯出失敗");
-        download(await r.blob(), "myzilla-bookmarks.rss");
+        const credential = token();
+        let feed =
+          feedCache?.credential === credential ? feedCache.blob : undefined;
+        if (!feed) {
+          const r = await fetch("/api/portal/feed", {
+            headers: { Authorization: `Bearer ${credential}` },
+            signal: AbortSignal.timeout(20000),
+            redirect: "error",
+          });
+          if (!r.ok) throw Error("RSS 匯出失敗");
+          feed = await r.blob();
+          if (credential === token()) feedCache = { credential, blob: feed };
+        }
+        download(feed, "myzilla-bookmarks.rss");
         announce("已下載私人 RSS");
         return;
       }

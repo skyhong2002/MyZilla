@@ -2,6 +2,7 @@ import { pageLabel, recentPages } from "../shared/page-label";
 import { favicon } from "./favicons";
 import { icon } from "./icons";
 import { webUrl } from "../shared/model";
+import { engines } from "../portal/model";
 import {
   captureButton,
   chooseDestination,
@@ -146,7 +147,7 @@ export function workspace(kind: string, data: any) {
           )
           .join("")}</div>`
       : "";
-    return `<div data-workspace class="daily-home"><div class="workspace-intro"><span class="eyebrow">${esc(new Date().toLocaleDateString("zh-TW", { month: "long", day: "numeric", weekday: "long" }))}</span><h1>今天，從這裡開始。</h1><p>找回看過的、打開常用的，接著自己的步調。</p><form class="home-search" data-workspace-form="home-search"><label><span class="sr-only">搜尋關鍵字</span><input name="q" type="search" required maxlength="2000" placeholder="找一篇看過的文章，或開始新的搜尋…"></label><label class="search-destination"><span class="sr-only">搜尋範圍</span><select name="where"><option value="history">我的瀏覽紀錄</option><option value="google">Google</option></select></label><button class="primary">${icon("search")}搜尋</button></form></div>
+    return `<div data-workspace class="daily-home"><div class="workspace-intro"><span class="eyebrow">${esc(new Date().toLocaleDateString("zh-TW", { month: "long", day: "numeric", weekday: "long" }))}</span><h1>今天，從這裡開始。</h1><p>找回看過的頁面、打開常用的網站，或用任一個搜尋網站開始。</p><form class="home-search" data-workspace-form="home-search"><label><span class="sr-only">搜尋關鍵字</span><input name="q" type="search" required maxlength="2000" placeholder="找一篇看過的文章，或開始新的搜尋…"></label><label class="search-destination"><span class="sr-only">搜尋範圍</span><select name="where"><option value="history">我的瀏覽紀錄</option><optgroup label="搜尋網站">${Object.entries(engines).map(([id, value]) => `<option value="${id}">${esc(value.label)}</option>`).join("")}</optgroup></select></label><button class="primary">${icon("search")}搜尋</button></form></div>
     ${data.failed ? `<p role="alert">部分內容尚未讀取。${action("retry", "重試")}</p>` : ""}
     ${homeDigest(data.digest)}
     <section class="workspace-section daily-shortcuts"><div class="heading"><h2>${icon("bookmark")}常用收藏</h2><a href="/#bookmark">管理我的網址 →</a></div><div class="shortcut-grid">${
@@ -160,7 +161,7 @@ export function workspace(kind: string, data: any) {
       `<a class="shortcut-empty" href="/#bookmark"><span class="icon-tile">${icon("plus")}</span><span><strong>把每天會用的網站放在這裡</strong><small>從「我的網址」新增收藏，常開的會排在前面。</small></span></a>`
     }</div></section>
     <section class="workspace-section"><div class="heading"><h2>${icon("clock")}接著上次看</h2><a href="/dashboard.html#history">全部瀏覽紀錄 →</a></div><div class="resume-grid">${recent.map((v: any) => `<article class="resume-card"><span class="resume-domain">${favicon(v.url)}<span class="resume-host">${esc(new URL(v.url).hostname)}</span><time datetime="${new Date(v.visitedAt).toISOString()}">${date(v.visitedAt)}</time></span><h3><a href="${esc(v.url)}" target="_blank" rel="noopener noreferrer">${esc(pageLabel(v).title)}</a></h3><div class="actions">${captureButton(v, "整理這個連結")}<a class="save-shortcut" href="/?captureUrl=${encodeURIComponent(v.url)}&captureTitle=${encodeURIComponent((v.title || v.url).slice(0, 500))}#bookmark">${icon("bookmark")}加到我的網址</a></div></article>`).join("") || (groups.length ? '<p class="empty">最近的紀錄沒有具體內容標題，可展開下方清單查看網址線索。</p>' : '<p class="empty">同步瀏覽紀錄後，可以從這裡接著看。<a href="/dashboard.html#settings">設定同步 →</a></p>')}</div>${groupedHistory}</section>
-    <nav class="entry-doors" aria-label="生活入口"><a class="entry-door" href="/#movie"><span class="icon-tile">${icon("movie")}</span><span><strong>我的電影</strong><small>想看的、看過的，留在一起</small></span></a><a class="entry-door" href="/#mood"><span class="icon-tile">${icon("heart")}</span><span><strong>記下心情</strong><small>留一點今天的自己</small></span></a><a class="entry-door" href="/#article"><span class="icon-tile">${icon("article")}</span><span><strong>我的網摘</strong><small>找回值得重讀的文章</small></span></a></nav>
+    
     <section class="workspace-section"><div class="heading"><h2>${icon("compass")}持續關注的線索</h2><a href="/dashboard.html#insights">全部洞察 →</a></div><div data-home-insights aria-label="關注線索"><p class="note">關注線索整理中；你可以先使用上方的入口。</p></div></section>
     <section class="workspace-section"><div class="heading"><h2>${icon("layers")}繼續整理</h2><a href="/#collections">所有選集 →</a></div><div class="workspace-grid">${data.collections?.items.slice(0, 3).map(card).join("") || `<div class="home-empty"><span class="icon-tile">${icon("layers")}</span><p>有幾篇想放在一起？為它們建立一份選集。</p>${action("create", "建立主題選集")}</div>`}</div></section>
     <section class="workspace-section"><div class="heading"><h2>${icon("inbox")}待整理 <small>${data.inbox?.total ?? 0}</small></h2><div class="actions">${action("paste", "加入連結")}<a href="/#inbox">全部待整理 →</a></div></div>${
@@ -265,12 +266,12 @@ export function installWorkspace(
       d = data.detail;
     void run(async () => {
       if (form.dataset.workspaceForm === "home-search") {
-        if (fields.where === "google") {
+        if (fields.where !== "history") {
           const popup = window.open("", "_blank");
           if (popup) popup.opener = null;
           try {
             const result = await api("/api/portal/search", "POST", {
-              engine: "google",
+              engine: String(fields.where),
               query: String(fields.q),
             });
             if (popup) popup.location.href = result.url;

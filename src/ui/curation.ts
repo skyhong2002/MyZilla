@@ -1,5 +1,4 @@
 import { installIcons } from "./icons";
-import "./curation.css";
 import {
   escapeText as esc,
   announce,
