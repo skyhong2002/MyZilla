@@ -177,6 +177,8 @@ try {
   await guest.locator('[data-form="login"]').waitFor();
   await submit(guest, "login", { handle: "friend-test", password }, "登入");
   await guest.getByRole("heading", { name: /Friend fixture 的空間/ }).waitFor();
+  // Phones open the primary navigation from the header menu first.
+  await guest.getByRole("button", { name: "選單", exact: true }).click();
   await guest.getByRole("link", { name: "瀏覽回顧", exact: true }).click();
   await guest.waitForFunction(
     () => document.querySelector("#visits-stat")?.textContent === "1",

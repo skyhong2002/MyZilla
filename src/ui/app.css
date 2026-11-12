@@ -2668,7 +2668,7 @@ input[type="file"]::file-selector-button {
     color: var(--text-3);
   }
   #dwell-panel .sites-table td:nth-child(3)::before {
-    content: "有效區間 ";
+    content: "計入次數 ";
     color: var(--text-3);
   }
 }
@@ -2747,4 +2747,61 @@ input[type="file"]::file-selector-button {
 }
 .item .notes {
   color: var(--text);
+}
+
+/* Round 3 review fixes ------------------------------------------------------ */
+.nav-toggle {
+  display: none;
+}
+.import-progress {
+  display: block;
+  max-width: 420px;
+  margin: var(--s-3) 0 var(--s-2);
+}
+/* Row actions stay out of the way until the row is pointed at or focused. */
+@media (hover: hover) and (min-width: 861px) {
+  .visit-row .curate-button,
+  .visit-row .save-history-link {
+    opacity: 0;
+    transition: opacity 0.12s;
+  }
+  .visit-row:hover :is(.curate-button, .save-history-link),
+  .visit-row:focus-within :is(.curate-button, .save-history-link) {
+    opacity: 1;
+  }
+}
+@media (max-width: 860px) {
+  .app-header-inner {
+    grid-template-areas:
+      "brand . account"
+      "nav nav nav";
+  }
+  .nav-toggle {
+    display: inline-flex;
+  }
+  .nav-toggle::before {
+    content: "";
+    width: 14px;
+    height: 10px;
+    border-block: 2px solid currentColor;
+    background: linear-gradient(currentColor, currentColor) center / 100% 2px no-repeat;
+  }
+  .app-header:not(.nav-open) .app-nav {
+    display: none;
+  }
+  .app-header.nav-open .app-nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    padding: 4px var(--gutter) var(--s-3);
+    overflow: visible;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .app-header.nav-open .app-nav a {
+    justify-content: flex-start;
+  }
+  .app-account {
+    gap: 6px;
+  }
 }

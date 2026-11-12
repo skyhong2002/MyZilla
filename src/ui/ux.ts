@@ -194,6 +194,7 @@ export async function discardChanges(root: ParentNode) {
 }
 export function installUX(root: HTMLElement) {
   installIcons(root);
+  installNavToggle();
   installFavicons(root);
   root.addEventListener("input", (e) => {
     const input = e.target as HTMLInputElement;
@@ -378,3 +379,37 @@ export function reauthenticate(account: string): Promise<boolean> {
   });
   return authentication;
 }
+
+// Phones fold the primary navigation behind one "選單" button in the header.
+let navToggleInstalled = false;
+export function installNavToggle() {
+  if (navToggleInstalled) return;
+  navToggleInstalled = true;
+  const setOpen = (button: HTMLElement, open: boolean) => {
+    button.setAttribute("aria-expanded", String(open));
+    button.closest(".app-header")?.classList.toggle("nav-open", open);
+  };
+  document.addEventListener("click", (event) => {
+    const target = event.target as HTMLElement;
+    const button = target.closest<HTMLElement>("[data-nav-toggle]");
+    if (button) {
+      setOpen(button, button.getAttribute("aria-expanded") !== "true");
+      return;
+    }
+    const open = document.querySelector<HTMLElement>(
+      '[data-nav-toggle][aria-expanded="true"]',
+    );
+    if (open && (target.closest("#primary-nav a") || !target.closest(".app-header")))
+      setOpen(open, false);
+  });
+  document.addEventListener("keydown", (event) => {
+    const open = document.querySelector<HTMLElement>(
+      '[data-nav-toggle][aria-expanded="true"]',
+    );
+    if (event.key === "Escape" && open) {
+      setOpen(open, false);
+      open.focus();
+    }
+  });
+}
+

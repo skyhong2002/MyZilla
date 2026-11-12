@@ -488,6 +488,12 @@ root.addEventListener("submit", (event) => {
         const progress = document.getElementById("notice");
         if (progress)
           progress.textContent = `匯入進度 0/${backup.items.length}`;
+        const bar = document.createElement("progress");
+        bar.max = backup.items.length;
+        bar.value = 0;
+        bar.className = "import-progress";
+        bar.setAttribute("aria-label", "匯入進度");
+        cancel.before(bar);
         let accepted = 0,
           rejected = 0;
         const errors: string[] = [];
@@ -509,8 +515,10 @@ root.addEventListener("submit", (event) => {
           const el = document.getElementById("notice");
           if (el)
             el.textContent = `匯入進度 ${accepted + rejected}/${backup.items.length}`;
+          bar.value = accepted + rejected;
         }
         cancel.remove();
+        bar.remove();
         noticeTone = rejected || cancelImport ? "" : "success";
         notice = `${cancelImport ? "匯入已停止" : "匯入完成"}：接受 ${accepted}、拒收 ${rejected}、未處理 ${backup.items.length - accepted - rejected}。重送相同 ID 不會新增重複項目。`;
         if (errors.length)

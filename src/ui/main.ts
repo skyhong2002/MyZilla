@@ -389,15 +389,27 @@ async function loadRecent(from: number, to: number) {
 async function loadSources() {
   const data = await api("/api/sources");
   $("sources-section").hidden = false;
-  $("sources-list").innerHTML = data.sources.length
-    ? data.sources
+  // One row per browser profile; visits and extension time are counts on it.
+  const grouped = new Map<
+    string,
+    { source: HistoryVisit["source"]; visits: number; intervals: number }
+  >();
+  for (const s of data.sources as {
+    source: HistoryVisit["source"];
+    kind: string;
+    count: number;
+  }[]) {
+    const key = JSON.stringify([s.source.browser, s.source.profile, s.source.device]);
+    const row = grouped.get(key) ?? { source: s.source, visits: 0, intervals: 0 };
+    if (s.kind === "visit") row.visits += s.count;
+    else row.intervals += s.count;
+    grouped.set(key, row);
+  }
+  $("sources-list").innerHTML = grouped.size
+    ? [...grouped.values()]
         .map(
-          (s: {
-            source: HistoryVisit["source"];
-            kind: string;
-            count: number;
-          }) =>
-            `<div class="source-row"><div><strong>${escape(s.source.browser)} · ${escape(s.source.profile)}</strong><span>${escape(s.source.device)} · ${s.kind === "visit" ? "造訪紀錄" : "擴充功能前景時間"}</span></div><span>${s.count.toLocaleString()} 筆${s.kind === "visit" ? "造訪" : "時間區間"}</span></div>`,
+          (s) =>
+            `<div class="source-row"><div><strong>${escape(s.source.browser)} · ${escape(s.source.profile)}</strong><span>${escape(s.source.device)}</span></div><span>${s.visits.toLocaleString()} 筆造訪${s.intervals ? ` · ${s.intervals.toLocaleString()} 段前景時間` : ""}</span></div>`,
         )
         .join("")
     : '<p class="empty">尚無同步來源，完成一次匯入後會顯示在這裡。</p>';
