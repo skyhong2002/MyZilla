@@ -53,7 +53,7 @@
   --s-5: 24px;
   --s-6: 32px;
   --s-7: 48px;
-  --fs-xs: 0.8125rem;
+  --fs-xs: 0.84375rem;
   --fs-s: 0.875rem;
   --fs-m: 1rem;
   --fs-l: 1.125rem;
@@ -3046,5 +3046,74 @@ input[type="file"]::file-selector-button {
   .visit-row > .visit,
   .visit-row > .recent-visit {
     flex: 1 1 auto;
+  }
+}
+
+/* Round 8 review fixes ------------------------------------------------------ */
+/* The weekly digest uses the accent tint instead of a separate warm color. */
+#ai-digest,
+.home-digest-card {
+  background: var(--accent-soft);
+  border: 0;
+  border-left: 3px solid var(--accent);
+}
+.home-digest h2 .mz-icon {
+  color: var(--accent-text);
+}
+/* Privacy reads as a small badge next to the title. */
+.item .visibility {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.item .visibility.private::before {
+  content: "";
+  width: 8px;
+  height: 9px;
+  border: 1.5px solid currentColor;
+  border-radius: 2px;
+}
+.item .visibility.friends,
+.item .visibility.shared {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+.item > .heading {
+  justify-content: flex-start;
+  gap: var(--s-3);
+}
+/* Desktop items: icon buttons with their names as tooltips and accessible text. */
+@media (min-width: 861px) {
+  .item > .actions > :is(button, a),
+  .item > .actions > .more-menu > summary {
+    width: 34px;
+    min-height: 34px;
+    padding: 0;
+    justify-content: center;
+    font-size: 0;
+    gap: 0;
+  }
+  .item > .actions > :is(button, a) .mz-icon {
+    width: 17px;
+    height: 17px;
+  }
+  .item > .actions > .more-menu > summary::after {
+    font-size: 17px;
+    margin: 0;
+    line-height: 1;
+  }
+  .item > .actions > a:not(:has(.mz-icon))::before {
+    content: "↗";
+    font-size: 15px;
+  }
+  .item .more-menu .menu {
+    left: auto;
+    right: 0;
   }
 }

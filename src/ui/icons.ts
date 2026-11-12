@@ -48,7 +48,7 @@ export function icon(name: IconName, extra = "") {
 const labels: [RegExp, IconName][] = [
   [/^回顧$/, "chart"],
   [/^下載/, "download"],
-  [/^(我的入口|今日入口)$/, "home"],
+  [/^(我的入口|今日入口|今天)$/, "home"],
   [/^(主題選集|我的與共同編輯|所有選集)/, "layers"],
   [/^(待整理|加入待整理|回到待整理)/, "inbox"],
   [/^(瀏覽回顧|瀏覽記錄|瀏覽歷史|歷史|回顧|長期線索)/, "clock"],
