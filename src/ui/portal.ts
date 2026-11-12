@@ -140,7 +140,7 @@ function header() {
     kind === "collections" ? "collections" : "home",
     signedIn
       ? `${me ? `<span class="account-name">${esc(me.account.name)}</span>` : ""}<button data-action="logout">登出</button>`
-      : '<a class="button primary" href="/community.html">登入</a>',
+      : '<a class="button primary" href="/community.html">帳號登入</a>',
     false,
     false,
     !signedIn,

@@ -77,7 +77,7 @@ const otherColor = "var(--chart-other)";
 
 $("app").innerHTML = `
 <a class="skip-link" href="#page-title">跳到主要內容</a>
-${siteHeader("dashboard", extension ? "" : '<button id="logout" type="button" hidden>登出</button>', true, extension)}
+${siteHeader("dashboard", extension ? "" : '<a id="login-link" class="button primary" href="/community.html">帳號登入</a><button id="logout" type="button" hidden>登出</button>', true, extension, !extension && !token)}
 <main class="site-main">
 <section class="profile"><div class="profile-copy"><div class="title-row"><h1 id="page-title" tabindex="-1">瀏覽回顧</h1><span class="private-badge">私人</span></div><p id="page-scope">總覽 · 全部紀錄</p></div></section>
 <div class="view-toolbar"><nav class="page-nav" aria-label="瀏覽紀錄導覽">${(["overview", "insights", "history", "recap"] as View[]).map((view) => `<a href="#${view}" data-view="${view}">${viewLabels[view]}</a>`).join("")}</nav>
@@ -172,6 +172,11 @@ function applyNavigation(focus = false) {
       .forEach((el) => (el.hidden = authenticated));
   }
   if ($("logout")) $("logout").hidden = !authenticated;
+  if ($("login-link")) $("login-link").hidden = authenticated;
+  if (!extension)
+    document
+      .querySelector(".app-header")
+      ?.classList.toggle("signed-out", !authenticated);
   if (focus) {
     $("page-title").focus({ preventScroll: true });
     scrollTo({ top: 0, behavior: "instant" });

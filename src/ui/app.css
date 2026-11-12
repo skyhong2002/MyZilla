@@ -2896,3 +2896,44 @@ input[type="file"]::file-selector-button {
     white-space: nowrap;
   }
 }
+
+/* Round 5 review fixes ------------------------------------------------------ */
+.app-header.signed-out [data-private-nav] {
+  display: none;
+}
+[data-action="revoke-device"] {
+  color: var(--danger);
+}
+.note a,
+.method-note a {
+  white-space: nowrap;
+}
+#dwell-panel td small[style] {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow-wrap: normal !important;
+}
+.help-layout {
+  grid-template-columns: 220px minmax(0, 820px);
+  justify-content: center;
+}
+.help-layout .community-section {
+  max-width: none;
+}
+.help-layout > nav.page-nav a[aria-current="location"] {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+.help-layout > nav.page-nav a[aria-current="location"]::after {
+  display: none;
+}
+@media (max-width: 600px) {
+  #category-sites .source-row > .actions {
+    width: 100%;
+  }
+  #category-sites .source-row select {
+    flex: 1;
+    width: 100%;
+  }
+}

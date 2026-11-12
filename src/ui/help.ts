@@ -2,7 +2,7 @@ import { siteHeader } from "./shell";
 import "./app.css";
 import { installUX, focusHeading } from "./ux";
 const root = document.getElementById("help")!;
-root.innerHTML = `<a class="skip-link" href="#help-main">跳到主要內容</a>${siteHeader("help", "", false, false, !sessionStorage.getItem("myzilla-token"))}
+root.innerHTML = `<a class="skip-link" href="#help-main">跳到主要內容</a>${siteHeader("help", sessionStorage.getItem("myzilla-token") ? "" : '<a class="button primary" href="/community.html">帳號登入</a>', false, false, !sessionStorage.getItem("myzilla-token"))}
 <main id="help-main" tabindex="-1" class="site-main community-main"><section class="profile"><div><h1>使用說明</h1><p>從登入、找回頁面，到整理與分享你的收藏。</p></div></section><label class="help-search">搜尋說明<input id="help-search" type="search" placeholder="例如登入、時間、分享"></label><p id="help-status" role="status"></p><div class="help-layout"><nav class="page-nav" aria-label="說明主題"><a href="#login">登入</a><a href="#import">匯入與同步</a><a href="#history">找回頁面</a><a href="#insights">洞察</a><a href="#time">停留時間</a><a href="#collections">收藏</a><a href="#sharing">朋友與分享</a><a href="#curation">主題選集</a><a href="#trouble">遇到問題</a></nav><div class="help-sections">
 <section id="login" class="community-section"><h2>登入自己的空間</h2><ol><li>到<a href="/community.html">帳號與朋友</a>，輸入既有帳號與密碼。</li><li>第一次使用且持有部署時提供的存取金鑰：使用金鑰登入，開啟既有空間後建立擁有者帳號。原有歷史會保留。</li><li>想用 Google 登入：先登入原帳號，在帳號頁按「連結 Google 帳號」完成一次連結；之後就能使用 Google 登入。</li></ol><p>新朋友需要站主提供的一次性邀請碼，註冊後會有自己的空間，不會取得你的歷史。存取金鑰相當於密碼，請勿分享。</p><p>登入只保留在目前分頁。登入過期時，編輯中的表單會保留，可在彈出視窗用原帳號密碼或原始金鑰重新登入，再送出操作。</p></section>
 <section id="import" class="community-section"><h2>匯入舊歷史，持續記錄新活動</h2><ol><li>前往<a href="/dashboard.html#settings">匯入與設定</a>，下載適合瀏覽器的擴充功能，依頁面步驟安裝。</li><li>每個瀏覽器設定檔各自安裝並連接自己的伺服器與同步金鑰。Chrome、Brave、Arc、Dia 使用 Chromium 版本；Zen 使用 Firefox 版本。</li><li>匯入這個設定檔的舊歷史可按「匯入本設定檔全部歷史」。需要多瀏覽器、所有設定檔完整匯入時，下載<a href="/downloads/import_history.py">原生匯入工具</a>，依<a href="/downloads/import-contract.md">匯入步驟</a>操作。</li></ol><p>沒有日期或筆數上限；工具支援重送與續傳。擴充功能只能讀取自身設定檔，不能替其他瀏覽器匯入。匯入後在設定頁的來源清單核對瀏覽器、設定檔與筆數。</p><p>既有歷史沒有前景時間；開啟擴充功能記錄後才會累積。更換同步金鑰後，所有設定檔都需要更新。</p></section>
@@ -46,3 +46,21 @@ if (["chrome-extension:", "moz-extension:"].includes(location.protocol)) {
     a.rel = "noopener noreferrer";
   });
 }
+
+// Mark the section being read in the table of contents.
+const tocLinks = [
+  ...root.querySelectorAll<HTMLAnchorElement>('.help-layout nav a[href^="#"]'),
+];
+const spy = new IntersectionObserver(
+  (entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      for (const link of tocLinks)
+        if (link.hash === "#" + entry.target.id)
+          link.setAttribute("aria-current", "location");
+        else link.removeAttribute("aria-current");
+    }
+  },
+  { rootMargin: "-90px 0px -65% 0px" },
+);
+sections.forEach((section) => spy.observe(section));
