@@ -174,7 +174,7 @@ function render() {
     !!root.querySelector<HTMLDetailsElement>(".legacy-access")?.open ||
     !!root.querySelector(".session-placeholder");
   document.title = `${me || token() ? labels[kind] : "登入"} · MyZilla`;
-  root.innerHTML = `<a class="skip-link" href="#portal-main">跳到主要內容</a><div class="portal-shell${signedIn ? "" : " portal-public"}">${header()}<div class="portal-layout"><main id="portal-main" tabindex="-1"><div id="notice" role="status" aria-live="polite">${esc(notice)}</div>${copyControl(notice)}${me ? content() : token() ? `<h1>${labels[kind]}</h1><div class="session-placeholder" aria-label="正在讀取內容"></div>` : welcome(legacyOpen)}</main>${signedIn ? sidebar() : ""}</div><footer><span>MyZilla</span><span>私人內容只有自己看得到</span><a href="/help.html">使用說明</a></footer><dialog id="editor" aria-label="收藏編輯與分享"></dialog></div>`;
+  root.innerHTML = `<a class="skip-link" href="#portal-main">跳到主要內容</a><div class="portal-shell${signedIn ? "" : " portal-public"}">${header()}<div class="portal-layout"><main id="portal-main" tabindex="-1"><div id="notice" role="status" aria-live="polite">${esc(notice)}</div>${copyControl(notice)}${me ? content() : token() ? `<h1>${labels[kind]}</h1><div class="session-placeholder" aria-label="正在讀取內容"></div>` : welcome(legacyOpen)}</main>${signedIn ? sidebar() : ""}</div><footer><span>MyZilla</span><span>私人內容只有自己看得到</span></footer><dialog id="editor" aria-label="收藏編輯與分享"></dialog></div>`;
 }
 function content() {
   if (["home", "inbox", "collections"].includes(kind))

@@ -60,6 +60,19 @@ if (mode === "site") {
   mkdirSync(out, { recursive: true });
   for (const [sizeName, size] of Object.entries(SIZES).filter(([n]) => !only || n === only)) {
     for (const state of STATES.filter((s) => !filter || s.id.includes(filter))) {
+      // A slow host can time out one shot; retry it once before giving up.
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          await shootState(state, size, sizeName);
+          break;
+        } catch (error) {
+          console.warn(state.id, sizeName, "attempt", attempt, "failed:", error.message.split("\n")[0]);
+          if (attempt === 2) throw error;
+        }
+      }
+    }
+  }
+  async function shootState(state, size, sizeName) {
       const context = await browser.newContext(
         contextOptions(size, { colorScheme: state.theme === "dark" ? "dark" : "light", locale: "zh-TW" }),
       );
@@ -99,7 +112,6 @@ if (mode === "site") {
       await shoot(page, file, size, state);
       console.log(file);
       await context.close();
-    }
   }
 } else if (mode === "references") {
   const [out, filter] = rest;
@@ -117,6 +129,14 @@ if (mode === "site") {
       const page = await context.newPage();
       await page.goto(ref.url, { waitUntil: "domcontentloaded", timeout: 45000 }).catch(() => {});
       await page.waitForTimeout(7000);
+      if (ref.login) {
+        await page.locator('input[name="username"]').fill(ref.login.user).catch(() => {});
+        await page.locator('input[name="password"]').fill(ref.login.password).catch(() => {});
+        await page.locator('input[type="submit"], button[type="submit"]').first().click().catch(() => {});
+        await page.waitForTimeout(3000);
+        await page.goto(ref.login.then, { waitUntil: "domcontentloaded" }).catch(() => {});
+        await page.waitForTimeout(4000);
+      }
       for (const name of ["Reject All", "Reject all", "Accept All", "Accept all", "Accept", "Got it"]) {
         const button = page.getByRole("button", { name, exact: true });
         if (await button.count().catch(() => 0)) {

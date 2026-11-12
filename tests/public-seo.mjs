@@ -152,7 +152,7 @@ try {
     errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto(base + "/");
-  await page.getByRole("heading", { name: "歡迎回到自己的入口" }).waitFor();
+  await page.getByRole("heading", { name: "瀏覽過的、收藏的，都在自己手上。" }).waitFor();
   await page.getByRole("heading", { name: "認識 MyZilla" }).waitFor();
   assert.equal(await page.locator("#product-intro").count(), 1);
   assert.equal(await page.locator("h1").count(), 1);

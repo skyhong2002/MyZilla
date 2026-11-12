@@ -100,5 +100,6 @@ export const REFERENCES = [
   { id: "arena-explore", url: "https://www.are.na/explore" },
   { id: "arena-channel", url: "https://www.are.na/are-na-team/are-na-blog" },
   { id: "raindrop-home", url: "https://raindrop.io/" },
-  { id: "linkding-demo", url: "https://demo.linkding.link/bookmarks" },
+  // The demo publishes a shared test/test account on its login page.
+  { id: "linkding-demo", url: "https://demo.linkding.link/login/", login: { user: "test", password: "test", then: "https://demo.linkding.link/bookmarks" } },
 ];

@@ -129,6 +129,7 @@ h1,
 h2,
 h3,
 h4 {
+  text-wrap: balance;
   margin: 0 0 var(--s-2);
   line-height: 1.35;
   font-weight: 650;
@@ -894,9 +895,13 @@ button .mz-icon {
     background-position: -200% 0;
   }
 }
-[aria-busy="true"] {
+#history-list[aria-busy="true"],
+.ranking[aria-busy="true"] {
   opacity: 0.6;
   transition: opacity 0.2s;
+}
+[data-cancel-import] {
+  margin-bottom: var(--s-4);
 }
 [role="alert"]:not(:empty):not(.ux-toast) {
   padding: var(--s-3) var(--s-4);
@@ -1507,7 +1512,7 @@ dialog .heading {
 .topic-grid,
 .personal-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: var(--s-3);
 }
 .resume-card,
@@ -1908,8 +1913,8 @@ a.recent-visit:hover {
   white-space: nowrap;
   padding-top: 3px;
 }
-.visit > span[aria-hidden],
-.recent-visit > span[aria-hidden] {
+.visit > span[aria-hidden]:last-child,
+.recent-visit > span[aria-hidden]:last-child {
   display: none;
 }
 .visit-row .curate-button,
@@ -2293,10 +2298,10 @@ details.community-section > summary {
   }
   .app-header-inner {
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: auto 1fr auto;
     grid-template-areas:
-      "brand account"
-      "nav nav";
+      "brand . account"
+      "nav nav nav";
     gap: 0 var(--s-3);
     min-height: 0;
     padding: 0;
