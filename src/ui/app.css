@@ -18,7 +18,7 @@
   --border-strong: #cdcac2;
   --text: #1c1b22;
   --text-2: #55535e;
-  --text-3: #6f6d78;
+  --text-3: #64626d;
   --accent: #4a4ccf;
   --accent-hover: #3b3db8;
   --accent-text: #3f41bf;
@@ -2542,5 +2542,133 @@ details.community-section > summary {
   .launch-tile > .link-favicon {
     grid-row: 1 / 3;
     align-self: center;
+  }
+}
+
+/* Round 1 review fixes ------------------------------------------------------ */
+/* Headings with an auto-inserted icon keep a gap between icon and text. */
+:is(h1, h2, h3):has(> .mz-icon:first-child) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+/* A capture button after a linked title sits on its own line. */
+:is(h3, td, li) > .curate-button {
+  display: flex;
+  width: fit-content;
+  margin-top: var(--s-2);
+  font-size: var(--fs-xs);
+  min-height: 30px;
+  padding: 4px 10px;
+}
+.community-section > .actions:first-child {
+  margin: 0 0 var(--s-5);
+}
+.community-section > h2 + form,
+.community-section > h2 + p {
+  margin-top: var(--s-2);
+}
+.status-chip.connected {
+  background: var(--success-soft);
+  color: var(--success);
+}
+#switch-key {
+  margin-bottom: var(--s-3);
+}
+.public-welcome h1,
+.workspace-intro h1 {
+  word-break: keep-all;
+}
+input[type="file"]::file-selector-button {
+  margin-right: 12px;
+  padding: 6px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-s);
+  background: var(--surface-2);
+  color: var(--text);
+  font: 500 var(--fs-s) var(--font-sans);
+  cursor: pointer;
+}
+.error-state {
+  padding: var(--s-6) var(--s-5);
+  border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
+  border-radius: var(--r-l);
+  background: var(--danger-soft);
+  text-align: center;
+}
+.error-state[role="alert"] {
+  color: var(--text);
+  font-size: var(--fs-m);
+}
+.error-state h2 {
+  font-size: var(--fs-l);
+  justify-content: center;
+}
+#message.error button {
+  margin-left: var(--s-2);
+}
+/* Loading: placeholders shaped like the content that will arrive. */
+#dashboard.is-loading .stats strong,
+#dashboard.is-loading #ranking,
+#dashboard.is-loading #recent-list {
+  color: transparent;
+  border-radius: var(--r-s);
+  background: linear-gradient(90deg, var(--surface-2), var(--surface-3), var(--surface-2));
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+#dashboard.is-loading .stats strong {
+  width: 60%;
+}
+#dashboard.is-loading #ranking,
+#dashboard.is-loading #recent-list {
+  min-height: 240px;
+  border-color: transparent;
+}
+/* Scrolling chip rows fade at the edge so it is clear there is more. */
+@media (max-width: 860px) {
+  .app-nav,
+  .rail-nav,
+  .view-toolbar .page-nav,
+  .workspace-tabs {
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+  }
+}
+@media (max-width: 600px) {
+  .item .actions {
+    gap: 6px;
+  }
+  .item .actions :is(button, a) {
+    min-height: 38px;
+    padding: 6px 10px;
+    font-size: var(--fs-xs);
+  }
+  /* Link tables become stacked rows on phones. */
+  #dwell-panel .sites-table thead {
+    display: none;
+  }
+  #dwell-panel .sites-table tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px var(--s-3);
+    padding: var(--s-3);
+    border-bottom: 1px solid var(--border);
+  }
+  #dwell-panel .sites-table td {
+    padding: 0;
+    border: 0;
+  }
+  #dwell-panel .sites-table td:first-child {
+    grid-column: 1 / -1;
+    margin-bottom: 4px;
+  }
+  #dwell-panel .sites-table td:nth-child(2)::before {
+    content: "推估停留 ";
+    color: var(--text-3);
+  }
+  #dwell-panel .sites-table td:nth-child(3)::before {
+    content: "有效區間 ";
+    color: var(--text-3);
   }
 }

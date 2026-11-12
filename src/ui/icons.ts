@@ -20,6 +20,7 @@ const paths = {
   clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
   chart: '<path d="M3 3v18h18M7 16v-5M12 16V7M17 16V4"/>',
   upload: '<path d="M4 15v6h16v-6M12 16V3m-5 5 5-5 5 5"/>',
+  download: '<path d="M4 15v6h16v-6M12 3v13m-5-5 5 5 5-5"/>',
   logout: '<path d="M9 3H3v18h6M8 12h13m-5-5 5 5-5 5"/>',
   plus: '<path d="M12 4v16M4 12h16"/>',
   edit: '<path d="m15 4 5 5M3 21l5-1L21 7l-5-5L3 15Z"/>',
@@ -45,6 +46,8 @@ export function icon(name: IconName, extra = "") {
   return `<svg class="mz-icon ${extra}" data-icon="${name}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${paths[name]}</svg>`;
 }
 const labels: [RegExp, IconName][] = [
+  [/^回顧$/, "chart"],
+  [/^下載/, "download"],
   [/^(我的入口|今日入口)$/, "home"],
   [/^(主題選集|我的與共同編輯|所有選集)/, "layers"],
   [/^(待整理|加入待整理|回到待整理)/, "inbox"],
@@ -56,7 +59,7 @@ const labels: [RegExp, IconName][] = [
   [/^我的心情/, "heart"],
   [/^(帳號與朋友|朋友|線上使用者|一起整理|加入朋友|允許共同)/, "users"],
   [/^(匯入與設定|編輯介紹|個人設定|帳號設定)/, "settings"],
-  [/^(匯入|下載|擴充功能|立即同步)/, "upload"],
+  [/^(匯入|擴充功能|立即同步)/, "upload"],
   [/^(快速搜尋|搜尋|再次搜尋|找回)/, "search"],
   [/^(短網址|複製|開啟網址)/, "link"],
   [/^(使用說明|如何|說明)/, "help"],

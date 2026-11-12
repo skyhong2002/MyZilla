@@ -58,6 +58,7 @@ let me: any,
   busy = false,
   editing: any;
 let cancelImport = false;
+let loadFailed = false;
 let loadVersion = 0;
 let renderedURL = location.href,
   restoring = false;
@@ -174,7 +175,7 @@ function render() {
     !!root.querySelector<HTMLDetailsElement>(".legacy-access")?.open ||
     !!root.querySelector(".session-placeholder");
   document.title = `${me || token() ? labels[kind] : "登入"} · MyZilla`;
-  root.innerHTML = `<a class="skip-link" href="#portal-main">跳到主要內容</a><div class="portal-shell${signedIn ? "" : " portal-public"}">${header()}<div class="portal-layout"><main id="portal-main" tabindex="-1"><div id="notice" role="status" aria-live="polite">${esc(notice)}</div>${copyControl(notice)}${me ? content() : token() ? `<h1>${labels[kind]}</h1><div class="session-placeholder" aria-label="正在讀取內容"></div>` : welcome(legacyOpen)}</main>${signedIn ? sidebar() : ""}</div><footer><span>MyZilla</span><span>私人內容只有自己看得到</span></footer><dialog id="editor" aria-label="收藏編輯與分享"></dialog></div>`;
+  root.innerHTML = `<a class="skip-link" href="#portal-main">跳到主要內容</a><div class="portal-shell${signedIn ? "" : " portal-public"}">${header()}<div class="portal-layout"><main id="portal-main" tabindex="-1"><div id="notice" role="status" aria-live="polite">${loadFailed && !me ? "" : esc(notice)}</div>${copyControl(notice)}${me ? content() : token() ? (loadFailed ? `<h1>${labels[kind]}</h1><section class="error-state" role="alert"><h2>暫時讀不到你的入口</h2><p>${esc(notice)}</p><p class="note">收藏與瀏覽紀錄都沒有變動。</p><button class="primary" data-action="retry-load">重新載入</button></section>` : `<h1>${labels[kind]}</h1><div class="session-placeholder" aria-label="正在讀取內容"></div>`) : welcome(legacyOpen)}</main>${signedIn ? sidebar() : ""}</div><footer><span>MyZilla</span><span>私人內容只有自己看得到</span></footer><dialog id="editor" aria-label="收藏編輯與分享"></dialog></div>`;
 }
 function content() {
   if (["home", "inbox", "collections"].includes(kind))
@@ -195,7 +196,7 @@ function pagination() {
   return `<div class="pagination"><button data-action="previous" ${offset === 0 ? "disabled" : ""}>上一頁</button><span>${listing.total ? offset + 1 : 0}–${Math.min(offset + 20, listing.total ?? 0)} / ${listing.total ?? 0}</span><button data-action="next" ${offset + 20 >= (listing.total ?? 0) ? "disabled" : ""}>下一頁</button></div>`;
 }
 function tools() {
-  return `<h1>匯入與工具</h1><section class="panel"><h2>最近刪除的收藏</h2><p>刪除後 10 分鐘內可復原，原分享連結不會恢復。</p>${listing.trash?.map((item: any) => `<div class="source-row"><span>${esc(item.title)} · ${esc(new Date(item.expires).toLocaleTimeString("zh-TW"))} 前可復原</span><button data-action="restore" data-id="${esc(item.id)}">復原收藏</button></div>`).join("") || "<p>目前沒有可復原的收藏。</p>"}</section><section class="panel"><h2>收藏備份與 RSS</h2><p>下載完整收藏備份，或從備份還原。匯入前會確認更新筆數與朋友可見的項目。</p><button data-action="export">下載 JSON 備份</button><button data-action="rss">下載私人書籤 RSS</button><form data-form="import"><label>匯入 MyZilla JSON<input type="file" name="file" accept="application/json,.json" required></label><button>匯入全部項目</button></form><details><summary>備份內容與 RSS 使用方式</summary><p>備份不含帳號密碼或分享連結。RSS 是供自己使用的匯出檔。</p><a href="/help.html#collections">收藏備份與還原說明</a></details></section><section class="panel"><h2>瀏覽器歷史</h2><p>Brave、Chrome、Arc、Dia、Zen 所有設定檔的既有歷史，繼續使用原生 SQLite 工具全量匯入；新活動由擴充功能同步。</p><a href="/dashboard.html#settings">安裝、匯入與同步設定 →</a></section>`;
+  return `<h1>匯入與工具</h1><section class="panel"><h2>最近刪除的收藏</h2><p>刪除後 10 分鐘內可復原，原分享連結不會恢復。</p>${listing.trash?.map((item: any) => `<div class="source-row"><span>${esc(item.title)} · ${esc(new Date(item.expires).toLocaleTimeString("zh-TW"))} 前可復原</span><button data-action="restore" data-id="${esc(item.id)}">復原收藏</button></div>`).join("") || "<p>目前沒有可復原的收藏。</p>"}</section><section class="panel"><h2>收藏備份與 RSS</h2><p>下載完整收藏備份，或從備份還原。匯入前會確認更新筆數與朋友可見的項目。</p><div class="actions"><button data-action="export">下載 JSON 備份</button><button data-action="rss">下載私人書籤 RSS</button></div><form data-form="import"><label>匯入 MyZilla JSON<input type="file" name="file" accept="application/json,.json" required></label><button>匯入全部項目</button></form><details><summary>備份內容與 RSS 使用方式</summary><p>備份不含帳號密碼或分享連結。RSS 是供自己使用的匯出檔。</p><a href="/help.html#collections">收藏備份與還原說明</a></details></section><section class="panel"><h2>瀏覽器歷史</h2><p>Brave、Chrome、Arc、Dia、Zen 所有設定檔的既有歷史，繼續使用原生 SQLite 工具全量匯入；新活動由擴充功能同步。</p><a href="/dashboard.html#settings">安裝、匯入與同步設定 →</a></section>`;
 }
 function editor(item?: any) {
   editing = item ?? {
@@ -276,6 +277,7 @@ async function load() {
   }
   me = nextMe;
   listing = nextListing;
+  loadFailed = false;
   if (
     !["home", "inbox", "collections"].includes(kind) &&
     listing.total !== undefined &&
@@ -326,6 +328,12 @@ async function run(job: () => Promise<void>, blocking = true) {
     await job();
   } catch (e) {
     notice = errorMessage(e);
+    if (!me && token()) {
+      // First load failed: show one error with a retry instead of a placeholder.
+      loadFailed = true;
+      render();
+      return;
+    }
     announce(notice, true);
     const el = document.getElementById("notice");
     if (el) el.textContent = notice;
@@ -468,7 +476,13 @@ root.addEventListener("submit", (event) => {
         cancel.type = "button";
         cancel.textContent = "停止匯入";
         cancel.dataset.cancelImport = "";
-        document.getElementById("notice")!.after(cancel);
+        cancel.className = "button";
+        const importForm = root.querySelector('form[data-form="import"]');
+        if (importForm) importForm.after(cancel);
+        else document.getElementById("notice")!.after(cancel);
+        const progress = document.getElementById("notice");
+        if (progress)
+          progress.textContent = `匯入進度 0/${backup.items.length}`;
         let accepted = 0,
           rejected = 0;
         const errors: string[] = [];
@@ -560,6 +574,13 @@ root.addEventListener("click", (event) => {
     const dialog = document.getElementById("editor") as HTMLDialogElement;
     dialog.innerHTML = `<form data-form="link"><h2>分享轉址連結</h2><p>持有連結的人都可開啟「${esc(item.title)}」的網址。筆記與其他收藏不會公開。編輯此收藏會更新目的地。<a href="/help.html#sharing" target="_blank" rel="noopener noreferrer">分享範圍說明 ↗</a></p><input type="hidden" name="id" value="${id}"><label>有效期<select name="days">${options({ "1": "1 天", "7": "7 天", "30": "30 天" }, "7")}</select></label><button>建立連結</button><button type="button" data-action="close">取消</button></form>`;
     dialog.showModal();
+    return;
+  }
+  if (action === "retry-load") {
+    loadFailed = false;
+    notice = "";
+    render();
+    void run(load, false);
     return;
   }
   void run(async () => {

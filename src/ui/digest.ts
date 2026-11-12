@@ -66,7 +66,7 @@ export function aiDigest(api: Api) {
     const rest = [...observations.slice(3), ...threads];
     root.innerHTML = `<div class="section-heading"><div><h2>本週回顧</h2><p>${esc(d.headline)}</p></div></div><div class="personal-cards">${observations.slice(0, 3).join("")}</div>
 ${rest.length ? `<details class="digest-more"><summary>其餘 ${observations.length > 3 ? `${observations.length - 3} 則觀察、` : ""}${threads.length} 條值得繼續的線索</summary><div class="personal-cards">${rest.join("")}</div></details>` : ""}
-<p class="method-note">${day(d.from)}—${day(d.to - 1)} · ${d.stats.visits.toLocaleString()} 次造訪 · 想問你：${esc(d.question)}<br>由 ${esc(d.models.classifier)} 分類、${esc(d.models.interpreter)} 解讀，只依標題與網址推測；每天 08:00 有新紀錄時更新。</p>`;
+<p class="method-note">${day(d.from)}—${day(d.to - 1)} · ${d.stats.visits.toLocaleString()} 次造訪 · 想問你：${esc(d.question)}<br>AI 只依頁面標題與網址推測整理，不讀頁面內文；每天 08:00 有新紀錄時更新。<a href="/help.html#insights">如何產生？</a></p>`;
   }
   return { load };
 }
