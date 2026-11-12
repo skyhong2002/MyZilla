@@ -136,7 +136,7 @@ export function workspace(kind: string, data: any) {
       data.recent?.visits ?? [],
     );
     const groupedHistory = groups.length
-      ? `<div class="unresolved-history"><h3>只有網站名稱的紀錄</h3><p class="note">以下是最近 ${data.recent?.visits?.length ?? 0} 筆中的紀錄；瀏覽器沒有留下具體內容標題。分類與線索取自網址，不代表已取得貼文內文。</p>${groups
+      ? `<div class="unresolved-history"><h3>這些網站沒有留下頁面標題</h3><p class="note">最近 ${data.recent?.visits?.length ?? 0} 筆造訪中，下列網站只有網址，依網站收在一起。</p>${groups
           .map(
             (g) =>
               `<details class="history-group"><summary>${favicon(g.items[0].url)}${esc(g.site)} · ${g.count} 次造訪 · ${g.items.length} 個網址</summary><ul>${g.items

@@ -45,6 +45,8 @@ async function runStep(page, step) {
     return page.locator('input[type="file"]').first().setInputFiles(file);
   }
   if (step.fill) return page.locator(step.fill.selector).fill(step.fill.value);
+  // Steps that only exist in one version (e.g. opening a menu) are skipped elsewhere.
+  if (step.optional && !(await page.locator(step.click.selector).count())) return;
   const c = step.click;
   const target = c.role
     ? page.getByRole(c.role, { name: c.name, exact: true })

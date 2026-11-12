@@ -18,7 +18,7 @@
   --border-strong: #cdcac2;
   --text: #1c1b22;
   --text-2: #55535e;
-  --text-3: #64626d;
+  --text-3: #5d5b66;
   --accent: #4a4ccf;
   --accent-hover: #3b3db8;
   --accent-text: #3f41bf;
@@ -2803,5 +2803,96 @@ input[type="file"]::file-selector-button {
   }
   .app-account {
     gap: 6px;
+  }
+}
+@media (max-width: 600px) {
+  .visit,
+  .recent-visit {
+    row-gap: 0;
+    padding-bottom: 4px;
+  }
+  .visit time,
+  .recent-visit time {
+    margin-top: -2px;
+  }
+  .visit-row {
+    padding-bottom: var(--s-2);
+  }
+  .visit-row > :is(.curate-button, .save-history-link) {
+    margin-left: 36px;
+  }
+  .visit-row > .save-history-link {
+    margin-left: 4px;
+  }
+}
+
+/* Round 4 review fixes ------------------------------------------------------ */
+.more-menu {
+  position: relative;
+  margin: 0;
+}
+.more-menu > summary {
+  min-height: 30px;
+  padding: 4px 10px;
+  border-radius: var(--r-s);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+}
+.more-menu > summary::before {
+  display: none;
+}
+.more-menu > summary::after {
+  content: "⋯";
+  margin-left: 2px;
+}
+.more-menu[open] > summary {
+  margin: 0;
+  background: var(--surface-3);
+}
+.more-menu .menu {
+  position: absolute;
+  z-index: 15;
+  top: calc(100% + 4px);
+  left: 0;
+  display: grid;
+  min-width: 180px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-m);
+  background: var(--surface);
+  box-shadow: var(--shadow-2);
+}
+.item .more-menu .menu :is(button, a) {
+  justify-content: flex-start;
+  width: 100%;
+  min-height: 36px;
+  background: transparent;
+  font-size: var(--fs-s);
+}
+.item .more-menu .menu :is(button, a):hover {
+  background: var(--surface-2);
+}
+.resume-card h3 a {
+  -webkit-line-clamp: 3;
+}
+@media (max-width: 600px) {
+  .shortcut-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .launch-tile {
+    grid-template-columns: 24px minmax(0, 1fr);
+    column-gap: var(--s-2);
+    padding: 10px;
+  }
+  .launch-tile .favicon-large {
+    width: 24px;
+    height: 24px;
+  }
+  .launch-tile small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }

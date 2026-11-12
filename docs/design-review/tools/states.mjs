@@ -24,7 +24,7 @@ export const STATES = [
   { id: "bookmarks", path: "/#bookmark" },
   { id: "bookmarks-no-results", path: "/?scope=all&q=zzqxv&sort=recent&offset=0&audience=mine#bookmark" },
   { id: "bookmark-editor", path: "/#bookmark", steps: [{ click: { role: "button", name: "新增網址" } }], viewportOnly: true },
-  { id: "bookmark-delete-undo", path: "/#bookmark", fake: true, steps: [{ click: { role: "button", name: "刪除" } }, { click: { selector: ".ux-confirm [data-confirm]" } }], viewportOnly: true },
+  { id: "bookmark-delete-undo", path: "/#bookmark", fake: true, steps: [{ click: { selector: ".more-menu summary" }, optional: true }, { click: { role: "button", name: "刪除" } }, { click: { selector: ".ux-confirm [data-confirm]" } }], viewportOnly: true },
   { id: "movies", path: "/#movie" },
   { id: "moods", path: "/#mood" },
   { id: "inbox", path: "/#inbox" },

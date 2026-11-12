@@ -66,6 +66,7 @@ try {
     .waitFor();
   await page.getByRole("button", { name: "開啟網址 ↗", exact: true }).click();
   await page.getByText("1 次開啟", { exact: false }).waitFor();
+  await page.locator(".more-menu summary").first().click();
   await page.getByRole("button", { name: "建立分享連結", exact: true }).click();
   await dialog.getByRole("button", { name: "建立連結", exact: true }).click();
   await page.waitForFunction(() =>
@@ -95,6 +96,7 @@ try {
   await page
     .getByText("評分 9/10 · 看過 2 次 · 願望清單 · 收藏：DVD", { exact: true })
     .waitFor();
+  await page.locator(".more-menu summary").first().click();
   await page.getByRole("button", { name: "朋友觀影概況", exact: true }).click();
   await dialog
     .getByText("1 人收藏此片 · 1 人評分 · 平均 9/10", { exact: true })
