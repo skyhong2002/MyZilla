@@ -2914,9 +2914,12 @@ input[type="file"]::file-selector-button {
   white-space: nowrap;
   overflow-wrap: normal !important;
 }
-.help-layout {
-  grid-template-columns: 220px minmax(0, 820px);
-  justify-content: center;
+/* Desktop only: the phone layout stacks the contents above the text. */
+@media (min-width: 861px) {
+  .help-layout {
+    grid-template-columns: 220px minmax(0, 820px);
+    justify-content: center;
+  }
 }
 .help-layout .community-section {
   max-width: none;
@@ -2935,5 +2938,62 @@ input[type="file"]::file-selector-button {
   #category-sites .source-row select {
     flex: 1;
     width: 100%;
+  }
+}
+
+/* Round 6 review fixes ------------------------------------------------------ */
+#message.error:has(> strong) {
+  display: grid;
+  justify-items: center;
+  gap: var(--s-2);
+  padding: var(--s-6) var(--s-5);
+  border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
+  border-radius: var(--r-l);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: var(--fs-m);
+  text-align: center;
+}
+#message.error > strong {
+  color: var(--text);
+  font-size: var(--fs-l);
+}
+#message.error:has(> strong) button {
+  margin: var(--s-2) 0 0;
+}
+@media (max-width: 860px) {
+  .insight-jumps {
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+  }
+}
+@media (max-width: 600px) {
+  .filters {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--s-2);
+  }
+  .filters > label:last-of-type {
+    grid-column: 1 / -1;
+  }
+  .filters > span {
+    grid-column: 1 / -1;
+    padding: 0;
+  }
+  .filters select {
+    min-height: 40px;
+    font-size: var(--fs-s);
+  }
+  [data-form="find"] {
+    flex-wrap: nowrap;
+  }
+}
+@media (hover: hover) and (min-width: 861px) {
+  #dwell-panel td .curate-button {
+    opacity: 0;
+  }
+  #dwell-panel tr:hover .curate-button,
+  #dwell-panel tr:focus-within .curate-button {
+    opacity: 1;
   }
 }

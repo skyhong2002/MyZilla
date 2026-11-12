@@ -1,5 +1,5 @@
 import { siteHeader } from "./shell";
-import { minuteFormat } from "./format";
+import { minuteFormat, displayUrl } from "./format";
 import { pageLabel } from "../shared/page-label";
 import { favicon, configureFavicons } from "./favicons";
 import { installTabCollector } from "./tab-collector";
@@ -101,14 +101,18 @@ function message(text: string, error = false, retry?: () => Promise<void>) {
   $("message").textContent = text;
   $("message").classList.toggle("error", error);
   if (retry) {
+    const title = document.createElement("strong");
+    title.textContent = "暫時讀不到瀏覽紀錄";
+    $("message").prepend(title);
     const button = document.createElement("button");
     button.type = "button";
+    button.className = "primary";
     button.textContent = "重新載入";
     button.onclick = () => {
       message("正在重新讀取…");
       void run(retry, false);
     };
-    $("message").append(" ", button);
+    $("message").append(button);
   }
 }
 function applyNavigation(focus = false) {
@@ -378,7 +382,7 @@ function visitMarkup(v: HistoryVisit, className: string) {
   try {
     host = new URL(v.url).hostname || host;
   } catch {}
-  return `<div class="visit-row"><${safe ? "a" : "div"} class="${className}" ${safe ? `href="${escape(safe)}" target="_blank" rel="noopener noreferrer"` : ""}><span class="site-icon" aria-hidden="true">${escape(host.slice(0, 1).toUpperCase())}</span><div><strong>${escape(label.title)}</strong>${label.detail ? `<small class="page-clue">${escape(label.detail)}</small>` : ""}<span>${escape(v.url)}</span><small>${escape(v.source.browser)} · ${escape(v.source.profile)} · ${escape(v.source.device)}</small></div><time>${new Date(v.visitedAt).toLocaleString("zh-TW", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}</time><span aria-hidden="true">${safe ? "↗" : "·"}</span></${safe ? "a" : "div"}>${!extension && safe ? captureButton({ url: safe, title: (v.title || safe).slice(0, 500) }) + `<a class="save-history-link" href="/?captureUrl=${encodeURIComponent(safe)}&captureTitle=${encodeURIComponent(v.title.slice(0, 500))}#bookmark">加入我的網址</a>` : ""}</div>`;
+  return `<div class="visit-row"><${safe ? "a" : "div"} class="${className}" ${safe ? `href="${escape(safe)}" target="_blank" rel="noopener noreferrer"` : ""}><span class="site-icon" aria-hidden="true">${escape(host.slice(0, 1).toUpperCase())}</span><div><strong>${escape(label.title)}</strong>${label.detail ? `<small class="page-clue">${escape(label.detail)}</small>` : ""}<span>${escape(displayUrl(v.url))}</span><small>${escape(v.source.browser)} · ${escape(v.source.profile)} · ${escape(v.source.device)}</small></div><time>${new Date(v.visitedAt).toLocaleString("zh-TW", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}</time><span aria-hidden="true">${safe ? "↗" : "·"}</span></${safe ? "a" : "div"}>${!extension && safe ? captureButton({ url: safe, title: (v.title || safe).slice(0, 500) }) + `<a class="save-history-link" href="/?captureUrl=${encodeURIComponent(safe)}&captureTitle=${encodeURIComponent(v.title.slice(0, 500))}#bookmark">加入我的網址</a>` : ""}</div>`;
 }
 async function loadRecent(from: number, to: number) {
   const version = generation;
