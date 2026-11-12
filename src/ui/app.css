@@ -3117,3 +3117,33 @@ input[type="file"]::file-selector-button {
     right: 0;
   }
 }
+
+/* Round 9 review fixes ------------------------------------------------------ */
+@media (min-width: 861px) {
+  /* "開啟網址" keeps its words; only edit and more are icon buttons. */
+  .item > .actions > :is(button, a):first-child {
+    width: auto;
+    padding: 0 12px;
+    gap: 6px;
+    font-size: var(--fs-xs);
+  }
+  .item > .actions > a:first-child::before {
+    content: none;
+  }
+}
+.launch-tile {
+  min-width: 0;
+  overflow: hidden;
+}
+.launch-tile small,
+.launch-tile strong {
+  max-width: 100%;
+}
+.launch-tile small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#category-sites {
+  max-width: 760px;
+}

@@ -9,6 +9,7 @@ import {
   hydrateHome,
 } from "./workspace";
 import "./app.css";
+import { revealCurrent } from "./reveal";
 import {
   installUX,
   pendingUI,
@@ -165,7 +166,7 @@ function sidebar() {
     )
     .join(
       "",
-    )}</nav>${kind === "home" ? "" : `<section class="rail-search" aria-labelledby="rail-search-title"><h2 id="rail-search-title">快速搜尋</h2><form data-form="search"><label>關鍵字<input name="query" required maxlength="2000"></label><label>搜尋網站<select name="engine">${options(Object.fromEntries(Object.entries(engines).map(([id, value]) => [id, value.label])), "google")}</select></label><button>搜尋並記錄</button><small>在新分頁開啟；記錄只有自己看得到。</small></form></section>`}</aside>`;
+    )}</nav>${kind === "home" ? "" : `<section class="rail-search" aria-labelledby="rail-search-title"><h2 id="rail-search-title">搜尋外部網站</h2><form data-form="search"><label>關鍵字<input name="query" required maxlength="2000"></label><label>搜尋網站<select name="engine">${options(Object.fromEntries(Object.entries(engines).map(([id, value]) => [id, value.label])), "google")}</select></label><button>搜尋並記錄</button><small>在新分頁開啟 Google 等網站；記錄只有自己看得到。</small></form></section>`}</aside>`;
 }
 function welcome(legacyOpen: boolean) {
   return `<section class="public-welcome"><div><h1>瀏覽過的、收藏的，都在自己手上。</h1><p class="lead">MyZilla 是自架的個人入口：收藏網址與網摘、整理主題選集，並搜尋自己在各瀏覽器留下的瀏覽紀錄。</p><p class="note">私人內容只在登入後顯示，存在自己的伺服器。</p></div><div class="welcome-card"><h2>登入我的入口</h2><p>使用帳號、Google，或收到的邀請碼。</p><a class="button primary" href="/community.html">帳號登入</a><details class="legacy-access" ${legacyOpen ? "open" : ""}><summary>使用既有存取金鑰</summary><form data-form="unlock"><label>存取金鑰<input name="token" type="password" minlength="32" required autocomplete="off"></label><button>開啟我的入口</button><p class="note"><a href="/help.html#login">金鑰是什麼？第一次登入說明</a></p></form></details></div></section>${productIntro}`;
@@ -189,7 +190,7 @@ function content() {
   if (kind === "links")
     return `<h1>短網址管理</h1><p>從收藏的「建立分享連結」產生。持有連結可開啟該網址；編輯收藏網址會更新轉址目的地。刪除收藏、撤銷或到期後失效。</p><p class="note">完整短網址只在建立時顯示一次，伺服器只保留雜湊；遺失時撤銷後重新建立即可。</p>${listing.links?.map((link: any) => `<article class="item"><strong>${esc(link.title)}</strong><p>${link.clicks} 次開啟 · ${esc(new Date(link.expires).toLocaleString("zh-TW", minuteFormat))} 到期</p><button data-action="revoke" data-id="${link.id}">撤銷連結</button></article>`).join("") || '<p class="empty">還沒有分享連結。</p>'}`;
   if (kind === "search")
-    return `<h1>我的搜尋記錄</h1><p>只包含從「快速搜尋」送出的關鍵字。</p>${listing.items.map((item: any) => `<article class="item"><strong>${esc(item.query)}</strong><p>${esc(engines[item.engine as keyof typeof engines]?.label)} · ${item.uses} 次 · ${esc(new Date(item.last_used).toLocaleString("zh-TW", minuteFormat))}</p><button data-action="search-again" data-id="${item.id}">再次搜尋</button><button data-action="delete-search" data-id="${item.id}">刪除</button></article>`).join("") || '<p class="empty">尚無搜尋記錄。</p>'}${pagination()}`;
+    return `<h1>我的搜尋記錄</h1><p>只包含從「搜尋外部網站」或「今天」搜尋框送往外部網站的關鍵字。</p>${listing.items.map((item: any) => `<article class="item"><strong>${esc(item.query)}</strong><p>${esc(engines[item.engine as keyof typeof engines]?.label)} · ${item.uses} 次 · ${esc(new Date(item.last_used).toLocaleString("zh-TW", minuteFormat))}</p><button data-action="search-again" data-id="${item.id}">再次搜尋</button><button data-action="delete-search" data-id="${item.id}">刪除</button></article>`).join("") || '<p class="empty">尚無搜尋記錄。</p>'}${pagination()}`;
   return `<div class="heading"><h1>${labels[kind]}</h1><button class="primary" data-action="new">新增${kind === "movie" ? "電影" : kind === "mood" ? "心情" : "網址"}</button></div><form data-form="find"><label for="find-query">搜尋${labels[kind]}<input id="find-query" name="query" type="search" value="${esc(query)}" placeholder="${kind === "movie" ? "片名、筆記或標籤" : kind === "mood" ? "標題、筆記或標籤" : "標題、網址或標籤"}"></label><button>搜尋</button></form><div class="filters"><label>生活分類<select id="scope">${options({ all: "全部", ...scopes }, scope)}</select></label><label>排序<select id="sort">${options({ recent: "最近使用", clicks: "點閱次數", created: "最新加入" }, sort)}</select></label><label>內容來源<select id="audience">${options({ mine: "自己的收藏", friends: "朋友分享的收藏" }, audience)}</select></label><span>${scope === "all" ? "全部分類" : scopes[scope as keyof typeof scopes]} · ${listing.total ?? 0} 筆</span></div>${query || scope !== "all" || audience !== "mine" ? `<div class="filter-summary"><span>${query ? `關鍵字：${esc(query)}` : ""} ${scope !== "all" ? esc(scopes[scope as keyof typeof scopes]) : ""}</span><button data-action="clear-filters">清除篩選</button></div>` : ""}${audience === "friends" ? '<p class="note">只顯示已接受的朋友主動分享的項目。</p>' : ""}${listing.items.map(itemMarkup).join("") || (query ? `<div class="empty"><h3>找不到符合「${esc(query)}」的項目</h3><p>換個關鍵字，或清除搜尋看全部${esc(labels[kind].replace("我的", ""))}。</p><button data-action="clear-filters">清除搜尋</button></div>` : '<p class="empty">目前沒有項目。新增收藏，或調整搜尋與分類。</p>')}${pagination()}`;
 }
 function itemMarkup(item: any) {
@@ -298,6 +299,7 @@ async function load() {
   }
   const focused = root.contains(document.activeElement);
   render();
+  revealCurrent(root);
   if (kind === "home")
     void hydrateHome(
       api,

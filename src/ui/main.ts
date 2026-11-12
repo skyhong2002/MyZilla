@@ -5,6 +5,7 @@ import { favicon, configureFavicons } from "./favicons";
 import { installTabCollector } from "./tab-collector";
 import { captureButton, installCapture } from "./curation";
 import "./app.css";
+import { revealCurrent } from "./reveal";
 import {
   installUX,
   pendingUI,
@@ -181,6 +182,7 @@ function applyNavigation(focus = false) {
     document
       .querySelector(".app-header")
       ?.classList.toggle("signed-out", !authenticated);
+  revealCurrent($("app"));
   if (focus) {
     $("page-title").focus({ preventScroll: true });
     scrollTo({ top: 0, behavior: "instant" });
@@ -319,6 +321,7 @@ async function refresh() {
     digest.load(),
     dwell.load(from, to),
   ]);
+  revealCurrent($("app"));
   if (version === generation) message("已連線 · 所有資料來自你的私人伺服器");
 }
 function render() {
