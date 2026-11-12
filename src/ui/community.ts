@@ -99,7 +99,7 @@ function render() {
               "",
             )}</nav><section class="community-section"><h2>${views[view() as keyof typeof views]}</h2><div class="session-placeholder" aria-label="正在讀取內容"></div></section>`
         : login()
-  }<footer><span>MyZilla</span><span>原始瀏覽歷史僅供本人存取</span></footer></main>`;
+  }<footer><span>MyZilla</span><span>私人內容只有自己看得到</span></footer></main>`;
   renderSites();
 }
 function login() {

@@ -2759,17 +2759,7 @@ input[type="file"]::file-selector-button {
   margin: var(--s-3) 0 var(--s-2);
 }
 /* Row actions stay out of the way until the row is pointed at or focused. */
-@media (hover: hover) and (min-width: 861px) {
-  .visit-row .curate-button,
-  .visit-row .save-history-link {
-    opacity: 0;
-    transition: opacity 0.12s;
-  }
-  .visit-row:hover :is(.curate-button, .save-history-link),
-  .visit-row:focus-within :is(.curate-button, .save-history-link) {
-    opacity: 1;
-  }
-}
+
 @media (max-width: 860px) {
   .app-header-inner {
     grid-template-areas:
@@ -2988,12 +2978,73 @@ input[type="file"]::file-selector-button {
     flex-wrap: nowrap;
   }
 }
-@media (hover: hover) and (min-width: 861px) {
-  #dwell-panel td .curate-button {
-    opacity: 0;
+
+
+/* Round 7 review fixes ------------------------------------------------------ */
+[data-action="delete-search"] {
+  color: var(--danger);
+}
+.item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+}
+.item-meta small {
+  margin-left: 4px;
+}
+/* Secondary actions share one quiet outline style everywhere. */
+.item .actions :is(button, a),
+.more-menu > summary,
+.visit-row .curate-button,
+.visit-row .save-history-link {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-2);
+}
+.item .actions :is(button, a):hover,
+.more-menu > summary:hover,
+.visit-row .curate-button:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+.visit-row .save-history-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 4px 10px;
+  border-radius: var(--r-s);
+  text-decoration: none;
+}
+.item .more-menu .menu :is(button, a) {
+  border-color: transparent;
+}
+.item .more-menu .menu [data-action="delete"] {
+  color: var(--danger);
+}
+@media (min-width: 861px) {
+  .item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: var(--s-5);
+    align-items: start;
   }
-  #dwell-panel tr:hover .curate-button,
-  #dwell-panel tr:focus-within .curate-button {
-    opacity: 1;
+  .item > * {
+    grid-column: 1;
+  }
+  .item > .actions {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    align-self: center;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .visit-row {
+    flex-wrap: nowrap;
+  }
+  .visit-row > .visit,
+  .visit-row > .recent-visit {
+    flex: 1 1 auto;
   }
 }

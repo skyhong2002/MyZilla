@@ -77,7 +77,7 @@ const otherColor = "var(--chart-other)";
 
 $("app").innerHTML = `
 <a class="skip-link" href="#page-title">跳到主要內容</a>
-${siteHeader("dashboard", extension ? "" : '<a id="login-link" class="button primary" href="/community.html">帳號登入</a><button id="logout" type="button" hidden>登出</button>', true, extension, !extension && !token)}
+${siteHeader("dashboard", extension ? "" : '<span id="account-name" class="account-name"></span><a id="login-link" class="button primary" href="/community.html">帳號登入</a><button id="logout" type="button" hidden>登出</button>', true, extension, !extension && !token)}
 <main class="site-main">
 <section class="profile"><div class="profile-copy"><div class="title-row"><h1 id="page-title" tabindex="-1">瀏覽回顧</h1><span class="private-badge">私人</span></div><p id="page-scope">總覽 · 全部紀錄</p></div></section>
 <div class="view-toolbar"><nav class="page-nav" aria-label="瀏覽紀錄導覽">${(["overview", "insights", "history", "recap"] as View[]).map((view) => `<a href="#${view}" data-view="${view}">${viewLabels[view]}</a>`).join("")}</nav>
@@ -94,7 +94,7 @@ ${!extension ? '<p class="access-help"><a href="/community.html">使用帳號登
 <section id="insights-view" data-panel="insights" hidden><div id="personal-insights"></div><details><summary>網站使用統計</summary><div class="section-heading"><div><h2>你的注意力分布</h2><p>以造訪次數和估計前景時間，從兩個角度回顧瀏覽習慣。</p></div><select id="insights-metric" aria-label="洞察統計方式"><option value="visits">造訪次數</option><option value="milliseconds">前景時間</option></select></div><div class="insights-grid"><div id="distribution"></div><div id="insight-summary" class="insight-summary"></div></div><p class="method-note">前景時間估計瀏覽器有焦點、分頁啟用且電腦未閒置時的活動，並非實際閱讀時間。</p><div class="section-heading"><h2>所有網站</h2><span id="sites-count"></span></div><div class="table-scroll"><table class="sites-table"><thead><tr><th scope="col">網站</th><th scope="col">造訪次數</th><th scope="col">前景時間</th></tr></thead><tbody id="sites-list"></tbody></table></div><button id="more-sites" type="button" hidden>顯示更多網站</button></details></section>
 <section id="history-view" data-panel="history" hidden><div class="section-heading"><div><h2>瀏覽歷史</h2><p id="history-count">搜尋所有已同步的紀錄。</p></div><label class="search"><span class="sr-only">搜尋造訪紀錄</span><input id="search" type="search" maxlength="2000" placeholder="搜尋標題或網址" aria-label="搜尋造訪紀錄"/></label></div><div id="history-feedback" role="status"></div><button id="clear-search" type="button" hidden>清除搜尋</button><div id="history-list"></div><div class="pagination"><button id="previous" type="button" disabled>← 上一頁</button><span id="page-info"></span><button id="next" type="button" disabled>下一頁 →</button></div></section>
 <section id="recap-view" data-panel="recap" hidden><h2 class="recap-title">這段時間，你看了些什麼？</h2><p class="note">依目前選取期間的全部紀錄整理。</p><div id="recap-content"></div><section id="dwell-panel"></section><a href="#history" data-view="history" class="button">回到歷史，找回那些頁面 →</a></section>
-</div><footer><span>MyZilla</span><span>原始瀏覽紀錄只存在你的伺服器</span></footer>
+</div><footer><span>MyZilla</span><span>私人內容只有自己看得到</span></footer>
 </main>`;
 
 function message(text: string, error = false, retry?: () => Promise<void>) {
@@ -300,7 +300,13 @@ async function refresh() {
       headers: { Authorization: `Bearer ${token}` },
       signal: AbortSignal.timeout(20000),
     });
-    if (response.ok) knownAccount = (await response.json()).id;
+    if (response.ok) {
+      const account = await response.json();
+      knownAccount = account.id;
+      // Same header as the other pages: the signed-in name next to 登出.
+      const name = document.getElementById("account-name");
+      if (name) name.textContent = account.name ?? "";
+    }
   }
   authenticated = true;
   render();
