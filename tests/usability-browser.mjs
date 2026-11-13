@@ -217,9 +217,11 @@ try {
   await expect(editor).not.toBeVisible();
   await expect(page.getByText("尚未儲存的內容", { exact: true })).toBeVisible();
   // Delete confirmation, undo and a durable recovery entry after dismissal.
+  await page.locator(".more-menu summary").first().click();
   await page.getByRole("button", { name: "刪除", exact: true }).click();
   await page.locator(".ux-confirm [data-cancel]").click();
   assert.equal((await api("/api/portal/items")).total, 1);
+  await page.locator(".more-menu summary").first().click();
   await page.getByRole("button", { name: "刪除", exact: true }).click();
   await page.locator(".ux-confirm [data-confirm]").click();
   await expect(page.locator("#ux-toast")).toContainText("收藏已刪除");
@@ -227,6 +229,7 @@ try {
   await expect(
     page.getByRole("heading", { name: item.title, exact: true }),
   ).toBeVisible();
+  await page.locator(".more-menu summary").first().click();
   await page.getByRole("button", { name: "刪除", exact: true }).click();
   await page.locator(".ux-confirm [data-confirm]").click();
   await page.getByRole("button", { name: "關閉通知", exact: true }).click();
@@ -285,6 +288,7 @@ try {
     });
   await page.goto(base + "/?offset=20#bookmark");
   await expect(page.locator(".item")).toHaveCount(1);
+  await page.locator(".more-menu summary").first().click();
   await page.getByRole("button", { name: "刪除", exact: true }).click();
   await page.locator(".ux-confirm [data-confirm]").click();
   await expect(page.locator(".item")).toHaveCount(20);

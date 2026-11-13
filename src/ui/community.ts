@@ -1,7 +1,6 @@
 import { siteHeader } from "./shell";
-import "./style.css";
-import "./classic.css";
-import "./community.css";
+import { minuteFormat } from "./format";
+import "./app.css";
 import {
   installUX,
   pendingUI,
@@ -76,7 +75,9 @@ async function api(path: string, method = "GET", body?: unknown) {
 }
 const identity = `<label>帳號（小寫英數、底線或連字號）<input name="handle" required minlength="3" maxlength="32" pattern="[a-z0-9][a-z0-9_-]{2,31}" autocomplete="username"></label><label>顯示名稱<input name="name" required maxlength="80" autocomplete="nickname"></label><label>密碼（至少 12 字元）<input name="password" type="password" required minlength="12" maxlength="128" autocomplete="new-password"></label>`;
 function categories(profile: any) {
-  return `<div class="category-bars">${profile.categories.map((row: any) => `<div><div class="section-heading"><span>${esc(row.label)}</span><span>${row.percent}% · ${row.visits.toLocaleString()} 次</span></div><progress value="${row.percent}" max="100" aria-label="${esc(row.label)}"></progress></div>`).join("")}</div>`;
+  // Categories with no visits are counted, not drawn as empty bars.
+  const empty = profile.categories.filter((row: any) => !row.visits).length;
+  return `<div class="category-bars">${profile.categories.filter((row: any) => row.visits).map((row: any) => `<div><div class="section-heading"><span>${esc(row.label)}</span><span>${row.percent}% · ${row.visits.toLocaleString()} 次</span></div><progress value="${row.percent}" max="100" aria-label="${esc(row.label)}"></progress></div>`).join("")}${empty ? `<p class="note">另有 ${empty} 個分類目前沒有造訪。</p>` : ""}</div>`;
 }
 function render() {
   const signedIn =
@@ -85,7 +86,7 @@ function render() {
     new URL(location.href).searchParams.has("google_complete");
   renderedURL = location.href;
   document.title = `${signedIn ? views[view() as keyof typeof views] : "登入"} · MyZilla`;
-  root.innerHTML = `<a class="skip-link" href="#community-main">跳到主要內容</a>${siteHeader("community", signedIn ? '<button data-action="logout">登出</button>' : "")}<main id="community-main" tabindex="-1" class="site-main community-main"><section class="profile"><div><h1>${data ? `${esc(data.me.name)} 的空間` : signedIn ? "我的空間" : "你的瀏覽，也能成為交流的起點"}</h1><p>私人歷史留給自己；選擇要分享的興趣摘要。</p></div></section><p id="community-message" role="status" aria-live="polite">${esc(output)}</p>${copyControl(output)}${
+  root.innerHTML = `<a class="skip-link" href="#community-main">跳到主要內容</a>${siteHeader("community", signedIn ? `${data ? `<span class="account-name">${esc(data.me.name)}</span>` : ""}<button data-action="logout">登出</button>` : "", false, false, !signedIn)}<main id="community-main" tabindex="-1" class="site-main community-main"><section class="profile"><div><h1>${data ? `${esc(data.me.name)} 的空間` : signedIn ? "我的空間" : "登入 MyZilla"}</h1><p>${signedIn ? "管理登入方式、同步金鑰、朋友與分享。原始瀏覽歷史只有自己看得到。" : "登入後回到自己的入口與瀏覽回顧。"}</p></div></section><p id="community-message" role="status" aria-live="polite">${esc(output)}</p>${copyControl(output)}${
     data
       ? loggedIn()
       : signedIn
@@ -100,7 +101,7 @@ function render() {
               "",
             )}</nav><section class="community-section"><h2>${views[view() as keyof typeof views]}</h2><div class="session-placeholder" aria-label="正在讀取內容"></div></section>`
         : login()
-  }<footer>MyZilla · 原始瀏覽歷史僅供本人存取</footer></main>`;
+  }<footer><span>MyZilla</span><span>私人內容只有自己看得到</span></footer></main>`;
   renderSites();
 }
 function login() {
@@ -150,10 +151,10 @@ function renderSites() {
   if (button) button.hidden = sites.length <= siteLimit;
 }
 function friends() {
-  return `<div class="actions"><a class="button" href="/?audience=friends#collections">探索朋友選集 →</a><a href="/#collections">我的與共同編輯選集 →</a></div><h2>朋友</h2><form data-form="friend"><label>對方帳號<input name="handle" required placeholder="例如 sky" maxlength="32"></label><button class="primary">送出朋友邀請</button></form><div>${data.friends.friends.length ? data.friends.friends.map((friend: any) => `<div class="source-row"><div><strong>${esc(friend.name)} · @${esc(friend.handle)}</strong><span>${friend.status === "accepted" ? "已是朋友" : friend.direction === "incoming" ? "邀請你成為朋友" : "等待對方接受"}</span></div><div class="actions">${friend.status === "accepted" ? `<a href="/?audience=friends&owner=${friend.id}#collections">查看選集</a>` : ""}${friend.status === "pending" && friend.direction === "incoming" ? `<button data-action="accept" data-id="${friend.id}">接受</button>` : ""}<button data-action="remove" data-id="${friend.id}">${friend.status === "accepted" ? "移除朋友" : friend.direction === "incoming" ? "婉拒" : "取消邀請"}</button></div></div>`).join("") : '<p class="empty">還沒有朋友邀請。可請朋友提供帳號，或由擁有者邀請加入本站。</p>'}</div><section><h2>興趣配對</h2><p>比較你們常看的網站類別與比例；分數越高，分布越相近。未分類網站不計入。</p>${!data.matches.enabled ? '<p>尚未開啟比較。到<a href="#account">帳號設定</a>選擇是否開放。</p>' : data.matches.matches.length ? data.matches.matches.map((match: any) => `<article class="match"><h3>${esc(match.name)} · ${match.score === null ? "尚無足夠分類資料" : `${match.score}% 分布相似度`}</h3><p>共同分類：${esc(match.shared.join("、") || "目前沒有")}</p><details><summary>查看對方已開放的興趣摘要</summary>${categories(match.profile)}</details><a href="/?audience=friends&owner=${match.id}#collections">看看對方挑選了什麼 →</a></article>`).join("") : "<p>接受朋友邀請，且雙方都開啟比較後，才會出現在這裡。</p>"}</section>`;
+  return `<div class="actions"><a class="button" href="/?audience=friends#collections">探索朋友選集 →</a><a href="/#collections">我的與共同編輯選集 →</a></div><h2>朋友</h2><form data-form="friend"><label>對方帳號<input name="handle" required placeholder="例如 sky" maxlength="32"></label><button class="primary">送出朋友邀請</button></form><div>${data.friends.friends.length ? data.friends.friends.map((friend: any) => `<div class="source-row"><div><strong>${esc(friend.name)} · @${esc(friend.handle)}</strong><span>${friend.status === "accepted" ? "已是朋友" : friend.direction === "incoming" ? "邀請你成為朋友" : "等待對方接受"}</span></div><div class="actions">${friend.status === "accepted" ? `<a href="/?audience=friends&owner=${friend.id}#collections">查看選集</a>` : ""}${friend.status === "pending" && friend.direction === "incoming" ? `<button data-action="accept" data-id="${friend.id}">接受</button>` : ""}<button data-action="remove" data-id="${friend.id}">${friend.status === "accepted" ? "移除朋友" : friend.direction === "incoming" ? "婉拒" : "取消邀請"}</button></div></div>`).join("") : '<p class="empty">還沒有朋友邀請。可請朋友提供帳號，或由擁有者邀請加入本站。</p>'}</div><section><h2>興趣配對</h2><p>比較你們常看的網站類別與比例；分數越高，分布越相近。未分類網站不計入。</p>${!data.matches.enabled ? '<p>尚未開啟比較。到<a href="#account">帳號設定</a>選擇是否開放。</p>' : data.matches.matches.length ? data.matches.matches.map((match: any) => `<article class="match"><h3>${esc(match.name)} · ${match.score === null ? "尚無足夠分類資料" : `${match.score}% 分布相似度`}</h3><p class="note">只比較雙方已分類網站的類別比例；100% 代表比例完全相同，不代表看過一樣的網頁。</p><p>共同分類：${esc(match.shared.join("、") || "目前沒有")}</p><details><summary>查看對方已開放的興趣摘要</summary>${categories(match.profile)}</details><a href="/?audience=friends&owner=${match.id}#collections">看看對方挑選了什麼 →</a></article>`).join("") : "<p>接受朋友邀請，且雙方都開啟比較後，才會出現在這裡。</p>"}</section>`;
 }
 function shares() {
-  return `<h2>分享我的興趣摘要</h2><p>建立連結前，先在<a href="#interests">興趣分析</a>確認內容。分享包含顯示名稱、全部造訪總數、分類次數與比例，沒有網站清單、原始網址或標題。</p><p>持有連結的人都能閱讀這份固定快照；連結不列入公開目錄，可隨時撤銷。<a href="/help.html#sharing">分享範圍說明</a></p><form data-form="share"><label>有效期間<select name="days"><option value="1">1 天</option><option value="7" selected>7 天</option><option value="30">30 天</option></select></label><button class="primary">建立分享連結</button></form><h3>有效分享</h3>${data.shares.shares.length ? data.shares.shares.map((share: any) => `<div class="source-row"><span>到期：${esc(new Date(share.expires).toLocaleString("zh-TW"))}</span><button data-action="revoke-share" data-id="${share.id}">撤銷分享</button></div>`).join("") : "<p>目前沒有有效的分享連結。</p>"}`;
+  return `<h2>分享我的興趣摘要</h2><p>建立連結前，先在<a href="#interests">興趣分析</a>確認內容。分享包含顯示名稱、全部造訪總數、分類次數與比例，沒有網站清單、原始網址或標題。</p><p>持有連結的人都能閱讀這份固定快照；連結不列入公開目錄，可隨時撤銷。<a href="/help.html#sharing">分享範圍說明</a></p><form data-form="share"><label>有效期間<select name="days"><option value="1">1 天</option><option value="7" selected>7 天</option><option value="30">30 天</option></select></label><button class="primary">建立分享連結</button></form><h3>有效分享</h3><p class="note">完整連結只在建立時顯示一次，伺服器不保留；遺失時撤銷後重新建立即可。</p>${data.shares.shares.length ? data.shares.shares.map((share: any) => `<div class="source-row"><span>興趣摘要快照 · 到期：${esc(new Date(share.expires).toLocaleString("zh-TW", minuteFormat))}</span><button data-action="revoke-share" data-id="${share.id}">撤銷分享</button></div>`).join("") : "<p>目前沒有有效的分享連結。</p>"}`;
 }
 async function load() {
   const credential = getToken();

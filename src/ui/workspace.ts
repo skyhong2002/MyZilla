@@ -1,7 +1,9 @@
 import { pageLabel, recentPages } from "../shared/page-label";
+import { minuteFormat, displayUrl } from "./format";
 import { favicon } from "./favicons";
 import { icon } from "./icons";
 import { webUrl } from "../shared/model";
+import { engines } from "../portal/model";
 import {
   captureButton,
   chooseDestination,
@@ -134,19 +136,19 @@ export function workspace(kind: string, data: any) {
       data.recent?.visits ?? [],
     );
     const groupedHistory = groups.length
-      ? `<div class="unresolved-history"><h3>只有網站名稱的紀錄</h3><p class="note">以下是最近 ${data.recent?.visits?.length ?? 0} 筆中的紀錄；瀏覽器沒有留下具體內容標題。分類與線索取自網址，不代表已取得貼文內文。</p>${groups
+      ? `<div class="unresolved-history"><h3>這些網站沒有留下頁面標題</h3><p class="note">最近 ${data.recent?.visits?.length ?? 0} 筆造訪中，下列網站只有網址，依網站收在一起。</p>${groups
           .map(
             (g) =>
               `<details class="history-group"><summary>${favicon(g.items[0].url)}${esc(g.site)} · ${g.count} 次造訪 · ${g.items.length} 個網址</summary><ul>${g.items
                 .map((v) => {
                   const label = pageLabel(v);
-                  return `<li><a href="${esc(v.url)}" target="_blank" rel="noopener noreferrer">${esc(label.title)}</a><p class="page-clue">${esc(label.detail)}</p><small>${esc(new Date(v.visitedAt).toLocaleString("zh-TW"))} · ${v.count} 次造訪</small><div class="actions">${captureButton(v, "整理這個連結")}</div></li>`;
+                  return `<li><a href="${esc(v.url)}" target="_blank" rel="noopener noreferrer">${esc(label.title)}</a><p class="page-clue">${esc(label.detail)}</p><small>${esc(new Date(v.visitedAt).toLocaleString("zh-TW", minuteFormat))} · ${v.count} 次造訪</small><div class="actions">${captureButton(v, "整理這個連結")}</div></li>`;
                 })
                 .join("")}</ul></details>`,
           )
           .join("")}</div>`
       : "";
-    return `<div data-workspace class="daily-home"><div class="workspace-intro"><span class="eyebrow">${esc(new Date().toLocaleDateString("zh-TW", { month: "long", day: "numeric", weekday: "long" }))}</span><h1>今天，從這裡開始。</h1><p>找回看過的、打開常用的，接著自己的步調。</p><form class="home-search" data-workspace-form="home-search"><label><span class="sr-only">搜尋關鍵字</span><input name="q" type="search" required maxlength="2000" placeholder="找一篇看過的文章，或開始新的搜尋…"></label><label class="search-destination"><span class="sr-only">搜尋範圍</span><select name="where"><option value="history">我的瀏覽紀錄</option><option value="google">Google</option></select></label><button class="primary">${icon("search")}搜尋</button></form></div>
+    return `<div data-workspace class="daily-home"><div class="workspace-intro"><span class="eyebrow">${esc(new Date().toLocaleDateString("zh-TW", { month: "long", day: "numeric", weekday: "long" }))}</span><h1>今天，從這裡開始。</h1><p>找回看過的頁面、打開常用的網站，或用任一個搜尋網站開始。</p><form class="home-search" data-workspace-form="home-search"><label><span class="sr-only">搜尋關鍵字</span><input name="q" type="search" required maxlength="2000" placeholder="找一篇看過的文章，或開始新的搜尋…"></label><label class="search-destination"><span class="sr-only">搜尋範圍</span><select name="where"><option value="history">我的瀏覽紀錄</option><optgroup label="搜尋網站">${Object.entries(engines).map(([id, value]) => `<option value="${id}">${esc(value.label)}</option>`).join("")}</optgroup></select></label><button class="primary">${icon("search")}搜尋</button></form></div>
     ${data.failed ? `<p role="alert">部分內容尚未讀取。${action("retry", "重試")}</p>` : ""}
     ${homeDigest(data.digest)}
     <section class="workspace-section daily-shortcuts"><div class="heading"><h2>${icon("bookmark")}常用收藏</h2><a href="/#bookmark">管理我的網址 →</a></div><div class="shortcut-grid">${
@@ -159,8 +161,8 @@ export function workspace(kind: string, data: any) {
         .join("") ||
       `<a class="shortcut-empty" href="/#bookmark"><span class="icon-tile">${icon("plus")}</span><span><strong>把每天會用的網站放在這裡</strong><small>從「我的網址」新增收藏，常開的會排在前面。</small></span></a>`
     }</div></section>
-    <section class="workspace-section"><div class="heading"><h2>${icon("clock")}接著上次看</h2><a href="/dashboard.html#history">全部瀏覽紀錄 →</a></div><div class="resume-grid">${recent.map((v: any) => `<article class="resume-card"><span class="resume-domain">${favicon(v.url)}<span class="resume-host">${esc(new URL(v.url).hostname)}</span><time datetime="${new Date(v.visitedAt).toISOString()}">${date(v.visitedAt)}</time></span><h3><a href="${esc(v.url)}" target="_blank" rel="noopener noreferrer">${esc(pageLabel(v).title)}</a></h3><div class="actions">${captureButton(v, "整理這個連結")}<a class="save-shortcut" href="/?captureUrl=${encodeURIComponent(v.url)}&captureTitle=${encodeURIComponent((v.title || v.url).slice(0, 500))}#bookmark">${icon("bookmark")}加到我的網址</a></div></article>`).join("") || (groups.length ? '<p class="empty">最近的紀錄沒有具體內容標題，可展開下方清單查看網址線索。</p>' : '<p class="empty">同步瀏覽紀錄後，可以從這裡接著看。<a href="/dashboard.html#settings">設定同步 →</a></p>')}</div>${groupedHistory}</section>
-    <nav class="entry-doors" aria-label="生活入口"><a class="entry-door" href="/#movie"><span class="icon-tile">${icon("movie")}</span><span><strong>我的電影</strong><small>想看的、看過的，留在一起</small></span></a><a class="entry-door" href="/#mood"><span class="icon-tile">${icon("heart")}</span><span><strong>記下心情</strong><small>留一點今天的自己</small></span></a><a class="entry-door" href="/#article"><span class="icon-tile">${icon("article")}</span><span><strong>我的網摘</strong><small>找回值得重讀的文章</small></span></a></nav>
+    <section class="workspace-section"><div class="heading"><h2>${icon("clock")}接著上次看</h2><a href="/dashboard.html#history">全部瀏覽紀錄 →</a></div><div class="resume-grid">${recent.map((v: any) => `<article class="resume-card"><span class="resume-domain">${favicon(v.url)}<span class="resume-host">${esc(new URL(v.url).hostname)}</span><time datetime="${new Date(v.visitedAt).toISOString()}">${date(v.visitedAt)}</time></span><h3><a href="${esc(v.url)}" target="_blank" rel="noopener noreferrer">${esc(pageLabel(v).title)}</a></h3><div class="actions">${captureButton(v, "整理這個連結")}<a class="save-shortcut" href="/?captureUrl=${encodeURIComponent(v.url)}&captureTitle=${encodeURIComponent((v.title || v.url).slice(0, 500))}#bookmark">${icon("bookmark")}加入我的網址</a></div></article>`).join("") || (groups.length ? '<p class="empty">最近的紀錄沒有具體內容標題，可展開下方清單查看網址線索。</p>' : '<p class="empty">同步瀏覽紀錄後，可以從這裡接著看。<a href="/dashboard.html#settings">設定同步 →</a></p>')}</div>${groupedHistory}</section>
+    
     <section class="workspace-section"><div class="heading"><h2>${icon("compass")}持續關注的線索</h2><a href="/dashboard.html#insights">全部洞察 →</a></div><div data-home-insights aria-label="關注線索"><p class="note">關注線索整理中；你可以先使用上方的入口。</p></div></section>
     <section class="workspace-section"><div class="heading"><h2>${icon("layers")}繼續整理</h2><a href="/#collections">所有選集 →</a></div><div class="workspace-grid">${data.collections?.items.slice(0, 3).map(card).join("") || `<div class="home-empty"><span class="icon-tile">${icon("layers")}</span><p>有幾篇想放在一起？為它們建立一份選集。</p>${action("create", "建立主題選集")}</div>`}</div></section>
     <section class="workspace-section"><div class="heading"><h2>${icon("inbox")}待整理 <small>${data.inbox?.total ?? 0}</small></h2><div class="actions">${action("paste", "加入連結")}<a href="/#inbox">全部待整理 →</a></div></div>${
@@ -188,12 +190,12 @@ export function workspace(kind: string, data: any) {
             )
             .join("")}</nav>${search("標題、網址或筆記")}`
         : `<a href="/dashboard.html#insights">回到洞察 →</a>`
-    }<div class="selection-bar"><label class="check"><input type="checkbox" data-select-all>本頁全選</label>${action("collect-selected", "整理已選頁面")}<span data-selection-count>尚未選取</span></div>${data.items.map((v: any, i: number) => `<article class="workspace-item"><label class="check"><input type="checkbox" data-pick="${i}"><span class="sr-only">選取 ${esc(v.title)}</span></label><div><h2><a href="${esc(v.url)}" target="_blank" rel="noopener noreferrer">${esc(pageLabel(v).title)}</a></h2>${pageLabel(v).detail ? `<p class="page-clue">${esc(pageLabel(v).detail)}</p>` : ""}<p class="item-url">${esc(v.url)}</p>${v.note ? `<p>${esc(v.note)}</p>` : ""}<small>${data.evidence ? `${v.days ?? 1} 個日期 · 最近 ${date(v.last ?? v.at ?? Date.now())}` : date(v.created)}</small><div class="actions">${captureButton(v, "放進選集")}${!data.evidence ? (v.status === "pending" ? action("keep", "先保留", v.id) + action("dismiss", "略過", v.id) : action("restore", "回到待整理", v.id)) : ""}</div></div></article>`).join("") || '<p class="empty">這裡還沒有內容。<a href="/dashboard.html#history">從瀏覽歷史挑選</a>，或直接加入連結。</p>'}${pager(data.offset, data.total, kind, p)}</div>`;
+    }<div class="selection-bar"><label class="check"><input type="checkbox" data-select-all>本頁全選</label>${action("collect-selected", "整理已選頁面")}<span data-selection-count>尚未選取</span></div>${data.items.map((v: any, i: number) => `<article class="workspace-item"><label class="check"><input type="checkbox" data-pick="${i}"><span class="sr-only">選取 ${esc(v.title)}</span></label><div><h2><a href="${esc(v.url)}" target="_blank" rel="noopener noreferrer">${esc(pageLabel(v).title)}</a></h2>${pageLabel(v).detail ? `<p class="page-clue">${esc(pageLabel(v).detail)}</p>` : ""}<p class="item-url">${esc(displayUrl(v.url))}</p>${v.note ? `<p>${esc(v.note)}</p>` : ""}<small>${data.evidence ? `${v.days ?? 1} 個日期 · 最近 ${date(v.last ?? v.at ?? Date.now())}` : date(v.created)}</small><div class="actions">${captureButton(v, "放進選集")}${!data.evidence ? (v.status === "pending" ? action("keep", "先保留", v.id) + action("dismiss", "略過", v.id) : action("restore", "回到待整理", v.id)) : ""}</div></div></article>`).join("") || '<p class="empty">這裡還沒有內容。<a href="/dashboard.html#history">從瀏覽歷史挑選</a>，或直接加入連結。</p>'}${pager(data.offset, data.total, kind, p)}</div>`;
   if (data.detail) {
     const d = data.detail,
       editable = d.role !== "reader",
       owner = d.role === "owner";
-    return `<div data-workspace><a href="/#collections">← 所有選集</a><div class="workspace-intro"><small>${owner ? "我的選集" : esc(d.owner) + " 的選集"} · ${d.visibility === "friends" ? "朋友可見" : "私人／指定共同編輯者可見"}</small><h1>${esc(d.title)}</h1><p class="notes">${esc(d.description)}</p><p>${d.tags.map((t: string) => `<span class="tag">${esc(t)}</span>`).join("")}</p><div class="actions">${editable ? action("paste", "加入連結") + `<a href="/#inbox">從待整理挑選 →</a>` : ""}${owner ? action("settings", "編輯介紹與權限") + action("share", "預覽與分享") + action("archive", "封存選集") : d.role === "editor" ? action("leave", "退出共同編輯") : ""}</div></div><p>${d.items.length} 個連結${editable ? " · 用上移／下移安排閱讀順序" : ""}</p>${d.items.map((v: any, i: number) => `<article class="workspace-item"><span class="item-number">${i + 1}</span><div><h2><a href="${esc(v.url)}" target="_blank" rel="noopener noreferrer">${esc(pageLabel(v).title)}</a></h2>${pageLabel(v).detail ? `<p class="page-clue">${esc(pageLabel(v).detail)}</p>` : ""}<p class="item-url">${esc(v.url)}</p><p class="notes">${esc(v.note || "尚未寫下推薦理由。")}</p><div class="actions">${editable ? action("edit-item", "寫推薦理由", v.id) + action("up", "上移", v.id, i === 0 ? "disabled" : "") + action("down", "下移", v.id, i === d.items.length - 1 ? "disabled" : "") + action("remove-item", "移出選集", v.id) : captureButton(v, "留到我的整理")}</div></div></article>`).join("") || '<p class="empty">從歷史、洞察或待整理挑選頁面，放進這份選集。</p>'}${
+    return `<div data-workspace><a href="/#collections">← 所有選集</a><div class="workspace-intro"><small>${owner ? "我的選集" : esc(d.owner) + " 的選集"} · ${d.visibility === "friends" ? "朋友可見" : "私人／指定共同編輯者可見"}</small><h1>${esc(d.title)}</h1><p class="notes">${esc(d.description)}</p><p>${d.tags.map((t: string) => `<span class="tag">${esc(t)}</span>`).join("")}</p><div class="actions">${editable ? action("paste", "加入連結") + `<a href="/#inbox">從待整理挑選 →</a>` : ""}${owner ? action("settings", "編輯介紹與權限") + action("share", "預覽與分享") + action("archive", "封存選集") : d.role === "editor" ? action("leave", "退出共同編輯") : ""}</div></div><p>${d.items.length} 個連結${editable ? " · 用上移／下移安排閱讀順序" : ""}</p>${d.items.map((v: any, i: number) => `<article class="workspace-item"><span class="item-number">${i + 1}</span><div><h2><a href="${esc(v.url)}" target="_blank" rel="noopener noreferrer">${esc(pageLabel(v).title)}</a></h2>${pageLabel(v).detail ? `<p class="page-clue">${esc(pageLabel(v).detail)}</p>` : ""}<p class="item-url">${esc(displayUrl(v.url))}</p><p class="notes">${esc(v.note || "尚未寫下推薦理由。")}</p><div class="actions">${editable ? action("edit-item", "寫推薦理由", v.id) + action("up", "上移", v.id, i === 0 ? "disabled" : "") + action("down", "下移", v.id, i === d.items.length - 1 ? "disabled" : "") + action("remove-item", "移出選集", v.id) : captureButton(v, "留到我的整理")}</div></div></article>`).join("") || '<p class="empty">從歷史、洞察或待整理挑選頁面，放進這份選集。</p>'}${
       owner
         ? `<section class="workspace-section"><h2>一起整理</h2><p>指定朋友能查看、加入、編排連結及修改推薦理由；只有你能發布分享快照。</p>${d.members.map((m: any) => `<div class="workspace-row"><span>${esc(m.name)} · @${esc(m.handle)}</span>${action("remove-member", "取消共同編輯", m.id)}</div>`).join("")}<form data-workspace-form="member"><label>邀請朋友<select name="account" required><option value="">選擇已接受的朋友</option>${data.friends
             .filter((f: any) => !d.members.some((m: any) => m.id === f.id))
@@ -265,12 +267,12 @@ export function installWorkspace(
       d = data.detail;
     void run(async () => {
       if (form.dataset.workspaceForm === "home-search") {
-        if (fields.where === "google") {
+        if (fields.where !== "history") {
           const popup = window.open("", "_blank");
           if (popup) popup.opener = null;
           try {
             const result = await api("/api/portal/search", "POST", {
-              engine: "google",
+              engine: String(fields.where),
               query: String(fields.q),
             });
             if (popup) popup.location.href = result.url;
@@ -486,7 +488,7 @@ export function installWorkspace(
       if (name === "share") {
         const dialog = modal(
           "預覽與分享",
-          `<p>持有連結的人能看到下列內容。這份快照不會隨之後的編輯更新；可隨時撤銷。</p><section class="share-preview"><h3>${esc(d.title)}</h3><p>${esc(d.description)}</p><p>${d.tags.map(esc).join(" · ")}</p><ol>${d.items.map((v: any) => `<li><strong>${esc(v.title)}</strong><p class="item-url">${esc(v.url)}</p><p>${esc(v.note)}</p></li>`).join("")}</ol></section><form><label>連結有效期<select name="days"><option value="1">1 天</option><option value="7" selected>7 天</option><option value="30">30 天</option></select></label><button ${!d.items.length ? "disabled" : ""}>建立分享連結</button></form>`,
+          `<p>持有連結的人能看到下列內容。這份快照不會隨之後的編輯更新；可隨時撤銷。</p><section class="share-preview"><h3>${esc(d.title)}</h3><p>${esc(d.description)}</p><p>${d.tags.map(esc).join(" · ")}</p><ol>${d.items.map((v: any) => `<li><strong>${esc(v.title)}</strong><p class="item-url">${esc(displayUrl(v.url))}</p><p>${esc(v.note)}</p></li>`).join("")}</ol></section><form><label>連結有效期<select name="days"><option value="1">1 天</option><option value="7" selected>7 天</option><option value="30">30 天</option></select></label><button ${!d.items.length ? "disabled" : ""}>建立分享連結</button></form>`,
         );
         dialog.querySelector("form")!.onsubmit = (e) => {
           e.preventDefault();

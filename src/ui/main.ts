@@ -1,10 +1,11 @@
 import { siteHeader } from "./shell";
+import { minuteFormat, displayUrl } from "./format";
 import { pageLabel } from "../shared/page-label";
 import { favicon, configureFavicons } from "./favicons";
 import { installTabCollector } from "./tab-collector";
 import { captureButton, installCapture } from "./curation";
-import "./style.css";
-import "./classic.css";
+import "./app.css";
+import { revealCurrent } from "./reveal";
 import {
   installUX,
   pendingUI,
@@ -68,42 +69,52 @@ let knownAccount = "",
   renderedURL = location.href,
   restoring = false;
 let generation = 0;
+let switchingKey = false;
 let searchGeneration = 0;
 let siteLimit = 25;
-const colors = [
-  "#8bc4a8",
-  "#83a8d3",
-  "#d8b877",
-  "#bc98d1",
-  "#db9d87",
-  "#7a817d",
-];
+// Validated categorical order; the folded "其他網站" slice is always neutral.
+const colors = [1, 2, 3, 4, 5].map((n) => `var(--chart-${n})`);
+const otherColor = "var(--chart-other)";
 
 $("app").innerHTML = `
 <a class="skip-link" href="#page-title">跳到主要內容</a>
-${siteHeader("dashboard", extension ? "" : '<button id="logout" type="button" hidden>登出</button>', true, extension)}
+${siteHeader("dashboard", extension ? "" : '<span id="account-name" class="account-name"></span><a id="login-link" class="button primary" href="/community.html">帳號登入</a><button id="logout" type="button" hidden>登出</button>', true, extension, !extension && !token)}
 <main class="site-main">
-<section class="profile"><div class="profile-copy"><div class="title-row"><h1 id="page-title" tabindex="-1">瀏覽回顧</h1><span class="private-badge">私人</span></div><p id="page-scope">總覽 · 全部紀錄</p></div><a href="#settings" data-view="settings" class="button profile-action">匯入紀錄 <span aria-hidden="true">↗</span></a></section>
-<nav class="page-nav" aria-label="瀏覽紀錄導覽">${(["overview", "insights", "history", "recap"] as View[]).map((view) => `<a href="#${view}" data-view="${view}">${viewLabels[view]}</a>`).join("")}</nav>
-<div id="range-controls" class="range-controls"><div class="period" role="group" aria-label="回顧範圍"><button data-days="1">今天</button><button data-days="7">近 7 天</button><button data-days="30">近 30 天</button><button data-days="0">全部</button></div><span id="range-label"></span></div>
-<div id="message" role="status" aria-live="polite">${extension ? "預設暫停記錄。設定連線後，即可開始同步。" : token ? "" : "解鎖後，查看自己的瀏覽紀錄。"}</div>
-<section id="settings" class="connection" aria-labelledby="connection-title"><div class="section-heading"><div><div class="eyebrow">${extension ? "CONNECTION" : "PRIVATE ACCESS"}</div><h2 id="connection-title">${extension ? "連接你的瀏覽空間" : "開啟你的私人回顧"}</h2><p>${extension ? "完整網址、標題、造訪時間與估計前景時間會同步至你指定的伺服器。" : "輸入存取金鑰以讀取紀錄。金鑰只保留在此分頁工作階段。"}</p></div><span id="connection-state" class="status-chip">尚未連線</span></div>
-<form id="connect-form">${extension ? '<label class="server-field">伺服器網址<input id="server" type="url" value="https://myzilla.observe.tw" required /></label><label>瀏覽器<input id="browser-name" required placeholder="Brave / Zen / Chrome / Arc / Dia"/></label><label>設定檔<input id="profile-name" required placeholder="Default / 工作 / 個人"/></label><label>裝置<input id="device-name" required placeholder="Sky Mac"/></label>' : ""}<label class="token-field">存取金鑰<input id="token" type="password" required minlength="32" autocomplete="off" placeholder="貼上你的存取金鑰"/></label><button class="primary" type="submit">${extension ? "儲存並連線" : "解鎖回顧"} <span aria-hidden="true">↗</span></button></form>
+<section class="profile"><div class="profile-copy"><div class="title-row"><h1 id="page-title" tabindex="-1">瀏覽回顧</h1><span class="private-badge">私人</span></div><p id="page-scope">總覽 · 全部紀錄</p></div></section>
+<div class="view-toolbar"><nav class="page-nav" aria-label="瀏覽紀錄導覽">${(["overview", "insights", "history", "recap"] as View[]).map((view) => `<a href="#${view}" data-view="${view}">${viewLabels[view]}</a>`).join("")}</nav>
+<div id="range-controls" class="range-controls"><div class="period" role="group" aria-label="回顧範圍"><button data-days="1">今天</button><button data-days="7">近 7 天</button><button data-days="30">近 30 天</button><button data-days="0">全部</button></div><span id="range-label"></span></div></div>
+<div id="message" role="status" aria-live="polite">${extension ? "預設暫停記錄。設定連線後，即可開始同步。" : token ? "正在讀取你的瀏覽紀錄…" : "解鎖後，查看自己的瀏覽紀錄。"}</div>
+<section id="settings" class="connection" aria-labelledby="connection-title"><div class="section-heading"><div><h2 id="connection-title">${extension ? "連接你的瀏覽空間" : "開啟你的私人回顧"}</h2><p id="connection-copy">${extension ? "完整網址、標題、造訪時間與估計前景時間會同步至你指定的伺服器。" : "輸入存取金鑰以讀取紀錄。金鑰只保留在此分頁工作階段。"}</p></div><span id="connection-state" class="status-chip">尚未連線</span></div>
+${extension ? "" : '<button id="switch-key" type="button" hidden>使用其他存取金鑰</button>'}<form id="connect-form">${extension ? '<label class="server-field">伺服器網址<input id="server" type="url" value="https://myzilla.observe.tw" required /></label><label>瀏覽器<input id="browser-name" required placeholder="Brave / Zen / Chrome / Arc / Dia"/></label><label>設定檔<input id="profile-name" required placeholder="Default / 工作 / 個人"/></label><label>裝置<input id="device-name" required placeholder="Sky Mac"/></label>' : ""}<label class="token-field">存取金鑰<input id="token" type="password" required minlength="32" autocomplete="off" placeholder="貼上你的存取金鑰"/></label><button class="primary" type="submit">${extension ? "儲存並連線" : "解鎖回顧"} <span aria-hidden="true">↗</span></button></form>
 ${!extension ? '<p class="access-help"><a href="/community.html">使用帳號登入／建立擁有者帳號 →</a></p><p class="access-help">已完成歷史匯入？直接解鎖即可查看。要累積新的紀錄，請在下方安裝擴充功能。</p>' : ""}
 <div id="capture-controls" ${extension ? "" : "hidden"}><div class="section-heading"><div><h3>紀錄與同步</h3><p>開始後累積新的活動；離線紀錄會保留，連線後補送。</p></div></div><div class="actions"><button id="toggle" class="primary" type="button">開始記錄</button><button id="sync" type="button">立即同步</button><button id="import" type="button">匯入本設定檔全部歷史</button></div><p id="capture-status"></p><p class="note">已透過原生工具匯入此設定檔的歷史，直接開始記錄即可，避免重複匯入。</p></div>
 </section>
 <section id="setup-guide" class="setup-guide"><div class="section-heading"><div><h2>讓瀏覽紀錄持續累積</h2><p>每個瀏覽器設定檔分別設定一次，就能在這裡一起回顧。</p></div></div><div class="setup-steps"><article><span class="step-number">01</span><h3>安裝擴充功能</h3><p>在使用中的瀏覽器與設定檔安裝對應版本。</p><a href="${extension ? "https://myzilla.observe.tw" : ""}/downloads/myzilla-chromium.zip">Brave / Chrome / Arc / Dia ↗</a><a href="${extension ? "https://myzilla.observe.tw" : ""}/downloads/myzilla-firefox.zip">Zen / Firefox ↗</a><small>Zen／Firefox 測試版重啟後需重新載入。</small></article><article><span class="step-number">02</span><h3>連線並開始記錄</h3><p>從工具列開啟 MyZilla，填入金鑰與來源名稱，按「開始記錄」。</p><a href="${extension ? "https://myzilla.observe.tw" : ""}/downloads/install.md">查看安裝步驟 ↗</a></article><article><span class="step-number">03</span><h3>找回以前看過的內容</h3><p>首次可匯入全部既有歷史，再到總覽與歷史頁探索。</p><a href="${extension ? "https://myzilla.observe.tw" : ""}/downloads/import-contract.md">多瀏覽器歷史匯入說明 ↗</a></article></div><div id="sources-section" hidden><h3>已同步的來源</h3><p class="note">所有期間的累計紀錄，依瀏覽器、設定檔與裝置呈現。</p><div id="sources-list"></div></div></section>
-<div id="dashboard" hidden>
+<div id="dashboard" class="is-loading" hidden>
 <section id="overview-view" data-panel="overview"><section id="ai-digest" aria-live="polite" hidden></section><div id="personal-overview"></div><div class="stats"><article><strong id="visits-stat">—</strong><span>造訪次數</span></article><article><strong id="sites-stat">—</strong><span>網站與來源</span></article><article><strong id="time-stat">—</strong><span>估計前景時間</span></article><article><strong id="estimated-stat">—</strong><span id="estimated-label">歷史推估停留</span><a href="#recap" data-view="recap">查看各連結與估算門檻 →</a></article></div><p class="note">前景時間由擴充功能記錄；歷史推估依相鄰造訪另計。</p><div class="section-heading"><div><h2>經常造訪的網站</h2><p>從日常的足跡，看看你持續關注什麼。</p></div><div class="sort-control"><label for="metric">排序依據</label><select id="metric"><option value="visits">造訪次數</option><option value="milliseconds">前景時間</option></select></div></div><div id="ranking" class="ranking"></div><a class="text-link" href="#insights" data-view="insights">查看洞察與網站統計 →</a><section class="recent-section"><div class="section-heading"><h2>最近看過的頁面</h2><a class="text-link" href="#history" data-view="history">全部歷史 →</a></div><div id="recent-list"></div></section></section>
 <section id="insights-view" data-panel="insights" hidden><div id="personal-insights"></div><details><summary>網站使用統計</summary><div class="section-heading"><div><h2>你的注意力分布</h2><p>以造訪次數和估計前景時間，從兩個角度回顧瀏覽習慣。</p></div><select id="insights-metric" aria-label="洞察統計方式"><option value="visits">造訪次數</option><option value="milliseconds">前景時間</option></select></div><div class="insights-grid"><div id="distribution"></div><div id="insight-summary" class="insight-summary"></div></div><p class="method-note">前景時間估計瀏覽器有焦點、分頁啟用且電腦未閒置時的活動，並非實際閱讀時間。</p><div class="section-heading"><h2>所有網站</h2><span id="sites-count"></span></div><div class="table-scroll"><table class="sites-table"><thead><tr><th scope="col">網站</th><th scope="col">造訪次數</th><th scope="col">前景時間</th></tr></thead><tbody id="sites-list"></tbody></table></div><button id="more-sites" type="button" hidden>顯示更多網站</button></details></section>
 <section id="history-view" data-panel="history" hidden><div class="section-heading"><div><h2>瀏覽歷史</h2><p id="history-count">搜尋所有已同步的紀錄。</p></div><label class="search"><span class="sr-only">搜尋造訪紀錄</span><input id="search" type="search" maxlength="2000" placeholder="搜尋標題或網址" aria-label="搜尋造訪紀錄"/></label></div><div id="history-feedback" role="status"></div><button id="clear-search" type="button" hidden>清除搜尋</button><div id="history-list"></div><div class="pagination"><button id="previous" type="button" disabled>← 上一頁</button><span id="page-info"></span><button id="next" type="button" disabled>下一頁 →</button></div></section>
-<section id="recap-view" data-panel="recap" hidden><div class="eyebrow">YOUR BROWSING RECAP</div><h2 class="recap-title">這段時間，你看了些什麼？</h2><p class="note">依目前選取期間的全部紀錄整理。</p><div id="recap-content"></div><section id="dwell-panel"></section><a href="#history" data-view="history" class="button">回到歷史，找回那些頁面 →</a></section>
-</div><footer><span>MyZilla</span><span>把你看過的，變成值得留下的。</span><span>私人瀏覽空間</span></footer>
+<section id="recap-view" data-panel="recap" hidden><h2 class="recap-title">這段時間，你看了些什麼？</h2><p class="note">依目前選取期間的全部紀錄整理。</p><div id="recap-content"></div><section id="dwell-panel"></section><a href="#history" data-view="history" class="button">回到歷史，找回那些頁面 →</a></section>
+</div><footer><span>MyZilla</span><span>私人內容只有自己看得到</span></footer>
 </main>`;
 
-function message(text: string, error = false) {
+function message(text: string, error = false, retry?: () => Promise<void>) {
   $("message").textContent = text;
   $("message").classList.toggle("error", error);
+  if (retry) {
+    const title = document.createElement("strong");
+    title.textContent = "暫時讀不到瀏覽紀錄";
+    $("message").prepend(title);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "primary";
+    button.textContent = "重新載入";
+    button.onclick = () => {
+      message("正在重新讀取…");
+      void run(retry, false);
+    };
+    $("message").append(button);
+  }
 }
 function applyNavigation(focus = false) {
   renderedURL = location.href;
@@ -113,6 +124,8 @@ function applyNavigation(focus = false) {
   $("setup-guide").hidden = authenticated && !settings;
   $("dashboard").hidden = !authenticated || settings;
   $("range-controls").hidden = settings || !authenticated;
+  document.querySelector<HTMLElement>(".view-toolbar")!.hidden =
+    !authenticated || settings;
   document
     .querySelectorAll<HTMLElement>("[data-panel]")
     .forEach((el) => (el.hidden = el.dataset.panel !== state.view));
@@ -148,7 +161,28 @@ function applyNavigation(focus = false) {
     : `${viewLabels[state.view]} · ${range}`;
   document.title = `${viewLabels[state.view]} · MyZilla`;
   $("connection-state").textContent = authenticated ? "已連線" : "尚未連線";
+  $("connection-state").classList.toggle("connected", authenticated);
+  if (!extension) {
+    // Signed in: the key form becomes an explicit "use another key" choice.
+    $("connection-title").textContent = authenticated
+      ? "私人回顧已開啟"
+      : "開啟你的私人回顧";
+    $("connection-copy").textContent = authenticated
+      ? "這個分頁已登入。要切換到另一把存取金鑰時才需要重新輸入。"
+      : "輸入存取金鑰以讀取紀錄。金鑰只保留在此分頁工作階段。";
+    $("connect-form").hidden = authenticated && !switchingKey;
+    $("switch-key").hidden = !authenticated || switchingKey;
+    document
+      .querySelectorAll<HTMLElement>(".access-help")
+      .forEach((el) => (el.hidden = authenticated));
+  }
   if ($("logout")) $("logout").hidden = !authenticated;
+  if ($("login-link")) $("login-link").hidden = authenticated;
+  if (!extension)
+    document
+      .querySelector(".app-header")
+      ?.classList.toggle("signed-out", !authenticated);
+  revealCurrent($("app"));
   if (focus) {
     $("page-title").focus({ preventScroll: true });
     scrollTo({ top: 0, behavior: "instant" });
@@ -208,7 +242,7 @@ async function status() {
   if (data.syncStatus?.error) message(data.syncStatus.error, true);
   else if (data.syncStatus?.at)
     message(
-      `最近同步：${new Date(data.syncStatus.at).toLocaleString("zh-TW")}`,
+      `最近同步：${new Date(data.syncStatus.at).toLocaleString("zh-TW", minuteFormat)}`,
     );
 }
 async function api(path: string, method = "GET", body?: unknown) {
@@ -268,7 +302,13 @@ async function refresh() {
       headers: { Authorization: `Bearer ${token}` },
       signal: AbortSignal.timeout(20000),
     });
-    if (response.ok) knownAccount = (await response.json()).id;
+    if (response.ok) {
+      const account = await response.json();
+      knownAccount = account.id;
+      // Same header as the other pages: the signed-in name next to 登出.
+      const name = document.getElementById("account-name");
+      if (name) name.textContent = account.name ?? "";
+    }
   }
   authenticated = true;
   render();
@@ -281,10 +321,12 @@ async function refresh() {
     digest.load(),
     dwell.load(from, to),
   ]);
+  revealCurrent($("app"));
   if (version === generation) message("已連線 · 所有資料來自你的私人伺服器");
 }
 function render() {
   if (!report) return;
+  $("dashboard").classList.remove("is-loading", "load-failed");
   const totalTime = report.sites.reduce((sum, s) => sum + s.milliseconds, 0);
   $("visits-stat").textContent = report.visitCount.toLocaleString();
   $("sites-stat").textContent = report.sites.length.toLocaleString();
@@ -319,13 +361,13 @@ function render() {
       .map((s, i) => {
         const start = angle;
         angle += (s.value / total) * 100;
-        return `${colors[i]} ${start}% ${angle}%`;
+        return `${s.name === "其他網站" ? otherColor : colors[i]} ${start}% ${angle}%`;
       })
       .join(",");
     $("distribution").innerHTML =
-      `<div class="donut" role="img" aria-label="${state.metric === "visits" ? "造訪次數" : "前景時間"}分布" style="background:conic-gradient(${gradient})"><div><span>${state.metric === "visits" ? "總造訪" : "前景時間"}</span><strong>${value(total)}</strong></div></div><ul class="legend">${parts.map((s, i) => `<li><i style="background:${colors[i]}"></i><span>${escape(s.name)}</span><b>${s.value / total < 0.01 ? "不到 1" : Math.round((s.value / total) * 100)}%</b></li>`).join("")}</ul>`;
+      `<div class="donut" role="img" aria-label="${state.metric === "visits" ? "造訪次數" : "前景時間"}分布" style="background:conic-gradient(${gradient})"><div><span>${state.metric === "visits" ? "總造訪" : "前景時間"}</span><strong>${value(total)}</strong></div></div><ul class="legend">${parts.map((s, i) => `<li><i style="background:${s.name === "其他網站" ? otherColor : colors[i]}"></i><span>${escape(s.name)}</span><b>${s.value / total < 0.01 ? "不到 1" : Math.round((s.value / total) * 100)}%</b></li>`).join("")}</ul>`;
     $("insight-summary").innerHTML =
-      `<div class="eyebrow">${state.metric === "visits" ? "MOST VISITED" : "MOST FOREGROUND TIME"}</div><h3>${escape(active[0].domain)}</h3><p>占這段期間${state.metric === "visits" ? "造訪次數" : "估計前景時間"}的 <strong>${Math.round((active[0][state.metric] / total) * 100)}%</strong>。</p><p>共 ${report.sites.length.toLocaleString()} 個網站與來源，${report.visitCount.toLocaleString()} 次造訪。</p>`;
+      `<div class="eyebrow">${state.metric === "visits" ? "最常造訪" : "前景時間最長"}</div><h3>${escape(active[0].domain)}</h3><p>占這段期間${state.metric === "visits" ? "造訪次數" : "估計前景時間"}的 <strong>${Math.round((active[0][state.metric] / total) * 100)}%</strong>。</p><p>共 ${report.sites.length.toLocaleString()} 個網站與來源，${report.visitCount.toLocaleString()} 次造訪。</p>`;
   }
   $("sites-count").textContent =
     `${report.sites.length.toLocaleString()} 個網站與來源`;
@@ -349,7 +391,7 @@ function visitMarkup(v: HistoryVisit, className: string) {
   try {
     host = new URL(v.url).hostname || host;
   } catch {}
-  return `<${safe ? "a" : "div"} class="${className}" ${safe ? `href="${escape(safe)}" target="_blank" rel="noopener noreferrer"` : ""}><span class="site-icon" aria-hidden="true">${escape(host.slice(0, 1).toUpperCase())}</span><div><strong>${escape(label.title)}</strong>${label.detail ? `<small class="page-clue">${escape(label.detail)}</small>` : ""}<span>${escape(v.url)}</span><small>${escape(v.source.browser)} · ${escape(v.source.profile)} · ${escape(v.source.device)}</small></div><time>${new Date(v.visitedAt).toLocaleString("zh-TW", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}</time><span aria-hidden="true">${safe ? "↗" : "·"}</span></${safe ? "a" : "div"}>${!extension && safe ? captureButton({ url: safe, title: (v.title || safe).slice(0, 500) }) + `<a class="save-history-link" href="/?captureUrl=${encodeURIComponent(safe)}&captureTitle=${encodeURIComponent(v.title.slice(0, 500))}#bookmark">加入我的網址</a>` : ""}`;
+  return `<div class="visit-row"><${safe ? "a" : "div"} class="${className}" ${safe ? `href="${escape(safe)}" target="_blank" rel="noopener noreferrer"` : ""}><span class="site-icon" aria-hidden="true">${escape(host.slice(0, 1).toUpperCase())}</span><div><strong>${escape(label.title)}</strong>${label.detail ? `<small class="page-clue">${escape(label.detail)}</small>` : ""}<span>${escape(displayUrl(v.url))}</span><small>${escape(v.source.browser)} · ${escape(v.source.profile)} · ${escape(v.source.device)}</small></div><time>${new Date(v.visitedAt).toLocaleString("zh-TW", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}</time><span aria-hidden="true">${safe ? "↗" : "·"}</span></${safe ? "a" : "div"}>${!extension && safe ? captureButton({ url: safe, title: (v.title || safe).slice(0, 500) }) + `<a class="save-history-link" href="/?captureUrl=${encodeURIComponent(safe)}&captureTitle=${encodeURIComponent(v.title.slice(0, 500))}#bookmark">加入我的網址</a>` : ""}</div>`;
 }
 async function loadRecent(from: number, to: number) {
   const version = generation;
@@ -365,15 +407,27 @@ async function loadRecent(from: number, to: number) {
 async function loadSources() {
   const data = await api("/api/sources");
   $("sources-section").hidden = false;
-  $("sources-list").innerHTML = data.sources.length
-    ? data.sources
+  // One row per browser profile; visits and extension time are counts on it.
+  const grouped = new Map<
+    string,
+    { source: HistoryVisit["source"]; visits: number; intervals: number }
+  >();
+  for (const s of data.sources as {
+    source: HistoryVisit["source"];
+    kind: string;
+    count: number;
+  }[]) {
+    const key = JSON.stringify([s.source.browser, s.source.profile, s.source.device]);
+    const row = grouped.get(key) ?? { source: s.source, visits: 0, intervals: 0 };
+    if (s.kind === "visit") row.visits += s.count;
+    else row.intervals += s.count;
+    grouped.set(key, row);
+  }
+  $("sources-list").innerHTML = grouped.size
+    ? [...grouped.values()]
         .map(
-          (s: {
-            source: HistoryVisit["source"];
-            kind: string;
-            count: number;
-          }) =>
-            `<div class="source-row"><div><strong>${escape(s.source.browser)} · ${escape(s.source.profile)}</strong><span>${escape(s.source.device)}</span></div><span>${s.count.toLocaleString()} 筆${s.kind === "visit" ? "造訪" : "時間區間"}</span></div>`,
+          (s) =>
+            `<div class="source-row"><div><strong>${escape(s.source.browser)} · ${escape(s.source.profile)}</strong><span>${escape(s.source.device)}</span></div><span>${s.visits.toLocaleString()} 筆造訪${s.intervals ? ` · ${s.intervals.toLocaleString()} 段前景時間` : ""}</span></div>`,
         )
         .join("")
     : '<p class="empty">尚無同步來源，完成一次匯入後會顯示在這裡。</p>';
@@ -430,8 +484,15 @@ async function run(job: () => Promise<void>, blocking = true) {
   try {
     await job();
   } catch (error) {
-    message(errorMessage(error), true);
-    announce(errorMessage(error), true);
+    // Nothing loaded yet: keep one explanation with a retry instead of an empty page.
+    if (!report && token && authenticated) {
+      $("dashboard").classList.remove("is-loading");
+      $("dashboard").classList.add("load-failed");
+      message(`${errorMessage(error)} 瀏覽紀錄沒有變動。`, true, refresh);
+    } else {
+      message(errorMessage(error), true);
+      announce(errorMessage(error), true);
+    }
   } finally {
     if (blocking) busy = false;
     finish();
@@ -501,8 +562,15 @@ $("connect-form").addEventListener("submit", (event) => {
       sessionStorage.setItem("myzilla-token", token);
     }
     await refresh();
+    switchingKey = false;
+    applyNavigation();
     clearDirty($("settings"));
   });
+});
+$("switch-key")?.addEventListener("click", () => {
+  switchingKey = true;
+  applyNavigation();
+  $("token").focus();
 });
 $("logout")?.addEventListener("click", async () => {
   if (!(await discardChanges($("app")))) return;

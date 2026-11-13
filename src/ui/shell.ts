@@ -1,12 +1,12 @@
-import "./shell.css";
-
 type Section =
   "home" | "collections" | "dashboard" | "settings" | "community" | "help";
+const publicItems = new Set<Section>(["home", "help"]);
 export function siteHeader(
   active: Section,
-  logout = "",
+  account = "",
   dashboard = false,
   extension = false,
+  signedOut = false,
 ) {
   const items: [Section, string, string][] = [
     ["home", "我的入口", "/#home"],
@@ -16,12 +16,14 @@ export function siteHeader(
     ["community", "帳號與朋友", "/community.html"],
     ["help", "使用說明", "/help.html"],
   ];
-  return `<div class="app-header"><header class="site-header app-brand-row"><a class="app-wordmark" href="${extension ? "#overview" : "/"}"><img src="./myzilla-mark.svg" width="48" height="36" alt=""><strong>MyZilla</strong><span>我的個人入口</span></a><p>搜尋、收藏、回顧，從自己的生活出發。</p></header><nav class="site-nav top-nav app-nav" aria-label="主要導覽">${items
+  // Signed-out visitors only see public destinations; the dashboard toggles
+  // this class when a key unlocks it in place.
+  return `<div class="app-header${signedOut ? " signed-out" : ""}"><div class="app-header-inner"><header class="site-header app-brand-row"><a class="app-wordmark" href="${extension ? "#overview" : "/"}"><img src="./myzilla-mark.svg" width="40" height="30" alt=""><strong>MyZilla</strong></a></header><nav id="primary-nav" class="site-nav top-nav app-nav" aria-label="主要導覽">${items
     .filter(([id]) => !extension || id === "dashboard" || id === "settings")
     .map(([id, label, href]) => {
       const local = dashboard && (id === "dashboard" || id === "settings");
       const view = id === "settings" ? "settings" : "overview";
-      return `<a href="${local ? "#" + view : href}" ${local ? `data-view="${view}" data-main-nav="${id}"` : ""} ${active === id ? 'aria-current="page"' : ""}>${label}</a>`;
+      return `<a href="${local ? "#" + view : href}" ${local ? `data-view="${view}" data-main-nav="${id}"` : ""} ${publicItems.has(id) ? "" : "data-private-nav"} ${active === id ? 'aria-current="page"' : ""}>${label}</a>`;
     })
-    .join("")}${logout}</nav></div>`;
+    .join("")}</nav><div class="app-account"><button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" data-nav-toggle>選單</button>${account}</div></div></div>`;
 }
