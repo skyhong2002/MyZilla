@@ -3147,3 +3147,16 @@ input[type="file"]::file-selector-button {
 #category-sites {
   max-width: 760px;
 }
+
+/* Round 10 review fixes ----------------------------------------------------- */
+/* Nothing is processing while a confirmation is still waiting for an answer. */
+body:has(dialog.ux-confirm[open]) .ux-inline-status {
+  display: none;
+}
+@media (min-width: 861px) {
+  .item > .actions > :is(button, a),
+  .item > .actions > .more-menu > summary {
+    min-width: 40px;
+    min-height: 40px;
+  }
+}

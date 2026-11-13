@@ -84,6 +84,8 @@ export function installIcons(root: HTMLElement) {
     for (const node of root.querySelectorAll<HTMLElement>("nav a,button,h2")) {
       if (node.querySelector("svg") || node.classList.contains("site-icon"))
         continue;
+      // Date-range buttons are words, not destinations.
+      if (node.closest(".period")) continue;
       const text = node.textContent?.trim() ?? "";
       const name = labels.find(([pattern]) => pattern.test(text))?.[1];
       if (name) node.insertAdjacentHTML("afterbegin", icon(name));
