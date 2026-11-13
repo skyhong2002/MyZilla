@@ -29,6 +29,10 @@ The new set never reached 9, so the run stopped after the phase-1 limit of ten r
 
 After r10, three small issues it raised were fixed without another review round: the 今天 range button had picked up the home icon (a regression from round 8), the import confirmation showed "processing" behind it, and desktop icon buttons grew to 40 px.
 
+## Stylesheet consolidation
+
+The hill climb left ten "Round N fixes" blocks at the end of `src/ui/app.css` that overrode earlier rules. After the last round they were folded into their component sections and the overridden rules deleted (3,162 → 2,988 lines; the 11 old stylesheets were 3,271 lines). All 88 states were recaptured and pixel-compared with a capture made just before: 85 are identical, three differ by 13–20 pixels, and `overview-loading` differs only in the phase of its shimmer animation.
+
 ## Before and after
 
 The baseline is `main`; the "after" images are the round-10 set. Desktop crops are the top 1000 px at 1440 wide; mobile crops are the top of the 390 px view.

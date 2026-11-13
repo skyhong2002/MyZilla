@@ -281,7 +281,9 @@ button:disabled:hover {
   font-weight: 500;
 }
 [data-action="delete"],
+[data-action="delete-search"],
 [data-action="revoke"],
+[data-action="revoke-device"],
 [data-action="revoke-share"],
 [data-action="remove"],
 [data-ws="remove-item"],
@@ -341,6 +343,34 @@ input[type="radio"] {
 }
 input[type="file"] {
   padding: 6px;
+}
+input[type="file"]::file-selector-button {
+  margin-right: 12px;
+  padding: 6px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-s);
+  background: var(--surface-2);
+  color: var(--text);
+  font: 500 var(--fs-s) var(--font-sans);
+  cursor: pointer;
+}
+/* Chinese file picker: the native input is visually hidden inside the label. */
+.file-pick {
+  flex-basis: 100%;
+}
+.file-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  font-weight: 400;
+  color: var(--text-2);
+}
+.file-pick:hover .button {
+  background: var(--surface-2);
+}
+.file-pick:focus-within .button {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
 }
 input[readonly] {
   background: var(--surface-2);
@@ -584,6 +614,12 @@ tbody th {
   margin-left: auto;
   flex: none;
 }
+.app-header.signed-out [data-private-nav] {
+  display: none;
+}
+.nav-toggle {
+  display: none;
+}
 .app-account .account-name {
   color: var(--text-2);
   font-size: var(--fs-s);
@@ -669,6 +705,10 @@ tbody th {
   background: var(--surface-2);
   color: var(--text-2);
 }
+.status-chip.connected {
+  background: var(--success-soft);
+  color: var(--success);
+}
 .tag {
   background: var(--surface-2);
   color: var(--text-2);
@@ -684,6 +724,10 @@ tbody th {
 .access-help {
   color: var(--text-3);
   font-size: var(--fs-s);
+}
+.note a,
+.method-note a {
+  white-space: nowrap;
 }
 .eyebrow {
   display: block;
@@ -799,6 +843,21 @@ tbody th {
 }
 .empty a {
   font-weight: 550;
+}
+/* Headings with an auto-inserted icon keep a gap between icon and text. */
+:is(h1, h2, h3):has(> .mz-icon:first-child) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+/* A capture button after a linked title sits on its own line. */
+:is(h3, td, li) > .curate-button {
+  display: flex;
+  width: fit-content;
+  margin-top: var(--s-2);
+  font-size: var(--fs-xs);
+  min-height: 30px;
+  padding: 4px 10px;
 }
 .icon-tile {
   display: inline-grid;
@@ -925,6 +984,46 @@ button .mz-icon {
   background: var(--danger-soft);
   color: var(--danger);
 }
+#notice.success:not(:empty) {
+  background: var(--success-soft);
+  color: var(--text);
+  border-left: 3px solid var(--success);
+}
+#notice a {
+  margin-left: var(--s-2);
+  font-weight: 600;
+}
+/* A first load that failed: one titled card with a retry. */
+.error-state,
+#message.error:has(> strong) {
+  padding: var(--s-6) var(--s-5);
+  border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
+  border-radius: var(--r-l);
+  background: var(--danger-soft);
+  text-align: center;
+}
+.error-state[role="alert"] {
+  color: var(--text);
+  font-size: var(--fs-m);
+}
+.error-state h2 {
+  font-size: var(--fs-l);
+  justify-content: center;
+}
+#message.error:has(> strong) {
+  display: grid;
+  justify-items: center;
+  gap: var(--s-2);
+  color: var(--danger);
+  font-size: var(--fs-m);
+}
+#message.error > strong {
+  color: var(--text);
+  font-size: var(--fs-l);
+}
+#message.error:has(> strong) button {
+  margin: var(--s-2) 0 0;
+}
 
 /* 7. Feedback: toast, dialogs, back to top --------------------------------- */
 .ux-toast {
@@ -961,6 +1060,10 @@ button .mz-icon {
 .ux-inline-status {
   color: var(--text-2);
   font-size: var(--fs-s);
+}
+/* Nothing is processing while a confirmation is still waiting for an answer. */
+body:has(dialog.ux-confirm[open]) .ux-inline-status {
+  display: none;
 }
 dialog {
   width: min(560px, calc(100vw - 32px));
@@ -1077,6 +1180,7 @@ dialog .heading {
   font-size: var(--fs-3xl);
   letter-spacing: 0;
   line-height: 1.25;
+  word-break: keep-all;
 }
 .public-welcome .lead {
   font-size: var(--fs-l);
@@ -1251,14 +1355,24 @@ dialog .heading {
 [data-form="find"] {
   margin-bottom: var(--s-3);
 }
+/* Collection items: a compact card; on desktop the actions sit to the right. */
 .item,
 .workspace-item {
-  padding: var(--s-4) var(--s-5);
   margin-bottom: var(--s-3);
+}
+.item {
+  padding: var(--s-3) var(--s-4);
+}
+.workspace-item {
+  padding: var(--s-4) var(--s-5);
 }
 .item .heading {
   align-items: center;
   margin-bottom: var(--s-1);
+}
+.item > .heading {
+  justify-content: flex-start;
+  gap: var(--s-3);
 }
 .item h2,
 .workspace-item h2 {
@@ -1266,6 +1380,9 @@ dialog .heading {
   align-items: center;
   font-size: var(--fs-l);
   margin: 0;
+}
+.item .heading h2 {
+  font-size: var(--fs-m);
 }
 .item h2 a,
 .workspace-item h2 a {
@@ -1278,14 +1395,134 @@ dialog .heading {
   text-decoration: underline;
 }
 .item p {
-  margin-bottom: var(--s-1);
+  font-size: var(--fs-s);
+  color: var(--text-2);
+  margin-bottom: 2px;
 }
 .item > small {
   display: block;
+  font-size: var(--fs-xs);
+}
+.item .heading small {
+  font-size: var(--fs-xs);
+}
+.item .notes {
+  color: var(--text);
+}
+.item .tag {
+  margin-bottom: 0;
+}
+.item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+}
+.item-meta small {
+  margin-left: 4px;
+}
+/* Privacy reads as a small badge next to the title. */
+.item .visibility {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.item .visibility.private::before {
+  content: "";
+  width: 8px;
+  height: 9px;
+  border: 1.5px solid currentColor;
+  border-radius: 2px;
+}
+.item .visibility.friends,
+.item .visibility.shared {
+  background: var(--accent-soft);
+  color: var(--accent-text);
 }
 .item .actions {
-  padding-top: var(--s-3);
+  gap: 4px;
+  margin-top: var(--s-2);
+  padding-top: var(--s-2);
   border-top: 1px solid var(--border);
+}
+.item .actions a {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--r-s);
+  text-decoration: none;
+}
+/* Secondary actions share one quiet outline style (see also history rows). */
+.item .actions :is(button, a),
+.more-menu > summary {
+  min-height: 30px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+}
+.item .actions :is(button, a):hover,
+.more-menu > summary:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+/* Less frequent item actions live in a "更多" disclosure menu. */
+.more-menu {
+  position: relative;
+  margin: 0;
+}
+.more-menu > summary {
+  border-radius: var(--r-s);
+  font-weight: 500;
+}
+.more-menu > summary::before {
+  display: none;
+}
+.more-menu > summary::after {
+  content: "⋯";
+  margin-left: 2px;
+}
+.more-menu[open] > summary {
+  margin: 0;
+  background: var(--surface-3);
+}
+.more-menu .menu {
+  position: absolute;
+  z-index: 15;
+  top: calc(100% + 4px);
+  left: 0;
+  display: grid;
+  min-width: 180px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-m);
+  background: var(--surface);
+  box-shadow: var(--shadow-2);
+}
+.item .more-menu .menu :is(button, a) {
+  justify-content: flex-start;
+  width: 100%;
+  min-height: 36px;
+  border-color: transparent;
+  background: transparent;
+  font-size: var(--fs-s);
+}
+.item .more-menu .menu :is(button, a):hover {
+  background: var(--surface-2);
+}
+.item .more-menu .menu [data-action="delete"] {
+  color: var(--danger);
+}
+.import-progress {
+  display: block;
+  max-width: 420px;
+  margin: var(--s-3) 0 var(--s-2);
 }
 .workspace-item {
   display: grid;
@@ -1390,8 +1627,17 @@ dialog .heading {
   display: grid;
   gap: var(--s-5);
 }
+/* Home sections read as one page, not cards inside cards. */
 .daily-home > .workspace-section {
   margin: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+.daily-home > .workspace-section + .workspace-section {
+  padding-top: var(--s-5);
+  border-top: 1px solid var(--border);
 }
 .workspace-intro {
   padding: var(--s-2) 0 var(--s-2);
@@ -1399,6 +1645,7 @@ dialog .heading {
 .workspace-intro h1 {
   font-size: var(--fs-3xl);
   line-height: 1.25;
+  word-break: keep-all;
 }
 .workspace-intro > p {
   color: var(--text-2);
@@ -1437,11 +1684,12 @@ dialog .heading {
   min-height: 44px;
   padding-inline: 20px;
 }
+/* The weekly digest uses the accent tint with a leading bar, in both themes. */
 .home-digest-card {
   padding: var(--s-4) var(--s-5);
   border-radius: var(--r-m);
-  background: var(--warm-soft);
-  border: 1px solid color-mix(in srgb, var(--warm) 22%, transparent);
+  background: var(--accent-soft);
+  border-left: 3px solid var(--accent);
 }
 .home-digest-headline {
   font-size: var(--fs-l);
@@ -1452,7 +1700,7 @@ dialog .heading {
   margin-bottom: var(--s-2);
 }
 .home-digest h2 .mz-icon {
-  color: var(--warm);
+  color: var(--accent-text);
 }
 .shortcut-grid {
   display: grid;
@@ -1465,11 +1713,13 @@ dialog .heading {
   align-content: start;
   gap: 6px;
   height: auto;
+  min-width: 0;
   min-height: 112px;
   padding: var(--s-4);
+  overflow: hidden;
   border: 1px solid var(--border);
   border-radius: var(--r-m);
-  background: var(--surface-2);
+  background: var(--surface);
   text-align: left;
   white-space: normal;
 }
@@ -1478,6 +1728,7 @@ dialog .heading {
   background: var(--accent-soft);
 }
 .launch-tile strong {
+  max-width: 100%;
   font-size: var(--fs-s);
   line-height: 1.4;
   display: -webkit-box;
@@ -1486,8 +1737,12 @@ dialog .heading {
   overflow: hidden;
 }
 .launch-tile small {
+  max-width: 100%;
+  overflow: hidden;
   font-size: var(--fs-xs);
   font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .launch-tile .link-favicon {
   margin: 0;
@@ -1539,7 +1794,7 @@ dialog .heading {
   color: var(--text);
   text-decoration: none;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -1742,8 +1997,32 @@ a.collection-card:hover {
   padding: var(--s-5);
   margin-bottom: var(--s-5);
   border-radius: var(--r-l);
-  background: var(--warm-soft);
-  border: 1px solid color-mix(in srgb, var(--warm) 22%, transparent);
+  background: var(--accent-soft);
+  border-left: 3px solid var(--accent);
+}
+/* Loading: placeholders shaped like the content that will arrive. */
+#dashboard.is-loading .stats strong,
+#dashboard.is-loading #ranking,
+#dashboard.is-loading #recent-list {
+  color: transparent;
+  border-radius: var(--r-s);
+  background: linear-gradient(90deg, var(--surface-2), var(--surface-3), var(--surface-2));
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+#dashboard.is-loading .stats strong {
+  width: 60%;
+}
+#dashboard.is-loading #ranking,
+#dashboard.is-loading #recent-list {
+  min-height: 240px;
+  border-color: transparent;
+}
+#dashboard.load-failed {
+  display: none !important;
+}
+#switch-key {
+  margin-bottom: var(--s-3);
 }
 #ai-digest .personal-cards > article {
   background: var(--surface);
@@ -1917,13 +2196,25 @@ a.recent-visit:hover {
 .recent-visit > span[aria-hidden]:last-child {
   display: none;
 }
+/* Row actions: always visible, in the same quiet outline style as item actions. */
 .visit-row .curate-button,
 .visit-row .save-history-link {
   min-height: 30px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-2);
   font-size: var(--fs-xs);
 }
-.visit-row .curate-button {
-  padding: 4px 10px;
+.visit-row .curate-button:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+.visit-row .save-history-link {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--r-s);
+  text-decoration: none;
 }
 .search {
   flex: 1 1 320px;
@@ -2125,6 +2416,12 @@ a.recent-visit:hover {
 #dwell-panel > label {
   max-width: 320px;
 }
+#dwell-panel td small[style] {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow-wrap: normal !important;
+}
 .connection form {
   align-items: end;
 }
@@ -2195,6 +2492,13 @@ a.recent-visit:hover {
 .community-grid form button {
   justify-self: start;
 }
+.community-section > .actions:first-child {
+  margin: 0 0 var(--s-5);
+}
+.community-section > h2 + form,
+.community-section > h2 + p {
+  margin-top: var(--s-2);
+}
 details.community-section > summary {
   font-size: var(--fs-m);
 }
@@ -2238,6 +2542,9 @@ details.community-section > summary {
   color: var(--text-3);
   font-variant-numeric: tabular-nums;
 }
+#category-sites {
+  max-width: 760px;
+}
 #category-sites select {
   width: auto;
   min-width: 150px;
@@ -2249,7 +2556,8 @@ details.community-section > summary {
 }
 .help-layout {
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
+  grid-template-columns: 220px minmax(0, 820px);
+  justify-content: center;
   gap: var(--s-6);
   align-items: start;
 }
@@ -2268,8 +2576,14 @@ details.community-section > summary {
 .help-layout > nav.page-nav a:hover {
   background: var(--surface-2);
 }
+.help-layout > nav.page-nav a[aria-current="location"] {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+.help-layout > nav.page-nav a[aria-current="location"]::after {
+  display: none;
+}
 .help-layout .community-section {
-  max-width: 760px;
   scroll-margin-top: 84px;
 }
 .help-layout .community-section h2 {
@@ -2281,6 +2595,63 @@ details.community-section > summary {
 }
 
 /* 14. Responsive ------------------------------------------------------------ */
+@media (min-width: 861px) {
+  /* Collection items: content on the left, compact actions on the right. */
+  .item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: var(--s-5);
+    align-items: start;
+  }
+  .item > * {
+    grid-column: 1;
+  }
+  .item > .actions {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    align-self: center;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  /* 編輯 and 更多 are icon buttons; their names stay as tooltips and accessible text. */
+  .item > .actions > :is(button, a),
+  .item > .actions > .more-menu > summary {
+    width: 40px;
+    min-height: 40px;
+    padding: 0;
+    justify-content: center;
+    font-size: 0;
+    gap: 0;
+  }
+  .item > .actions > :is(button, a) .mz-icon {
+    width: 17px;
+    height: 17px;
+  }
+  .item > .actions > .more-menu > summary::after {
+    font-size: 17px;
+    margin: 0;
+    line-height: 1;
+  }
+  /* 開啟網址 keeps its words. */
+  .item > .actions > :is(button, a):first-child {
+    width: auto;
+    padding: 0 12px;
+    gap: 6px;
+    font-size: var(--fs-xs);
+  }
+  .item .more-menu .menu {
+    left: auto;
+    right: 0;
+  }
+  .visit-row {
+    flex-wrap: nowrap;
+  }
+  .visit-row > .visit,
+  .visit-row > .recent-visit {
+    flex: 1 1 auto;
+  }
+}
 @media (max-width: 1080px) {
   .stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2296,6 +2667,7 @@ details.community-section > summary {
   html {
     scroll-padding-top: 120px;
   }
+  /* Header: brand, menu button and account on one row; the menu opens below. */
   .app-header-inner {
     display: grid;
     grid-template-columns: auto 1fr auto;
@@ -2313,24 +2685,48 @@ details.community-section > summary {
   }
   .app-account {
     grid-area: account;
+    gap: 6px;
     padding-right: var(--gutter);
   }
   .app-account .account-name {
     display: none;
   }
+  .nav-toggle {
+    display: inline-flex;
+  }
+  .nav-toggle::before {
+    content: "";
+    width: 14px;
+    height: 10px;
+    border-block: 2px solid currentColor;
+    background: linear-gradient(currentColor, currentColor) center / 100% 2px no-repeat;
+  }
   .app-nav {
     grid-area: nav;
-    overflow-x: auto;
-    scrollbar-width: none;
-    padding: 0 var(--gutter) 8px;
-    gap: 4px;
+  }
+  .app-header:not(.nav-open) .app-nav {
+    display: none;
+  }
+  .app-header.nav-open .app-nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    padding: 4px var(--gutter) var(--s-3);
   }
   .app-nav a {
+    justify-content: flex-start;
     padding: 8px 12px;
     min-height: 40px;
     background: var(--surface-2);
   }
-  .app-nav::-webkit-scrollbar,
+  /* Scrolling chip rows fade at the edge so it is clear there is more. */
+  .rail-nav,
+  .view-toolbar .page-nav,
+  .workspace-tabs,
+  .insight-jumps {
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+  }
   .rail-nav::-webkit-scrollbar,
   .page-nav::-webkit-scrollbar {
     display: none;
@@ -2417,12 +2813,31 @@ details.community-section > summary {
   .community-section,
   .workspace-section,
   .connection,
-  .setup-guide {
-    padding: var(--s-4);
-  }
-  .item,
+  .setup-guide,
   .workspace-item {
     padding: var(--s-4);
+  }
+  .workspace-item {
+    gap: var(--s-3);
+  }
+  [data-form="find"] {
+    flex-wrap: nowrap;
+  }
+  .filters {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--s-2);
+  }
+  .filters > label:last-of-type,
+  .filters > span {
+    grid-column: 1 / -1;
+  }
+  .filters > span {
+    padding: 0;
+  }
+  .filters select {
+    min-height: 40px;
+    font-size: var(--fs-s);
   }
   .home-search {
     grid-template-columns: minmax(0, 1fr) auto;
@@ -2433,6 +2848,32 @@ details.community-section > summary {
   .home-search select {
     border-left: 0;
     border-top: 1px solid var(--border);
+  }
+  .shortcut-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--s-2);
+  }
+  .launch-tile {
+    grid-template-columns: 24px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    column-gap: var(--s-2);
+    row-gap: 0;
+    min-height: 0;
+    padding: 10px;
+  }
+  .launch-tile > .link-favicon {
+    grid-row: 1 / 3;
+    align-self: center;
+  }
+  .launch-tile .favicon-large {
+    width: 24px;
+    height: 24px;
+  }
+  .resume-grid,
+  .workspace-grid,
+  .topic-grid,
+  .personal-cards {
+    grid-template-columns: 1fr;
   }
   .stats strong {
     font-size: var(--fs-xl);
@@ -2453,11 +2894,23 @@ details.community-section > summary {
   .visit,
   .recent-visit {
     grid-template-columns: 24px minmax(0, 1fr);
+    row-gap: 0;
+    padding-bottom: 4px;
   }
   .visit time,
   .recent-visit time {
     grid-column: 2;
+    margin-top: -2px;
     padding-top: 0;
+  }
+  .visit-row {
+    padding-bottom: var(--s-2);
+  }
+  .visit-row > :is(.curate-button, .save-history-link) {
+    margin-left: 36px;
+  }
+  .visit-row > .save-history-link {
+    margin-left: 4px;
   }
   .donut {
     width: 168px;
@@ -2467,17 +2920,39 @@ details.community-section > summary {
     width: 110px;
     height: 110px;
   }
-  .resume-grid,
-  .workspace-grid,
-  .topic-grid,
-  .personal-cards {
-    grid-template-columns: 1fr;
+  /* Link tables become stacked rows on phones. */
+  #dwell-panel .sites-table thead {
+    display: none;
   }
-  .shortcut-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  #dwell-panel .sites-table tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px var(--s-3);
+    padding: var(--s-3);
+    border-bottom: 1px solid var(--border);
   }
-  .workspace-item {
-    gap: var(--s-3);
+  #dwell-panel .sites-table td {
+    padding: 0;
+    border: 0;
+  }
+  #dwell-panel .sites-table td:first-child {
+    grid-column: 1 / -1;
+    margin-bottom: 4px;
+  }
+  #dwell-panel .sites-table td:nth-child(2)::before {
+    content: "推估停留 ";
+    color: var(--text-3);
+  }
+  #dwell-panel .sites-table td:nth-child(3)::before {
+    content: "計入次數 ";
+    color: var(--text-3);
+  }
+  #category-sites .source-row > .actions {
+    width: 100%;
+  }
+  #category-sites .source-row select {
+    flex: 1;
+    width: 100%;
   }
   dialog {
     padding: var(--s-4);
@@ -2509,654 +2984,5 @@ details.community-section > summary {
   .app-nav a[aria-current="page"],
   .rail-nav a[aria-current="page"] {
     outline: 2px solid CanvasText;
-  }
-}
-
-/* Home sections read as one page, not cards inside cards. */
-.daily-home > .workspace-section {
-  padding: 0;
-  background: none;
-  border: 0;
-  box-shadow: none;
-}
-.daily-home > .workspace-section + .workspace-section {
-  padding-top: var(--s-5);
-  border-top: 1px solid var(--border);
-}
-.daily-home .launch-tile {
-  background: var(--surface);
-}
-@media (max-width: 600px) {
-  .shortcut-grid {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--s-2);
-  }
-  .launch-tile {
-    grid-template-columns: 32px minmax(0, 1fr);
-    grid-template-rows: auto auto;
-    column-gap: var(--s-3);
-    row-gap: 0;
-    min-height: 0;
-    padding: 10px 14px;
-  }
-  .launch-tile > .link-favicon {
-    grid-row: 1 / 3;
-    align-self: center;
-  }
-}
-
-/* Round 1 review fixes ------------------------------------------------------ */
-/* Headings with an auto-inserted icon keep a gap between icon and text. */
-:is(h1, h2, h3):has(> .mz-icon:first-child) {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-/* A capture button after a linked title sits on its own line. */
-:is(h3, td, li) > .curate-button {
-  display: flex;
-  width: fit-content;
-  margin-top: var(--s-2);
-  font-size: var(--fs-xs);
-  min-height: 30px;
-  padding: 4px 10px;
-}
-.community-section > .actions:first-child {
-  margin: 0 0 var(--s-5);
-}
-.community-section > h2 + form,
-.community-section > h2 + p {
-  margin-top: var(--s-2);
-}
-.status-chip.connected {
-  background: var(--success-soft);
-  color: var(--success);
-}
-#switch-key {
-  margin-bottom: var(--s-3);
-}
-.public-welcome h1,
-.workspace-intro h1 {
-  word-break: keep-all;
-}
-input[type="file"]::file-selector-button {
-  margin-right: 12px;
-  padding: 6px 14px;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--r-s);
-  background: var(--surface-2);
-  color: var(--text);
-  font: 500 var(--fs-s) var(--font-sans);
-  cursor: pointer;
-}
-.error-state {
-  padding: var(--s-6) var(--s-5);
-  border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
-  border-radius: var(--r-l);
-  background: var(--danger-soft);
-  text-align: center;
-}
-.error-state[role="alert"] {
-  color: var(--text);
-  font-size: var(--fs-m);
-}
-.error-state h2 {
-  font-size: var(--fs-l);
-  justify-content: center;
-}
-#message.error button {
-  margin-left: var(--s-2);
-}
-/* Loading: placeholders shaped like the content that will arrive. */
-#dashboard.is-loading .stats strong,
-#dashboard.is-loading #ranking,
-#dashboard.is-loading #recent-list {
-  color: transparent;
-  border-radius: var(--r-s);
-  background: linear-gradient(90deg, var(--surface-2), var(--surface-3), var(--surface-2));
-  background-size: 200% 100%;
-  animation: shimmer 1.4s linear infinite;
-}
-#dashboard.is-loading .stats strong {
-  width: 60%;
-}
-#dashboard.is-loading #ranking,
-#dashboard.is-loading #recent-list {
-  min-height: 240px;
-  border-color: transparent;
-}
-/* Scrolling chip rows fade at the edge so it is clear there is more. */
-@media (max-width: 860px) {
-  .app-nav,
-  .rail-nav,
-  .view-toolbar .page-nav,
-  .workspace-tabs {
-    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
-    mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
-  }
-}
-@media (max-width: 600px) {
-  .item .actions {
-    gap: 6px;
-  }
-  .item .actions :is(button, a) {
-    min-height: 38px;
-    padding: 6px 10px;
-    font-size: var(--fs-xs);
-  }
-  /* Link tables become stacked rows on phones. */
-  #dwell-panel .sites-table thead {
-    display: none;
-  }
-  #dwell-panel .sites-table tr {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2px var(--s-3);
-    padding: var(--s-3);
-    border-bottom: 1px solid var(--border);
-  }
-  #dwell-panel .sites-table td {
-    padding: 0;
-    border: 0;
-  }
-  #dwell-panel .sites-table td:first-child {
-    grid-column: 1 / -1;
-    margin-bottom: 4px;
-  }
-  #dwell-panel .sites-table td:nth-child(2)::before {
-    content: "推估停留 ";
-    color: var(--text-3);
-  }
-  #dwell-panel .sites-table td:nth-child(3)::before {
-    content: "計入次數 ";
-    color: var(--text-3);
-  }
-}
-
-/* Round 2 review fixes ------------------------------------------------------ */
-#notice.success:not(:empty) {
-  background: var(--success-soft);
-  color: var(--text);
-  border-left: 3px solid var(--success);
-}
-#notice a {
-  margin-left: var(--s-2);
-  font-weight: 600;
-}
-#dashboard.load-failed {
-  display: none !important;
-}
-.file-pick {
-  flex-basis: 100%;
-}
-.file-row {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-  font-weight: 400;
-  color: var(--text-2);
-}
-.file-pick:focus-within .button {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
-}
-.file-pick:hover .button {
-  background: var(--surface-2);
-}
-/* Collection lists: one compact card per item, quiet secondary actions. */
-.item {
-  padding: var(--s-3) var(--s-4);
-}
-.item .heading h2 {
-  font-size: var(--fs-m);
-}
-.item p {
-  font-size: var(--fs-s);
-  color: var(--text-2);
-  margin-bottom: 2px;
-}
-.item > small {
-  font-size: var(--fs-xs);
-}
-.item .actions {
-  gap: 4px;
-  margin-top: var(--s-2);
-  padding-top: var(--s-2);
-}
-.item .actions :is(button, a) {
-  min-height: 30px;
-  padding: 4px 10px;
-  border-color: transparent;
-  background: var(--surface-2);
-  font-size: var(--fs-xs);
-}
-.item .actions :is(button, a):hover {
-  border-color: var(--border-strong);
-}
-.item .actions a {
-  display: inline-flex;
-  align-items: center;
-  border-radius: var(--r-s);
-  text-decoration: none;
-}
-.item .tag {
-  margin-bottom: 0;
-}
-.item .heading small {
-  font-size: var(--fs-xs);
-}
-.item .notes {
-  color: var(--text);
-}
-
-/* Round 3 review fixes ------------------------------------------------------ */
-.nav-toggle {
-  display: none;
-}
-.import-progress {
-  display: block;
-  max-width: 420px;
-  margin: var(--s-3) 0 var(--s-2);
-}
-/* Row actions stay out of the way until the row is pointed at or focused. */
-
-@media (max-width: 860px) {
-  .app-header-inner {
-    grid-template-areas:
-      "brand . account"
-      "nav nav nav";
-  }
-  .nav-toggle {
-    display: inline-flex;
-  }
-  .nav-toggle::before {
-    content: "";
-    width: 14px;
-    height: 10px;
-    border-block: 2px solid currentColor;
-    background: linear-gradient(currentColor, currentColor) center / 100% 2px no-repeat;
-  }
-  .app-header:not(.nav-open) .app-nav {
-    display: none;
-  }
-  .app-header.nav-open .app-nav {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
-    padding: 4px var(--gutter) var(--s-3);
-    overflow: visible;
-    -webkit-mask-image: none;
-    mask-image: none;
-  }
-  .app-header.nav-open .app-nav a {
-    justify-content: flex-start;
-  }
-  .app-account {
-    gap: 6px;
-  }
-}
-@media (max-width: 600px) {
-  .visit,
-  .recent-visit {
-    row-gap: 0;
-    padding-bottom: 4px;
-  }
-  .visit time,
-  .recent-visit time {
-    margin-top: -2px;
-  }
-  .visit-row {
-    padding-bottom: var(--s-2);
-  }
-  .visit-row > :is(.curate-button, .save-history-link) {
-    margin-left: 36px;
-  }
-  .visit-row > .save-history-link {
-    margin-left: 4px;
-  }
-}
-
-/* Round 4 review fixes ------------------------------------------------------ */
-.more-menu {
-  position: relative;
-  margin: 0;
-}
-.more-menu > summary {
-  min-height: 30px;
-  padding: 4px 10px;
-  border-radius: var(--r-s);
-  background: var(--surface-2);
-  color: var(--text);
-  font-size: var(--fs-xs);
-  font-weight: 500;
-}
-.more-menu > summary::before {
-  display: none;
-}
-.more-menu > summary::after {
-  content: "⋯";
-  margin-left: 2px;
-}
-.more-menu[open] > summary {
-  margin: 0;
-  background: var(--surface-3);
-}
-.more-menu .menu {
-  position: absolute;
-  z-index: 15;
-  top: calc(100% + 4px);
-  left: 0;
-  display: grid;
-  min-width: 180px;
-  padding: 6px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-m);
-  background: var(--surface);
-  box-shadow: var(--shadow-2);
-}
-.item .more-menu .menu :is(button, a) {
-  justify-content: flex-start;
-  width: 100%;
-  min-height: 36px;
-  background: transparent;
-  font-size: var(--fs-s);
-}
-.item .more-menu .menu :is(button, a):hover {
-  background: var(--surface-2);
-}
-.resume-card h3 a {
-  -webkit-line-clamp: 3;
-}
-@media (max-width: 600px) {
-  .shortcut-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .launch-tile {
-    grid-template-columns: 24px minmax(0, 1fr);
-    column-gap: var(--s-2);
-    padding: 10px;
-  }
-  .launch-tile .favicon-large {
-    width: 24px;
-    height: 24px;
-  }
-  .launch-tile small {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-}
-
-/* Round 5 review fixes ------------------------------------------------------ */
-.app-header.signed-out [data-private-nav] {
-  display: none;
-}
-[data-action="revoke-device"] {
-  color: var(--danger);
-}
-.note a,
-.method-note a {
-  white-space: nowrap;
-}
-#dwell-panel td small[style] {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow-wrap: normal !important;
-}
-/* Desktop only: the phone layout stacks the contents above the text. */
-@media (min-width: 861px) {
-  .help-layout {
-    grid-template-columns: 220px minmax(0, 820px);
-    justify-content: center;
-  }
-}
-.help-layout .community-section {
-  max-width: none;
-}
-.help-layout > nav.page-nav a[aria-current="location"] {
-  background: var(--accent-soft);
-  color: var(--accent-text);
-}
-.help-layout > nav.page-nav a[aria-current="location"]::after {
-  display: none;
-}
-@media (max-width: 600px) {
-  #category-sites .source-row > .actions {
-    width: 100%;
-  }
-  #category-sites .source-row select {
-    flex: 1;
-    width: 100%;
-  }
-}
-
-/* Round 6 review fixes ------------------------------------------------------ */
-#message.error:has(> strong) {
-  display: grid;
-  justify-items: center;
-  gap: var(--s-2);
-  padding: var(--s-6) var(--s-5);
-  border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
-  border-radius: var(--r-l);
-  background: var(--danger-soft);
-  color: var(--danger);
-  font-size: var(--fs-m);
-  text-align: center;
-}
-#message.error > strong {
-  color: var(--text);
-  font-size: var(--fs-l);
-}
-#message.error:has(> strong) button {
-  margin: var(--s-2) 0 0;
-}
-@media (max-width: 860px) {
-  .insight-jumps {
-    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
-    mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
-  }
-}
-@media (max-width: 600px) {
-  .filters {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--s-2);
-  }
-  .filters > label:last-of-type {
-    grid-column: 1 / -1;
-  }
-  .filters > span {
-    grid-column: 1 / -1;
-    padding: 0;
-  }
-  .filters select {
-    min-height: 40px;
-    font-size: var(--fs-s);
-  }
-  [data-form="find"] {
-    flex-wrap: nowrap;
-  }
-}
-
-
-/* Round 7 review fixes ------------------------------------------------------ */
-[data-action="delete-search"] {
-  color: var(--danger);
-}
-.item-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 6px;
-}
-.item-meta small {
-  margin-left: 4px;
-}
-/* Secondary actions share one quiet outline style everywhere. */
-.item .actions :is(button, a),
-.more-menu > summary,
-.visit-row .curate-button,
-.visit-row .save-history-link {
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text-2);
-}
-.item .actions :is(button, a):hover,
-.more-menu > summary:hover,
-.visit-row .curate-button:hover {
-  border-color: var(--border-strong);
-  color: var(--text);
-}
-.visit-row .save-history-link {
-  display: inline-flex;
-  align-items: center;
-  min-height: 30px;
-  padding: 4px 10px;
-  border-radius: var(--r-s);
-  text-decoration: none;
-}
-.item .more-menu .menu :is(button, a) {
-  border-color: transparent;
-}
-.item .more-menu .menu [data-action="delete"] {
-  color: var(--danger);
-}
-@media (min-width: 861px) {
-  .item {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    column-gap: var(--s-5);
-    align-items: start;
-  }
-  .item > * {
-    grid-column: 1;
-  }
-  .item > .actions {
-    grid-column: 2;
-    grid-row: 1 / span 3;
-    align-self: center;
-    margin: 0;
-    padding: 0;
-    border: 0;
-  }
-  .visit-row {
-    flex-wrap: nowrap;
-  }
-  .visit-row > .visit,
-  .visit-row > .recent-visit {
-    flex: 1 1 auto;
-  }
-}
-
-/* Round 8 review fixes ------------------------------------------------------ */
-/* The weekly digest uses the accent tint instead of a separate warm color. */
-#ai-digest,
-.home-digest-card {
-  background: var(--accent-soft);
-  border: 0;
-  border-left: 3px solid var(--accent);
-}
-.home-digest h2 .mz-icon {
-  color: var(--accent-text);
-}
-/* Privacy reads as a small badge next to the title. */
-.item .visibility {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 1px 8px;
-  border-radius: var(--r-pill);
-  background: var(--surface-2);
-  color: var(--text-2);
-  font-weight: 600;
-  white-space: nowrap;
-}
-.item .visibility.private::before {
-  content: "";
-  width: 8px;
-  height: 9px;
-  border: 1.5px solid currentColor;
-  border-radius: 2px;
-}
-.item .visibility.friends,
-.item .visibility.shared {
-  background: var(--accent-soft);
-  color: var(--accent-text);
-}
-.item > .heading {
-  justify-content: flex-start;
-  gap: var(--s-3);
-}
-/* Desktop items: icon buttons with their names as tooltips and accessible text. */
-@media (min-width: 861px) {
-  .item > .actions > :is(button, a),
-  .item > .actions > .more-menu > summary {
-    width: 34px;
-    min-height: 34px;
-    padding: 0;
-    justify-content: center;
-    font-size: 0;
-    gap: 0;
-  }
-  .item > .actions > :is(button, a) .mz-icon {
-    width: 17px;
-    height: 17px;
-  }
-  .item > .actions > .more-menu > summary::after {
-    font-size: 17px;
-    margin: 0;
-    line-height: 1;
-  }
-  .item > .actions > a:not(:has(.mz-icon))::before {
-    content: "↗";
-    font-size: 15px;
-  }
-  .item .more-menu .menu {
-    left: auto;
-    right: 0;
-  }
-}
-
-/* Round 9 review fixes ------------------------------------------------------ */
-@media (min-width: 861px) {
-  /* "開啟網址" keeps its words; only edit and more are icon buttons. */
-  .item > .actions > :is(button, a):first-child {
-    width: auto;
-    padding: 0 12px;
-    gap: 6px;
-    font-size: var(--fs-xs);
-  }
-  .item > .actions > a:first-child::before {
-    content: none;
-  }
-}
-.launch-tile {
-  min-width: 0;
-  overflow: hidden;
-}
-.launch-tile small,
-.launch-tile strong {
-  max-width: 100%;
-}
-.launch-tile small {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-#category-sites {
-  max-width: 760px;
-}
-
-/* Round 10 review fixes ----------------------------------------------------- */
-/* Nothing is processing while a confirmation is still waiting for an answer. */
-body:has(dialog.ux-confirm[open]) .ux-inline-status {
-  display: none;
-}
-@media (min-width: 861px) {
-  .item > .actions > :is(button, a),
-  .item > .actions > .more-menu > summary {
-    min-width: 40px;
-    min-height: 40px;
   }
 }
